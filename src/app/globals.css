@@ -1,0 +1,90 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    /* aqui estan los estilos para el tema claro que estara por defecto en VINT */
+    --bg-primary: #F9F8F3;              /*este es el fondo principal*/
+    --bg-secondary: #F0EFE8;            /*estos son los fondos de las secciones*/
+    --bg-card: #FFFFFF;                 /*estas son las tarjetas*/
+    --text-primary: #1A1A1A;            /*estos son los textos principales*/
+    --text-secondary: #5C5C5C;          /*estos son los textos secundarios*/
+    --text-muted: #9E9E9E;              /*estos son los textos de apoyo*/
+    --accent: #FF7A00;                  /*color de los acentos*/
+    --accent-hover: #E56D00;            /*el hover del acento*/
+    --accend-light: #FFF0E0;            /*fondo del acento*/
+    --border: #E5E3DA;                  /*este sera el borde suave*/
+    --shadow: rgba(0, 0, 0, 0.08);      
+}
+
+
+/* lo que pasa aqui basicamente es que por lo que yo instale el next-themes haga lo siguiente "data-theme="dark" que lo que hace es cambiar los datos que se pusieron en el tema claro de arriba por los que voy a poner aqui, asi se logra cambiar de tema claro a tema oscuro" */
+
+[data-theme='dark'] {
+     --bg-primary: #0F0F0F;              /*este es el fondo principal*/
+    --bg-secondary: #1A1A1A;            /*estos son los fondos de las secciones*/
+    --bg-card: #242424;                 /*estas son las tarjetas*/
+    --text-primary: #F5F5F5;            /*estos son los textos principales*/
+    --text-secondary: #ABABAB;          /*estos son los textos secundarios*/
+    --text-muted: #6B6B6B;              /*estos son los textos de apoyo*/
+    --accent: #FF7A00;                  /*color de los acentos, para aclarar aqui en el tema       oscuro se mantiene este naranja que es como el color que por el momento predomina en estos dos temas*/
+    --accent-hover: #FF9333;            /*el hover del acento*/
+    --accend-light: #2A1A00;            /*fondo del acento*/
+    --border: #2E2E2E;                  /*este sera el borde suave*/
+    --shadow: rgba(0, 0, 0, 0.4);
+}
+
+
+/* estos son los estilos base */
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'DM Sans', sans-serif;
+
+  /* esto hace que al momento de hacer la transición de tema claro a oscuro no sea de una forma brusca y se ve suave */
+
+  transition: background-color 0.3s ease, color 0.3s ease;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display {
+  font-family: 'Playfair Display', serif;
+}
+
+/* aqui se encuentra la animación de entrada para elementos al cargar la página */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+/* Delays escalonados para que cada elemento entre uno después del otro */
+
+.delay-100 { animation-delay: 0.1s; opacity: 0; }
+.delay-200 { animation-delay: 0.2s; opacity: 0; }
+.delay-300 { animation-delay: 0.3s; opacity: 0; }
+.delay-400 { animation-delay: 0.4s; opacity: 0; }
+.delay-500 { animation-delay: 0.5s; opacity: 0; }
