@@ -1,253 +1,67 @@
-/*
-  page.tsx — Landing Page principal de VINT
-
-  Es Server Component por defecto en Next.js 15 App Router.
-  Se renderiza en el servidor: mejor SEO y carga más rápida.
-  No puede tener useState ni eventos del usuario.
-
-  Estructura:
-  1. Hero Section     — título + barra de búsqueda
-  2. Valores Section  — 3 tarjetas de propuesta de valor
-  3. Productos Section — grid de 8 productos
-  4. Footer
-*/
-
-/*
-  page.tsx — Landing Page principal de VINT
-  Next.js 15 App Router.
-*/
-
 import Link from 'next/link'
 import { Search, ShieldCheck, Leaf, Tag } from 'lucide-react'
 import { ProductCard, type Product } from '@/components/products/ProductCard'
 
-// MOCK DATA — Datos de ejemplo
 const MOCK_PRODUCTS: Product[] = [
-  {
-    id: 1,
-    name: 'Chaqueta de cuero vintage café',
-    price: 85000,
-    size: 'M',
-    condition: 'Excelente',
-    seller: 'María V.',
-    image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&h=500&fit=crop',
-    rating: 4.9,
-  },
-  {
-    id: 2,
-    name: 'Jean wide leg azul oscuro',
-    price: 45000,
-    size: 'S',
-    condition: 'Muy Bueno',
-    seller: 'Camila R.',
-    image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&h=500&fit=crop',
-    rating: 4.7,
-  },
-  {
-    id: 3,
-    name: 'Blazer oversize verde oliva',
-    price: 72000,
-    size: 'L',
-    condition: 'Excelente',
-    seller: 'Laura M.',
-    image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400&h=500&fit=crop',
-    rating: 5.0,
-  },
-  {
-    id: 4,
-    name: 'Vestido floral midi años 90',
-    price: 38000,
-    size: 'XS',
-    condition: 'Bueno',
-    seller: 'Sofía T.',
-    image: 'https://images.unsplash.com/photo-1572804013427-4d7ca7268217?w=400&h=500&fit=crop',
-    rating: 4.5,
-  },
-  {
-    id: 5,
-    name: 'Sweater de punto crema oversize',
-    price: 52000,
-    size: 'M',
-    condition: 'Excelente',
-    seller: 'Valentina O.',
-    image: 'https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=400&h=500&fit=crop',
-    rating: 4.8,
-  },
-  {
-    id: 6,
-    name: 'Falda de cuadros escoceses',
-    price: 29000,
-    size: 'S',
-    condition: 'Muy Bueno',
-    seller: 'Isabela C.',
-    image: 'https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=400&h=500&fit=crop',
-    rating: 4.6,
-  },
-  {
-    id: 7,
-    name: 'Camiseta graphic tee banda rock',
-    price: 22000,
-    size: 'L',
-    condition: 'Bueno',
-    seller: 'Daniela P.',
-    image: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=400&h=500&fit=crop',
-    rating: 4.4,
-  },
-  {
-    id: 8,
-    name: 'Abrigo largo camel',
-    price: 120000,
-    size: 'M',
-    condition: 'Excelente',
-    seller: 'Andrea S.',
-    image: 'https://images.unsplash.com/photo-1539533018447-63fcce2678e3?w=400&h=500&fit=crop',
-    rating: 4.9,
-  },
+  { id:1, name:'Chaqueta de cuero vintage café', price:85000, size:'M', condition:'Excelente', seller:'María V.', image:'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&h=500&fit=crop', rating:4.9 },
+  { id:2, name:'Jean wide leg azul oscuro', price:45000, size:'S', condition:'Muy Bueno', seller:'Camila R.', image:'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&h=500&fit=crop', rating:4.7 },
+  { id:3, name:'Blazer oversize verde oliva', price:72000, size:'L', condition:'Excelente', seller:'Laura M.', image:'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400&h=500&fit=crop', rating:5.0 },
+  { id:4, name:'Vestido floral midi años 90', price:38000, size:'XS', condition:'Bueno', seller:'Sofía T.', image:'https://images.unsplash.com/photo-1572804013427-4d7ca7268217?w=400&h=500&fit=crop', rating:4.5 },
+  { id:5, name:'Sweater de punto crema oversize', price:52000, size:'M', condition:'Excelente', seller:'Valentina O.', image:'https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=400&h=500&fit=crop', rating:4.8 },
+  { id:6, name:'Falda de cuadros escoceses', price:29000, size:'S', condition:'Muy Bueno', seller:'Isabela C.', image:'https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=400&h=500&fit=crop', rating:4.6 },
+  { id:7, name:'Camiseta graphic tee banda rock', price:22000, size:'L', condition:'Bueno', seller:'Daniela P.', image:'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=400&h=500&fit=crop', rating:4.4 },
+  { id:8, name:'Abrigo largo camel', price:120000, size:'M', condition:'Excelente', seller:'Andrea S.', image:'https://images.unsplash.com/photo-1539533018447-63fcce2678e3?w=400&h=500&fit=crop', rating:4.9 },
 ]
 
 const VALUES = [
-  {
-    icon: ShieldCheck,
-    title: 'Compra Segura',
-    description: 'Todos los vendedores son verificados. Tu pago está protegido hasta que recibas tu prenda.',
-  },
-  {
-    icon: Leaf,
-    title: 'Moda Sostenible',
-    description: 'Cada compra en VINT es una prenda menos en el vertedero. Moda circular, planeta feliz.',
-  },
-  {
-    icon: Tag,
-    title: 'Mejores Precios',
-    description: 'Ropa de calidad hasta un 70% más barata. Tu estilo no tiene que costar una fortuna.',
-  },
+  { icon: ShieldCheck, title: 'Compra Segura', description: 'Todos los vendedores son verificados. Tu pago está protegido hasta que recibas tu prenda.' },
+  { icon: Leaf, title: 'Moda Sostenible', description: 'Cada compra en VINT es una prenda menos en el vertedero. Moda circular, planeta feliz.' },
+  { icon: Tag, title: 'Mejores Precios', description: 'Ropa de calidad hasta un 70% más barata. Tu estilo no tiene que costar una fortuna.' },
 ]
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen">
+    <main style={{ minHeight: '100vh' }}>
 
-      {/* ── HERO ── */}
-      <section
-        style={{ backgroundColor: 'var(--bg-primary)' }}
-        className="relative overflow-hidden pt-20 pb-24 px-4 sm:px-6 lg:px-8"
-        aria-labelledby="hero-title"
-      >
-        <div
-          style={{ backgroundColor: 'var(--accent)' }}
-          className="absolute top-[-80px] right-[-80px] w-[400px] h-[400px] rounded-full opacity-5 blur-3xl pointer-events-none"
-          aria-hidden="true"
-        />
-
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <div
-            style={{
-              backgroundColor: 'var(--accent-light)',
-              color: 'var(--accent)',
-              border: '1px solid var(--accent)',
-            }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium mb-8"
-          >
-            <span aria-hidden="true">✦</span>
-            Más de 2.400 prendas disponibles
+      {/* HERO */}
+      <section style={{ backgroundColor: 'var(--bg-primary)', padding: '80px 2rem 96px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: -80, right: -80, width: 400, height: 400, borderRadius: '50%', backgroundColor: 'var(--accent)', opacity: 0.05, filter: 'blur(60px)', pointerEvents: 'none' }} />
+        <div style={{ maxWidth: 800, margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderRadius: 999, backgroundColor: 'var(--accent-light)', color: 'var(--accent)', border: '1px solid var(--accent)', fontSize: 13, fontWeight: 500, marginBottom: 32 }}>
+            <span>✦</span> Más de 2.400 prendas disponibles
           </div>
-
-          <h1
-            id="hero-title"
-            style={{ color: 'var(--text-primary)' }}
-            className="text-5xl sm:text-6xl lg:text-7xl font-black leading-tight tracking-tight mb-6"
-          >
-            Ropa de{' '}
-            <span style={{ color: 'var(--accent)' }}>Segunda Mano,</span>
-            <br />
-            Primer Nivel.
+          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 'clamp(40px, 6vw, 72px)', fontWeight: 900, lineHeight: 1.1, letterSpacing: '-0.02em', color: 'var(--text-primary)', marginBottom: 24 }}>
+            Ropa de Segunda Mano,<br />
+            <span style={{ color: 'var(--accent)' }}>Primer Nivel.</span>
           </h1>
-
-          <p
-            style={{ color: 'var(--text-secondary)' }}
-            className="text-lg sm:text-xl max-w-2xl mx-auto mb-10 leading-relaxed"
-          >
-            Compra y vende ropa única con estilo. VINT conecta a personas que aman
-            la moda sostenible y los precios que sí tienen sentido.
+          <p style={{ fontSize: 18, color: 'var(--text-secondary)', maxWidth: 600, margin: '0 auto 40px', lineHeight: 1.7 }}>
+            Compra y vende ropa única con estilo. VINT conecta a personas que aman la moda sostenible y los precios que sí tienen sentido.
           </p>
-
-          <div className="max-w-xl mx-auto" role="search">
-            <label htmlFor="search-input" className="sr-only">
-              Buscar prendas, marcas o vendedores
-            </label>
-            <div
-              style={{
-                backgroundColor: 'var(--bg-card)',
-                border: '2px solid var(--border)',
-              }}
-              className="flex items-center rounded-2xl px-4 py-3 gap-3 focus-within:border-[var(--accent)] transition-all"
-            >
-              <Search
-                size={20}
-                style={{ color: 'var(--text-muted)' }}
-                className="shrink-0"
-              />
-              <input
-                id="search-input"
-                type="search"
-                placeholder="Busca chaquetas, jeans, vestidos..."
-                style={{ backgroundColor: 'transparent', color: 'var(--text-primary)' }}
-                className="flex-1 outline-none text-base"
-              />
-              <button
-                style={{ backgroundColor: 'var(--accent)', color: '#FFFFFF' }}
-                className="px-5 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity"
-              >
-                Buscar
-              </button>
-            </div>
+          <div style={{ maxWidth: 560, margin: '0 auto 24px', display: 'flex', alignItems: 'center', gap: 12, backgroundColor: 'var(--bg-card)', border: '2px solid var(--border)', borderRadius: 16, padding: '10px 10px 10px 16px' }}>
+            <Search size={18} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+            <input type="search" placeholder="Busca chaquetas, jeans, vestidos..." style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: 15, color: 'var(--text-primary)', fontFamily: "'DM Sans', sans-serif" }} />
+            <button style={{ backgroundColor: 'var(--accent)', color: 'white', border: 'none', padding: '10px 24px', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Buscar</button>
+          </div>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link href="/vender" style={{ backgroundColor: 'var(--accent)', color: 'white', padding: '12px 28px', borderRadius: 12, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>Comenzar a Vender →</Link>
+            <Link href="/explorar" style={{ backgroundColor: 'transparent', color: 'var(--accent)', border: '2px solid var(--accent)', padding: '12px 28px', borderRadius: 12, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>Explorar Productos</Link>
           </div>
         </div>
       </section>
 
-      {/* ── VALORES ── */}
-      <section
-        style={{ backgroundColor: 'var(--bg-secondary)' }}
-        className="py-20 px-4 sm:px-6 lg:px-8"
-      >
-        <div className="max-w-7xl mx-auto">
-          <h2
-            style={{ color: 'var(--text-primary)' }}
-            className="text-3xl sm:text-4xl font-bold text-center mb-12"
-          >
-            ¿Por qué elegir VINT?
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* VALORES */}
+      <section style={{ backgroundColor: 'var(--bg-secondary)', padding: '80px 2rem' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
             {VALUES.map((value) => {
               const Icon = value.icon
               return (
-                <div
-                  key={value.title}
-                  style={{
-                    backgroundColor: 'var(--bg-card)',
-                    border: '1px solid var(--border)',
-                  }}
-                  className="rounded-2xl p-8 text-center hover:shadow-md transition-shadow"
-                >
-                  <div
-                    style={{ backgroundColor: 'var(--accent-light)' }}
-                    className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5"
-                  >
+                <div key={value.title} style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 20, padding: '40px 32px', textAlign: 'center' }}>
+                  <div style={{ width: 64, height: 64, borderRadius: '50%', backgroundColor: 'var(--accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
                     <Icon size={26} style={{ color: 'var(--accent)' }} />
                   </div>
-                  <h3
-                    style={{ color: 'var(--text-primary)' }}
-                    className="font-bold text-xl mb-3"
-                  >
-                    {value.title}
-                  </h3>
-                  <p
-                    style={{ color: 'var(--text-secondary)' }}
-                    className="text-sm leading-relaxed"
-                  >
-                    {value.description}
-                  </p>
+                  <h3 style={{ fontWeight: 700, fontSize: 18, color: 'var(--text-primary)', marginBottom: 12 }}>{value.title}</h3>
+                  <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{value.description}</p>
                 </div>
               )
             })}
@@ -255,83 +69,46 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── PRODUCTOS ── */}
-      <section
-        style={{ backgroundColor: 'var(--bg-primary)' }}
-        className="py-20 px-4 sm:px-6 lg:px-8"
-      >
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-end justify-between mb-10">
+      {/* PRODUCTOS */}
+      <section style={{ backgroundColor: 'var(--bg-primary)', padding: '80px 2rem' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 40 }}>
             <div>
-              <h2
-                style={{ color: 'var(--text-primary)' }}
-                className="text-3xl sm:text-4xl font-bold"
-              >
-                Prendas destacadas
-              </h2>
-              <p style={{ color: 'var(--text-secondary)' }} className="mt-2 text-sm">
-                Selección curada de las mejores publicaciones del día
-              </p>
+              <h2 style={{ fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, color: 'var(--text-primary)' }}>Prendas destacadas</h2>
+              <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 6 }}>Selección curada de las mejores publicaciones del día</p>
             </div>
-            <Link 
-              href="/explorar"
-              style={{ color: 'var(--accent)' }}
-              className="text-sm font-semibold hover:underline hidden sm:block"
-            >
-              Ver todas →
-            </Link>
+            <Link href="/explorar" style={{ fontSize: 14, fontWeight: 600, color: 'var(--accent)', textDecoration: 'none' }}>Ver todas →</Link>
           </div>
 
-          <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          <ul style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, listStyle: 'none' }}>
             {MOCK_PRODUCTS.map((product) => (
               <li key={product.id}>
                 <ProductCard product={product} />
               </li>
             ))}
           </ul>
+
+          <div style={{ textAlign: 'center', marginTop: 48 }}>
+            <Link href="/explorar" style={{ backgroundColor: 'var(--accent)', color: 'white', padding: '14px 36px', borderRadius: 12, fontSize: 15, fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+              Ver Todos los Productos →
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* ── FOOTER ── */}
-      <footer
-        style={{
-          backgroundColor: 'var(--bg-secondary)',
-          borderTop: '1px solid var(--border)',
-        }}
-        className="py-12 px-4 sm:px-6 lg:px-8"
-      >
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <div
-              style={{ backgroundColor: 'var(--accent)' }}
-              className="w-8 h-8 rounded-full flex items-center justify-center"
-            >
-              <span className="font-black text-white text-sm">V</span>
-            </div>
-            <span style={{ color: 'var(--text-primary)' }} className="font-bold text-lg">
-              Vint
-            </span>
+      {/* FOOTER */}
+      <footer style={{ backgroundColor: 'var(--bg-secondary)', borderTop: '1px solid var(--border)', padding: '48px 2rem' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, color: 'white', fontSize: 14 }}>V</div>
+            <span style={{ fontWeight: 700, fontSize: 18, color: 'var(--text-primary)', fontFamily: "'Playfair Display', serif" }}>Vint</span>
           </div>
-
-          <p style={{ color: 'var(--text-muted)' }} className="text-xs text-center">
-            © 2025 Vint · Moda de segunda mano, primer nivel · Hecho con 💛 en Colombia
-          </p>
-
-          <nav>
-            <ul className="flex gap-5">
-              {['Términos', 'Privacidad', 'Contacto'].map((link) => (
-                <li key={link}>
-                  <Link
-                    href="#"
-                    style={{ color: 'var(--text-muted)' }}
-                    className="text-xs hover:text-[var(--accent)] transition-colors"
-                  >
-                    {link}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>© 2025 Vint · Moda de segunda mano, primer nivel · Hecho con 💛 en Colombia</p>
+          <ul style={{ display: 'flex', gap: 20, listStyle: 'none' }}>
+            {['Términos', 'Privacidad', 'Contacto'].map((link) => (
+              <li key={link}><Link href="#" style={{ fontSize: 12, color: 'var(--text-muted)', textDecoration: 'none' }}>{link}</Link></li>
+            ))}
+          </ul>
         </div>
       </footer>
 
