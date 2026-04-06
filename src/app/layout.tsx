@@ -15,6 +15,7 @@ import './globals.css'
 import { ThemeProvider } from '@/components/layout/ThemeProvider'
 import { Navbar } from '@/components/layout/Navbar'
 
+
 /* Next.js usa este objeto para generar automaticamente las etiquetas de <title> y el de <meta description> en el <head> esto es importante para que Google indexe bien el proyecto de VINT */
 
 export const metadata: Metadata = {
@@ -37,6 +38,10 @@ export default function RootLayout({
     */
 
     <html lang="es" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/logo-light.png" media="(prefers-color-scheme: light)" />
+        <link rel="icon" href="/logo-dark.png" media="(prefers-color-scheme: dark)" />
+      </head>
       <body>
         
         {/*

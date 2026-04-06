@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { Search, ShieldCheck, Leaf, Tag } from 'lucide-react'
 import { ProductCard, type Product } from '@/components/products/ProductCard'
+import Image from 'next/image'
+
 
 const MOCK_PRODUCTS: Product[] = [
   { id:1, name:'Chaqueta de cuero vintage café', price:85000, size:'M', condition:'Excelente', seller:'María V.', image:'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&h=500&fit=crop', rating:4.9 },
@@ -98,15 +100,14 @@ export default function HomePage() {
 
       {/* FOOTER */}
       <footer style={{ backgroundColor: 'var(--bg-secondary)', borderTop: '1px solid var(--border)', padding: '48px 2rem' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, color: 'white', fontSize: 14 }}>V</div>
-            <span style={{ fontWeight: 700, fontSize: 18, color: 'var(--text-primary)', fontFamily: "'Playfair Display', serif" }}>Vint</span>
+        <div style={{ maxWidth: 1280, margin: '0 auto', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, position: 'absolute', left: 0 }}>
+            <Image src="/logo1.png" alt="Vint" width={32} height={32} />
+              <span style={{ fontWeight: 700, fontSize: 18, color: 'var(--text-primary)', fontFamily: "'Playfair Display', serif" }}>Vint</span>
           </div>
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>© 2025 Vint · Moda de segunda mano a nivel de todos · Made in Colombia</p>
-        </div>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>© 2025 Vint · Moda de segunda mano a nivel de todos · Made in Colombia</p>
+          </div>
       </footer>
-
     </main>
   )
 }

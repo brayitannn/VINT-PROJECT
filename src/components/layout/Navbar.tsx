@@ -4,6 +4,7 @@ import { useTheme } from 'next-themes'
 import { Sun, Moon } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export function Navbar() {
   const { theme, setTheme } = useTheme()
@@ -25,23 +26,20 @@ export function Navbar() {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
 
-        {/* LOGO */}
+      {/* LOGO */}
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: '50%',
-            backgroundColor: 'var(--accent)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: "'Playfair Display', serif", fontWeight: 900,
-            color: 'white', fontSize: 18,
-          }}>V</div>
+          <Image 
+            src="/logo1.png" 
+            alt="Vint" 
+            width={36} 
+            height={36}
+          />
           <span style={{
             fontFamily: "'Playfair Display', serif",
             fontWeight: 700, fontSize: 20,
             color: 'var(--text-primary)',
           }}>Vint</span>
         </Link>
-
-        
 
         {/* ACCIONES */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
