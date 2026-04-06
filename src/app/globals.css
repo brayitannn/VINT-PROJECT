@@ -4,30 +4,30 @@
 @tailwind utilities;
 
 :root {
-  --bg-primary: #F9F8F3;
-  --bg-secondary: #F0EFE8;
-  --bg-card: #FFFFFF;
-  --text-primary: #1A1A1A;
-  --text-secondary: #5C5C5C;
-  --text-muted: #9E9E9E;
-  --accent: #FF7A00;
-  --accent-hover: #E56D00;
-  --accent-light: #FFF0E0;
-  --border: #E5E3DA;
-  --shadow: rgba(0, 0, 0, 0.08);
+  --bg-primary: #F2E8D8;        /* Crema */
+  --bg-secondary: #EAD9C3;      /* Crema oscurecida */
+  --bg-card: #FAF4EC;           /* Crema clara para cards */
+  --text-primary: #2C1F14;      /* Café muy oscuro */
+  --text-secondary: #5F6F52;    /* Verde militar */
+  --text-muted: #A8A39D;        /* Gris cálido */
+  --accent: #8B5E3C;            /* Café cuero */
+  --accent-hover: #7A5235;      /* Café cuero oscuro */
+  --accent-light: #F2E8D8;      /* Crema */
+  --border: #D4C5B0;            /* Crema borde */
+  --shadow: rgba(95, 111, 82, 0.12); /* Sombra verde militar suave */
 }
 
 [data-theme='dark'] {
-  --bg-primary: #0F0F0F;
-  --bg-secondary: #1A1A1A;
-  --bg-card: #242424;
-  --text-primary: #F5F5F5;
-  --text-secondary: #ABABAB;
-  --text-muted: #6B6B6B;
-  --accent: #FF7A00;
-  --accent-hover: #FF9333;
-  --accent-light: #2A1A00;
-  --border: #2E2E2E;
+  --bg-primary: #1C1F1A;        /* Verde militar muy oscuro */
+  --bg-secondary: #252920;      /* Verde militar oscuro */
+  --bg-card: #2E3229;           /* Verde militar card */
+  --text-primary: #F2E8D8;      /* Crema */
+  --text-secondary: #A8A39D;    /* Gris cálido */
+  --text-muted: #6C7A89;        /* Azul deslavado */
+  --accent: #8B5E3C;            /* Café cuero */
+  --accent-hover: #A8724D;      /* Café cuero claro */
+  --accent-light: #2A1F14;      /* Café oscuro */
+  --border: #3A3F35;            /* Verde militar borde */
   --shadow: rgba(0, 0, 0, 0.4);
 }
 

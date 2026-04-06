@@ -41,19 +41,7 @@ export function Navbar() {
           }}>Vint</span>
         </Link>
 
-        {/* LINKS */}
-        <ul style={{ display: 'flex', listStyle: 'none', gap: '2rem' }}>
-          <li>
-            <Link href="/explorar" style={{ textDecoration: 'none', fontSize: 14, fontWeight: 500, color: 'var(--text-secondary)' }}>
-              Explorar
-            </Link>
-          </li>
-          <li>
-            <Link href="/top-vendedores" style={{ textDecoration: 'none', fontSize: 14, fontWeight: 500, color: 'var(--text-secondary)' }}>
-              Top Vendedores
-            </Link>
-          </li>
-        </ul>
+        
 
         {/* ACCIONES */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

@@ -28,11 +28,11 @@ export default function HomePage() {
         <div style={{ position: 'absolute', top: -80, right: -80, width: 400, height: 400, borderRadius: '50%', backgroundColor: 'var(--accent)', opacity: 0.05, filter: 'blur(60px)', pointerEvents: 'none' }} />
         <div style={{ maxWidth: 800, margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderRadius: 999, backgroundColor: 'var(--accent-light)', color: 'var(--accent)', border: '1px solid var(--accent)', fontSize: 13, fontWeight: 500, marginBottom: 32 }}>
-            <span>✦</span> Más de 2.400 prendas disponibles
+            <span>✦</span> Todo el estilo que quieres a un click de distancia
           </div>
           <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 'clamp(40px, 6vw, 72px)', fontWeight: 900, lineHeight: 1.1, letterSpacing: '-0.02em', color: 'var(--text-primary)', marginBottom: 24 }}>
-            Ropa de Segunda Mano,<br />
-            <span style={{ color: 'var(--accent)' }}>Primer Nivel.</span>
+            Ropa con estilo<br />
+            <span style={{ color: 'var(--accent)' }}>De primer Nivel</span>
           </h1>
           <p style={{ fontSize: 18, color: 'var(--text-secondary)', maxWidth: 600, margin: '0 auto 40px', lineHeight: 1.7 }}>
             Compra y vende ropa única con estilo. VINT conecta a personas que aman la moda sostenible y los precios que sí tienen sentido.
@@ -74,8 +74,8 @@ export default function HomePage() {
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 40 }}>
             <div>
-              <h2 style={{ fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, color: 'var(--text-primary)' }}>Prendas destacadas</h2>
-              <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 6 }}>Selección curada de las mejores publicaciones del día</p>
+              <h2 style={{ fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, color: 'var(--text-primary)' }}>De lo mejor que podras encontrar</h2>
+              <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 6 }}>Selección precisa de las mejores publicaciones del día</p>
             </div>
             <Link href="/explorar" style={{ fontSize: 14, fontWeight: 600, color: 'var(--accent)', textDecoration: 'none' }}>Ver todas →</Link>
           </div>
@@ -103,12 +103,7 @@ export default function HomePage() {
             <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, color: 'white', fontSize: 14 }}>V</div>
             <span style={{ fontWeight: 700, fontSize: 18, color: 'var(--text-primary)', fontFamily: "'Playfair Display', serif" }}>Vint</span>
           </div>
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>© 2025 Vint · Moda de segunda mano, primer nivel · Hecho con 💛 en Colombia</p>
-          <ul style={{ display: 'flex', gap: 20, listStyle: 'none' }}>
-            {['Términos', 'Privacidad', 'Contacto'].map((link) => (
-              <li key={link}><Link href="#" style={{ fontSize: 12, color: 'var(--text-muted)', textDecoration: 'none' }}>{link}</Link></li>
-            ))}
-          </ul>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>© 2025 Vint · Moda de segunda mano a nivel de todos · Made in Colombia</p>
         </div>
       </footer>
 
