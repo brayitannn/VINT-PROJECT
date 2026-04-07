@@ -2,18 +2,7 @@ import Link from 'next/link'
 import { Search, ShieldCheck, Leaf, Tag } from 'lucide-react'
 import { ProductCard, type Product } from '@/components/products/ProductCard'
 import Image from 'next/image'
-
-
-const MOCK_PRODUCTS: Product[] = [
-  { id:1, name:'Chaqueta de cuero vintage café', price:85000, size:'M', condition:'Excelente', seller:'María V.', image:'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&h=500&fit=crop', rating:4.9 },
-  { id:2, name:'Jean wide leg azul oscuro', price:45000, size:'S', condition:'Muy Bueno', seller:'Camila R.', image:'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&h=500&fit=crop', rating:4.7 },
-  { id:3, name:'Blazer oversize verde oliva', price:72000, size:'L', condition:'Excelente', seller:'Laura M.', image:'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400&h=500&fit=crop', rating:5.0 },
-  { id:4, name:'Vestido floral midi años 90', price:38000, size:'XS', condition:'Bueno', seller:'Sofía T.', image:'https://images.unsplash.com/photo-1572804013427-4d7ca7268217?w=400&h=500&fit=crop', rating:4.5 },
-  { id:5, name:'Sweater de punto crema oversize', price:52000, size:'M', condition:'Excelente', seller:'Valentina O.', image:'https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=400&h=500&fit=crop', rating:4.8 },
-  { id:6, name:'Falda de cuadros escoceses', price:29000, size:'S', condition:'Muy Bueno', seller:'Isabela C.', image:'https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=400&h=500&fit=crop', rating:4.6 },
-  { id:7, name:'Camiseta graphic tee banda rock', price:22000, size:'L', condition:'Bueno', seller:'Daniela P.', image:'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=400&h=500&fit=crop', rating:4.4 },
-  { id:8, name:'Abrigo largo camel', price:120000, size:'M', condition:'Excelente', seller:'Andrea S.', image:'https://images.unsplash.com/photo-1539533018447-63fcce2678e3?w=400&h=500&fit=crop', rating:4.9 },
-]
+import { supabase } from '@/lib/supabase/supabase'
 
 const VALUES = [
   { icon: ShieldCheck, title: 'Compra Segura', description: 'Todos los vendedores son verificados. Tu pago está protegido hasta que recibas tu prenda.' },
@@ -21,7 +10,36 @@ const VALUES = [
   { icon: Tag, title: 'Mejores Precios', description: 'Ropa de calidad hasta un 70% más barata. Tu estilo no tiene que costar una fortuna.' },
 ]
 
-export default function HomePage() {
+function mapCondicion(condicion: string): Product['condition'] {
+  switch (condicion?.toUpperCase()) {
+    case 'NUEVO': return 'Excelente'
+    case 'COMO_NUEVO': return 'Excelente'
+    case 'USADO': return 'Muy Bueno'
+    case 'DESGASTADO': return 'Bueno'
+    default: return 'Bueno'
+  }
+}
+
+export default async function HomePage() {
+  const { data, error } = await supabase
+  .from('v_catalogo_publico')
+  .select('*')
+  .limit(6)
+
+
+  if (error) console.error('Error cargando prendas:', error.message)
+
+  const products: Product[] = (data ?? []).map((item: any) => ({
+    id: item.id_prenda,
+    name: item.titulo,
+    price: Number(item.precio),
+    size: item.talla ?? 'M',
+    condition: mapCondicion(item.condicion),
+    seller: item.vendedor ?? 'Vendedor',
+    image: item.imagen_principal ?? 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&h=500&fit=crop',
+    rating: 4.5,
+  }))
+
   return (
     <main style={{ minHeight: '100vh' }}>
 
@@ -83,7 +101,7 @@ export default function HomePage() {
           </div>
 
           <ul style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, listStyle: 'none' }}>
-            {MOCK_PRODUCTS.map((product) => (
+            {products.map((product) => (
               <li key={product.id}>
                 <ProductCard product={product} />
               </li>
@@ -103,10 +121,10 @@ export default function HomePage() {
         <div style={{ maxWidth: 1280, margin: '0 auto', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, position: 'absolute', left: 0 }}>
             <Image src="/logo1.png" alt="Vint" width={32} height={32} />
-              <span style={{ fontWeight: 700, fontSize: 18, color: 'var(--text-primary)', fontFamily: "'Playfair Display', serif" }}>Vint</span>
+            <span style={{ fontWeight: 700, fontSize: 18, color: 'var(--text-primary)', fontFamily: "'Playfair Display', serif" }}>Vint</span>
           </div>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>© 2025 Vint · Moda de segunda mano a nivel de todos · Made in Colombia</p>
-          </div>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>© 2025 Vint · Moda de segunda mano a nivel de todos · Made in Colombia</p>
+        </div>
       </footer>
     </main>
   )
