@@ -8,6 +8,7 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useRole } from './RoleContext'
 import { MOCK_USER } from '@/lib/supabase/mock-user'
+import { useCart } from '@/context/CartContext'
 
 export function Navbar() {
   const { theme, setTheme } = useTheme()
@@ -16,6 +17,7 @@ export function Navbar() {
   const menuRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
   const { role, setRole } = useRole()
+  const { totalItems, toggleDrawer } = useCart()
 
   // --- DETECCIÓN DE RUTAS CORREGIDA ---
   const isDashboard = pathname?.startsWith('/dashboard')
@@ -108,6 +110,7 @@ export function Navbar() {
             /* VISTA DE USUARIO AUTENTICADO */
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <button style={iconButtonStyle}><Bell size={18} /></button>
+              <CartButton onClick={toggleDrawer} totalItems={totalItems} style={iconButtonStyle} />
               
               <div ref={menuRef} style={{ position: 'relative' }}>
                 <button
@@ -181,7 +184,7 @@ export function Navbar() {
             /* VISTA EXPLORAR */
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <button style={iconButtonStyle}><Bell size={18} /></button>
-              <button style={iconButtonStyle}><ShoppingCart size={18} /></button>
+              <CartButton onClick={toggleDrawer} totalItems={totalItems} style={iconButtonStyle} />
               <Link href="/perfil" style={{ ...iconButtonStyle, backgroundColor: 'var(--text-primary)', color: 'var(--bg-primary)', border: 'none' }}>
                 <User size={18} />
               </Link>
@@ -212,5 +215,25 @@ function DropdownItem({ href, icon, label, onClick }: { href: string; icon: Reac
       <span style={{ color: 'var(--text-muted)' }}>{icon}</span>
       {label}
     </Link>
+  )
+}
+
+function CartButton({ onClick, totalItems, style }: { onClick: () => void; totalItems: number; style: React.CSSProperties }) {
+  return (
+    <button onClick={onClick} style={{ ...style, position: 'relative' }}>
+      <ShoppingCart size={18} />
+      {totalItems > 0 && (
+        <span style={{
+          position: 'absolute', top: -4, right: -4,
+          backgroundColor: 'var(--accent)', color: 'white',
+          fontSize: 10, fontWeight: 700, borderRadius: '50%',
+          width: 18, height: 18,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          border: '2px solid var(--bg-primary)',
+        }}>
+          {totalItems}
+        </span>
+      )}
+    </button>
   )
 }

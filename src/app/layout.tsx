@@ -15,6 +15,8 @@ import './globals.css'
 import { ThemeProvider } from '@/components/layout/ThemeProvider'
 import { Navbar } from '@/components/layout/Navbar'
 import { RoleProvider } from '@/components/layout/RoleContext'
+import { CartProvider } from '@/context/CartContext'
+import { CartDrawer } from '@/components/cart/CartDrawer'
 
 
 /* Next.js usa este objeto para generar automaticamente las etiquetas de <title> y el de <meta description> en el <head> esto es importante para que Google indexe bien el proyecto de VINT */
@@ -52,8 +54,11 @@ export default function RootLayout({
 
         <ThemeProvider>
           <RoleProvider>
-            <Navbar />
-            {children}
+            <CartProvider>
+              <Navbar />
+              <CartDrawer />
+              {children}
+            </CartProvider>
           </RoleProvider>
         </ThemeProvider>
       </body>
