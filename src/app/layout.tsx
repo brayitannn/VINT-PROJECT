@@ -14,6 +14,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { ThemeProvider } from '@/components/layout/ThemeProvider'
 import { Navbar } from '@/components/layout/Navbar'
+import { RoleProvider } from '@/components/layout/RoleContext'
 
 
 /* Next.js usa este objeto para generar automaticamente las etiquetas de <title> y el de <meta description> en el <head> esto es importante para que Google indexe bien el proyecto de VINT */
@@ -50,8 +51,10 @@ export default function RootLayout({
         */}
 
         <ThemeProvider>
-          <Navbar />
-          {children}
+          <RoleProvider>
+            <Navbar />
+            {children}
+          </RoleProvider>
         </ThemeProvider>
       </body>
     </html>
