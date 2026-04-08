@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { X, ShoppingBag, Trash2, Plus, Minus, CreditCard } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import Image from 'next/image'
@@ -15,6 +16,7 @@ export function CartDrawer() {
     totalPrice,
     totalItems
   } = useCart()
+  const router = useRouter()
   
   const drawerRef = useRef<HTMLDivElement>(null)
 
@@ -219,14 +221,20 @@ export function CartDrawer() {
             <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>
               Gastos de envío e impuestos calculados al finalizar la compra.
             </p>
-            <button style={{
-              width: '100%', padding: '16px', borderRadius: 14,
-              backgroundColor: 'var(--accent)', color: 'white',
-              border: 'none', fontSize: 16, fontWeight: 700,
-              cursor: 'pointer', display: 'flex', alignItems: 'center',
-              justifyContent: 'center', gap: 10,
-              boxShadow: '0 4px 12px var(--accent-light)',
-            }}>
+            <button 
+              onClick={() => {
+                setIsDrawerOpen(false)
+                router.push('/checkout')
+              }}
+              style={{
+                width: '100%', padding: '16px', borderRadius: 14,
+                backgroundColor: 'var(--accent)', color: 'white',
+                border: 'none', fontSize: 16, fontWeight: 700,
+                cursor: 'pointer', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', gap: 10,
+                boxShadow: '0 4px 12px var(--accent-light)',
+              }}
+            >
               <CreditCard size={20} /> Finalizar Compra
             </button>
           </div>
