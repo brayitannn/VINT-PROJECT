@@ -15,9 +15,9 @@ interface Props {
 }
 
 const STATUS_CONFIG = {
-  active: { label: 'Activo', className: 'badge-active' },
-  inactive: { label: 'Inactivo', className: 'badge-inactive' },
-  draft: { label: 'Borrador', className: 'badge-draft' },
+  DISPONIBLE: { label: 'Disponible', className: 'badge-active' },
+  OCULTO: { label: 'Oculto', className: 'badge-draft' },
+  VENDIDO: { label: 'Vendido', className: 'badge-inactive' },
 }
 
 function SortIcon({ field, filters }: { field: keyof Product; filters: ProductFilters }) {
@@ -80,12 +80,13 @@ export function ProductTable({
                 onChange={onToggleSelectAll}
               />
             </th>
-            <SortTh label="Producto" field="name" />
-            <SortTh label="SKU" field="sku" />
-            <SortTh label="Categoría" field="category" />
-            <SortTh label="Precio" field="price" />
-            <SortTh label="Stock" field="stock" />
-            <SortTh label="Estado" field="status" />
+            <SortTh label="ID (Cat)" field="id_categoria" />
+            <SortTh label="Prenda" field="titulo" />
+            <SortTh label="Precio" field="precio" />
+            <SortTh label="Talla" field="talla" />
+            <SortTh label="Color" field="color" />
+            <SortTh label="Género" field="genero" />
+            <SortTh label="Estado" field="estado_publicacion" />
             <th className="th">Acciones</th>
           </tr>
         </thead>
@@ -93,7 +94,7 @@ export function ProductTable({
           {loading && products.length === 0 ? (
             Array.from({ length: 5 }).map((_, i) => (
               <tr key={i} className="tr-skeleton">
-                {Array.from({ length: 8 }).map((_, j) => (
+                {Array.from({ length: 9 }).map((_, j) => (
                   <td key={j} className="td">
                     <div className="skeleton" />
                   </td>
@@ -102,38 +103,39 @@ export function ProductTable({
             ))
           ) : products.length === 0 ? (
             <tr>
-              <td colSpan={8} className="td-empty">
+              <td colSpan={9} className="td-empty">
                 <div className="empty-state">
                   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
                     <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
                     <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
                     <line x1="12" y1="22.08" x2="12" y2="12" />
                   </svg>
-                  <p>No se encontraron productos</p>
+                  <p>No se encontraron prendas</p>
                 </div>
               </td>
             </tr>
           ) : (
             products.map((product) => {
-              const isSelected = selected.has(product.id)
-              const status = STATUS_CONFIG[product.status]
-              const lowStock = product.stock <= 5 && product.stock > 0
-              const noStock = product.stock === 0
+              const isSelected = selected.has(product.id_prenda)
+              const status = STATUS_CONFIG[product.estado_publicacion] || STATUS_CONFIG.OCULTO
 
               return (
-                <tr key={product.id} className={`tr ${isSelected ? 'tr-selected' : ''}`}>
+                <tr key={product.id_prenda} className={`tr ${isSelected ? 'tr-selected' : ''}`}>
                   <td className="td td-check">
                     <input
                       type="checkbox"
                       className="checkbox"
                       checked={isSelected}
-                      onChange={() => onToggleSelect(product.id)}
+                      onChange={() => onToggleSelect(product.id_prenda)}
                     />
                   </td>
                   <td className="td">
+                    <code className="sku">CAT-{product.id_categoria}</code>
+                  </td>
+                  <td className="td">
                     <div className="product-cell">
-                      {product.image_url ? (
-                        <img src={product.image_url} alt={product.name} className="product-thumb" />
+                      {product.imagen_url ? (
+                        <img src={product.imagen_url} alt={product.titulo} className="product-thumb" />
                       ) : (
                         <div className="product-thumb-placeholder">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -144,37 +146,28 @@ export function ProductTable({
                         </div>
                       )}
                       <div>
-                        <p className="product-name">{product.name}</p>
-                        {product.description && (
-                          <p className="product-desc">{product.description}</p>
+                        <p className="product-name">{product.titulo}</p>
+                        {product.descripcion && (
+                          <p className="product-desc line-clamp-1 max-w-[150px]">{product.descripcion}</p>
                         )}
                       </div>
                     </div>
                   </td>
-                  <td className="td">
-                    <code className="sku">{product.sku}</code>
+                  <td className="td td-number">
+                    ${product.precio.toLocaleString('es-CO', { minimumFractionDigits: 0 })}
                   </td>
                   <td className="td">
-                    {product.category ? (
-                      <span className="category-tag">{product.category}</span>
+                    {product.talla ? (
+                      <span className="category-tag">{product.talla}</span>
                     ) : (
                       <span className="text-muted">—</span>
                     )}
                   </td>
-                  <td className="td td-number">
-                    ${product.price.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
+                  <td className="td">
+                    <span style={{ fontSize: 13 }}>{product.color || '—'}</span>
                   </td>
-                  <td className="td td-number">
-                    <span className={`stock-value ${lowStock ? 'stock-low' : ''} ${noStock ? 'stock-empty' : ''}`}>
-                      {noStock && (
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                          <line x1="12" y1="9" x2="12" y2="13" />
-                          <line x1="12" y1="17" x2="12.01" y2="17" />
-                        </svg>
-                      )}
-                      {product.stock}
-                    </span>
+                  <td className="td">
+                    <span style={{ fontSize: 13 }}>{product.genero || '—'}</span>
                   </td>
                   <td className="td">
                     <span className={`badge ${status.className}`}>{status.label}</span>

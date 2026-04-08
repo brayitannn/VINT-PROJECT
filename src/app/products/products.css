@@ -160,20 +160,20 @@
 }
 
 .btn-danger {
-  background: var(--color-danger, #ef4444);
+  background: var(--color-danger, #B5654D);
   color: #fff;
 }
 .btn-danger:not(:disabled):hover {
-  background: var(--color-danger-hover, #dc2626);
+  background: var(--color-danger-hover, #8C4735);
 }
 
 .btn-danger-outline {
   background: transparent;
-  color: var(--color-danger, #ef4444);
-  border: 1px solid var(--color-danger, #ef4444);
+  color: var(--color-danger, #B5654D);
+  border: 1px solid var(--color-danger, #B5654D);
 }
 .btn-danger-outline:hover {
-  background: var(--color-danger-alpha, rgba(239,68,68,0.08));
+  background: var(--color-danger-alpha, rgba(181, 101, 77, 0.08));
 }
 
 .btn-spinner {
@@ -197,9 +197,9 @@
   font-size: 0.875rem;
 }
 .alert-error {
-  background: var(--color-danger-alpha, rgba(239,68,68,0.08));
-  color: var(--color-danger, #ef4444);
-  border: 1px solid var(--color-danger-alpha, rgba(239,68,68,0.2));
+  background: var(--color-danger-alpha, rgba(181, 101, 77, 0.08));
+  color: var(--color-danger, #B5654D);
+  border: 1px solid var(--color-danger-alpha, rgba(181, 101, 77, 0.25));
 }
 
 /* Table -------------------------------------------------------------------- */
@@ -373,7 +373,7 @@
 /* Stock */
 .stock-value { display: inline-flex; align-items: center; gap: 0.3rem; font-weight: 500; }
 .stock-low   { color: var(--color-warning, #d97706); }
-.stock-empty { color: var(--color-danger, #ef4444); }
+.stock-empty { color: var(--color-danger, #B5654D); }
 .text-muted  { color: var(--color-text-muted, #94a3b8); }
 
 /* Action buttons ----------------------------------------------------------- */
@@ -400,7 +400,7 @@
   color: var(--color-text-muted, #94a3b8);
 }
 .action-edit:hover  { background: var(--color-primary-alpha, rgba(99,102,241,0.08)); border-color: var(--color-primary, #6366f1); color: var(--color-primary, #6366f1); }
-.action-delete:hover { background: var(--color-danger-alpha, rgba(239,68,68,0.08)); border-color: var(--color-danger, #ef4444); color: var(--color-danger, #ef4444); }
+.action-delete:hover { background: var(--color-danger-alpha, rgba(181, 101, 77, 0.08)); border-color: var(--color-danger, #B5654D); color: var(--color-danger, #B5654D); }
 
 /* Checkbox ----------------------------------------------------------------- */
 .checkbox {
@@ -592,9 +592,9 @@
   padding: 0.625rem 0.875rem;
   margin-top: 1rem;
   border-radius: 0.5rem;
-  background: var(--color-danger-alpha, rgba(239,68,68,0.08));
-  border: 1px solid var(--color-danger-alpha, rgba(239,68,68,0.2));
-  color: var(--color-danger, #ef4444);
+  background: var(--color-danger-alpha, rgba(181, 101, 77, 0.08));
+  border: 1px solid var(--color-danger-alpha, rgba(181, 101, 77, 0.25));
+  color: var(--color-danger, #B5654D);
   font-size: 0.8125rem;
 }
 
@@ -615,8 +615,8 @@
   width: 4rem;
   height: 4rem;
   border-radius: 50%;
-  background: var(--color-danger-alpha, rgba(239,68,68,0.1));
-  color: var(--color-danger, #ef4444);
+  background: var(--color-danger-alpha, rgba(181, 101, 77, 0.15));
+  color: var(--color-danger, #B5654D);
   margin: 0 auto 1.25rem;
 }
 

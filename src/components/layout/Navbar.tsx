@@ -18,6 +18,10 @@ export function Navbar() {
   const { role, setRole } = useRole()
 
   // --- DETECCIÓN DE RUTAS CORREGIDA ---
+  if (pathname === '/') {
+    return null;
+  }
+
   const isDashboard = pathname?.startsWith('/dashboard')
   const isInventoryPage = pathname?.startsWith('/products') // Esta es tu ruta del pantallazo
   const isExplorar = pathname === '/explorar'

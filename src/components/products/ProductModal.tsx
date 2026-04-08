@@ -11,20 +11,24 @@ interface Props {
 }
 
 const EMPTY: ProductInsert = {
-  name: '',
-  description: '',
-  price: 0,
-  stock: 0,
-  sku: '',
-  category: '',
-  status: 'draft',
-  image_url: '',
+  id_usuario: 1, // Por ahora quemado, debería venir del UserContext
+  id_categoria: 1,
+  id_marca: 1,
+  titulo: '',
+  descripcion: '',
+  talla: '',
+  color: '',
+  precio: 0,
+  genero: 'Unisex',
+  condicion: 'NUEVO',
+  estado_publicacion: 'DISPONIBLE',
+  imagen_url: '',
 }
 
 const STATUS_OPTIONS: { value: ProductStatus; label: string }[] = [
-  { value: 'active', label: 'Activo' },
-  { value: 'inactive', label: 'Inactivo' },
-  { value: 'draft', label: 'Borrador' },
+  { value: 'DISPONIBLE', label: 'Disponible' },
+  { value: 'OCULTO', label: 'Oculto' },
+  { value: 'VENDIDO', label: 'Vendido' },
 ]
 
 export function ProductModal({ open, product, onClose, onSubmit }: Props) {
@@ -36,14 +40,18 @@ export function ProductModal({ open, product, onClose, onSubmit }: Props) {
   useEffect(() => {
     if (product) {
       setForm({
-        name: product.name,
-        description: product.description ?? '',
-        price: product.price,
-        stock: product.stock,
-        sku: product.sku,
-        category: product.category ?? '',
-        status: product.status,
-        image_url: product.image_url ?? '',
+        id_usuario: product.id_usuario,
+        id_categoria: product.id_categoria,
+        id_marca: product.id_marca,
+        titulo: product.titulo,
+        descripcion: product.descripcion ?? '',
+        talla: product.talla ?? '',
+        color: product.color ?? '',
+        precio: product.precio,
+        genero: product.genero ?? '',
+        condicion: product.condicion ?? '',
+        estado_publicacion: product.estado_publicacion,
+        imagen_url: product.imagen_url ?? '',
       })
     } else {
       setForm(EMPTY)
@@ -56,22 +64,15 @@ export function ProductModal({ open, product, onClose, onSubmit }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.name.trim()) return setFieldError('El nombre es requerido.')
-    if (!form.sku.trim()) return setFieldError('El SKU es requerido.')
-    if (form.price < 0) return setFieldError('El precio no puede ser negativo.')
-    if (form.stock < 0) return setFieldError('El stock no puede ser negativo.')
+    if (!form.titulo.trim()) return setFieldError('El título es requerido.')
+    if (form.precio < 0) return setFieldError('El precio no puede ser negativo.')
 
     setSubmitting(true)
     setFieldError(null)
 
-    const payload = {
-      ...form,
-      description: form.description || null,
-      category: (form.category as string) || null,
-      image_url: (form.image_url as string) || null,
-    }
-
+    const payload = { ...form }
     const { error } = await onSubmit(payload)
+    
     setSubmitting(false)
     if (error) setFieldError(error)
     else onClose()
@@ -85,8 +86,8 @@ export function ProductModal({ open, product, onClose, onSubmit }: Props) {
         {/* Header */}
         <div className="modal-header">
           <div>
-            <p className="modal-eyebrow">{isEdit ? 'Editar producto' : 'Nuevo producto'}</p>
-            <h2 className="modal-title">{isEdit ? product!.name : 'Crear producto'}</h2>
+            <p className="modal-eyebrow">{isEdit ? 'Editar prenda' : 'Nueva prenda'}</p>
+            <h2 className="modal-title">{isEdit ? product!.titulo : 'Publicar prenda'}</h2>
           </div>
           <button className="modal-close" onClick={onClose} aria-label="Cerrar">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -98,45 +99,19 @@ export function ProductModal({ open, product, onClose, onSubmit }: Props) {
         {/* Body */}
         <form onSubmit={handleSubmit} className="modal-form">
           <div className="form-grid">
-            {/* Name */}
+            {/* Título */}
             <div className="field col-span-2">
-              <label className="field-label">Nombre *</label>
+              <label className="field-label">Título *</label>
               <input
                 className="field-input"
-                value={form.name}
-                onChange={(e) => set('name', e.target.value)}
-                placeholder="Nombre del producto"
+                value={form.titulo}
+                onChange={(e) => set('titulo', e.target.value)}
+                placeholder="Camiseta Nike Vintage..."
                 required
               />
             </div>
 
-            {/* SKU */}
-            <div className="field">
-              <label className="field-label">SKU *</label>
-              <input
-                className="field-input"
-                value={form.sku}
-                onChange={(e) => set('sku', e.target.value)}
-                placeholder="PROD-001"
-                required
-              />
-            </div>
-
-            {/* Status */}
-            <div className="field">
-              <label className="field-label">Estado</label>
-              <select
-                className="field-input"
-                value={form.status}
-                onChange={(e) => set('status', e.target.value as ProductStatus)}
-              >
-                {STATUS_OPTIONS.map((s) => (
-                  <option key={s.value} value={s.value}>{s.label}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Price */}
+            {/* Precio */}
             <div className="field">
               <label className="field-label">Precio *</label>
               <div className="field-prefix-wrapper">
@@ -145,44 +120,100 @@ export function ProductModal({ open, product, onClose, onSubmit }: Props) {
                   className="field-input with-prefix"
                   type="number"
                   min="0"
-                  step="0.01"
-                  value={form.price}
-                  onChange={(e) => set('price', parseFloat(e.target.value) || 0)}
+                  step="100"
+                  value={form.precio}
+                  onChange={(e) => set('precio', parseFloat(e.target.value) || 0)}
                 />
               </div>
             </div>
 
-            {/* Stock */}
+            {/* Estado */}
             <div className="field">
-              <label className="field-label">Stock</label>
+              <label className="field-label">Publicación</label>
+              <select
+                className="field-input"
+                value={form.estado_publicacion}
+                onChange={(e) => set('estado_publicacion', e.target.value as ProductStatus)}
+              >
+                {STATUS_OPTIONS.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Talla & Color */}
+            <div className="field">
+              <label className="field-label">Talla</label>
               <input
                 className="field-input"
-                type="number"
-                min="0"
-                value={form.stock}
-                onChange={(e) => set('stock', parseInt(e.target.value) || 0)}
+                value={form.talla as string}
+                onChange={(e) => set('talla', e.target.value)}
+                placeholder="S, M, L, XL..."
+              />
+            </div>
+            <div className="field">
+              <label className="field-label">Color</label>
+              <input
+                className="field-input"
+                value={form.color as string}
+                onChange={(e) => set('color', e.target.value)}
+                placeholder="Negro, Azul..."
               />
             </div>
 
-            {/* Category */}
-            <div className="field col-span-2">
-              <label className="field-label">Categoría</label>
+            {/* Género & Condición */}
+            <div className="field">
+              <label className="field-label">Género</label>
+              <select
+                className="field-input"
+                value={form.genero as string}
+                onChange={(e) => set('genero', e.target.value)}
+              >
+                <option value="Hombre">Hombre</option>
+                <option value="Mujer">Mujer</option>
+                <option value="Unisex">Unisex</option>
+              </select>
+            </div>
+            <div className="field">
+              <label className="field-label">Condición</label>
+              <select
+                className="field-input"
+                value={form.condicion as string}
+                onChange={(e) => set('condicion', e.target.value)}
+              >
+                <option value="NUEVO">Nuevo</option>
+                <option value="USADO">Usado</option>
+              </select>
+            </div>
+
+            {/* Categoría & Marca (Por ahora numérico/quemado) */}
+            <div className="field">
+              <label className="field-label">ID Categoría</label>
               <input
                 className="field-input"
-                value={form.category as string}
-                onChange={(e) => set('category', e.target.value)}
-                placeholder="Electrónica, Ropa, etc."
+                type="number"
+                value={form.id_categoria}
+                onChange={(e) => set('id_categoria', parseInt(e.target.value) || 1)}
+              />
+            </div>
+            <div className="field">
+              <label className="field-label">ID Marca</label>
+              <input
+                className="field-input"
+                type="number"
+                value={form.id_marca}
+                onChange={(e) => set('id_marca', parseInt(e.target.value) || 1)}
               />
             </div>
 
             {/* Image URL */}
             <div className="field col-span-2">
-              <label className="field-label">URL de imagen</label>
+              <label className="field-label">URL de imagen (Galería futura)</label>
               <input
                 className="field-input"
-                value={form.image_url as string}
-                onChange={(e) => set('image_url', e.target.value)}
-                placeholder="https://..."
+                value={form.imagen_url as string}
+                onChange={(e) => set('imagen_url', e.target.value)}
+                placeholder="https://images.unsplash.com/..."
               />
             </div>
 
@@ -191,9 +222,9 @@ export function ProductModal({ open, product, onClose, onSubmit }: Props) {
               <label className="field-label">Descripción</label>
               <textarea
                 className="field-input field-textarea"
-                value={form.description as string}
-                onChange={(e) => set('description', e.target.value)}
-                placeholder="Descripción del producto..."
+                value={form.descripcion as string}
+                onChange={(e) => set('descripcion', e.target.value)}
+                placeholder="Describe tu prenda..."
                 rows={3}
               />
             </div>
@@ -217,7 +248,7 @@ export function ProductModal({ open, product, onClose, onSubmit }: Props) {
             <button type="submit" className="btn btn-primary" disabled={submitting}>
               {submitting ? (
                 <span className="btn-spinner" />
-              ) : isEdit ? 'Guardar cambios' : 'Crear producto'}
+              ) : isEdit ? 'Guardar cambios' : 'Publicar prenda'}
             </button>
           </div>
         </form>

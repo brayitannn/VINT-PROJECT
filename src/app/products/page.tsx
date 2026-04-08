@@ -62,14 +62,14 @@ export default function ProductsPage() {
 
   const handleModalSubmit = async (data: ProductInsert | ProductUpdate) => {
     if (editingProduct) {
-      return update(editingProduct.id, data as ProductUpdate)
+      return update(editingProduct.id_prenda, data as ProductUpdate)
     }
     return create(data as ProductInsert)
   }
 
   const handleDeleteConfirm = async () => {
     if (deletingBulk) return removeSelected()
-    if (deletingProduct) return remove(deletingProduct.id)
+    if (deletingProduct) return remove(deletingProduct.id_prenda)
     return { error: null }
   }
 
@@ -133,9 +133,9 @@ export default function ProductsPage() {
             onChange={(e) => updateFilters({ status: e.target.value as ProductStatus | 'all' })}
           >
             <option value="all">Todos los estados</option>
-            <option value="active">Activo</option>
-            <option value="inactive">Inactivo</option>
-            <option value="draft">Borrador</option>
+            <option value="DISPONIBLE">Disponible</option>
+            <option value="OCULTO">Oculto</option>
+            <option value="VENDIDO">Vendido</option>
           </select>
 
           {/* Category filter */}
@@ -143,11 +143,11 @@ export default function ProductsPage() {
             <select
               className="filter-select"
               value={filters.category ?? 'all'}
-              onChange={(e) => updateFilters({ category: e.target.value })}
+              onChange={(e) => updateFilters({ category: e.target.value === 'all' ? 'all' : parseInt(e.target.value) })}
             >
               <option value="all">Todas las categorías</option>
               {categories.map((c) => (
-                <option key={c} value={c}>{c}</option>
+                <option key={c.id} value={c.id}>{c.nombre}</option>
               ))}
             </select>
           )}
@@ -237,7 +237,7 @@ export default function ProductsPage() {
 
       <ProductDeleteDialog
         open={deleteOpen}
-        productName={deletingProduct?.name}
+        productName={deletingProduct?.titulo}
         count={deletingBulk ? selected.size : undefined}
         onClose={() => setDeleteOpen(false)}
         onConfirm={handleDeleteConfirm}

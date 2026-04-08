@@ -17,7 +17,7 @@ import type {
 
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([])
-  const [categories, setCategories] = useState<string[]>([])
+  const [categories, setCategories] = useState<{id: number, nombre: string}[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -26,7 +26,7 @@ export function useProducts() {
     search: '',
     status: 'all',
     category: 'all',
-    sortBy: 'created_at',
+    sortBy: 'fecha_publicacion',
     sortOrder: 'desc',
   })
 
@@ -131,7 +131,7 @@ export function useProducts() {
 
   const toggleSelectAll = useCallback(() => {
     setSelected((s) =>
-      s.size === products.length ? new Set() : new Set(products.map((p) => p.id))
+      s.size === products.length ? new Set() : new Set(products.map((p) => p.id_prenda))
     )
   }, [products])
 

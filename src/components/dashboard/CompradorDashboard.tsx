@@ -1,215 +1,215 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { Search, Heart, ShoppingBag, Sparkles, ArrowRight, Loader2 } from 'lucide-react'
+import { Search, Heart, ShoppingBag } from 'lucide-react'
 import { type MockUser } from '@/lib/supabase/mock-user'
-
-interface ProductoRecomendado {
-  id_prenda: number
-  titulo: string
-  precio: number
-  talla: string
-  condicion: string
-  vendedor: string
-  imagen_principal: string
-  categoria: string
-  razon?: string
-}
+import { useRecomendaciones } from '@/hooks/useRecomendaciones'
+import { DashboardNavbar, AccesoRapido } from './DashboardNavbar'
+import { RecomendacionesGrid } from './RecomendacionesGrid'
 
 interface CompradorDashboardProps {
   user: MockUser
 }
 
-const ACCESOS_RAPIDOS = [
-  { icon: Search, label: 'Explorar', href: '/explorar', color: '#6366F1' },
-  { icon: Heart, label: 'Favoritos', href: '/favoritos', color: '#EC4899' },
-  { icon: ShoppingBag, label: 'Mis Compras', href: '/compras', color: '#F59E0B' },
+const ACCESOS_RAPIDOS: AccesoRapido[] = [
+  { id: 'explorar', icon: Search, label: 'Explorar', href: '/explorar', accent: '#8B5E3C' },
+  { id: 'favoritos', icon: Heart, label: 'Favoritos', href: '/favoritos', accent: '#8B5E3C' },
+  { id: 'compras', icon: ShoppingBag, label: 'Mis Compras', href: '/compras', accent: '#8B5E3C' },
 ]
 
 export function CompradorDashboard({ user }: CompradorDashboardProps) {
-  const [recomendaciones, setRecomendaciones] = useState<ProductoRecomendado[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    async function cargarRecomendaciones() {
-      try {
-        setLoading(true)
-        const res = await fetch('/api/recomendaciones', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user }),
-        })
-        if (!res.ok) throw new Error('Error al obtener recomendaciones')
-        const data = await res.json()
-        setRecomendaciones(data.recomendaciones ?? [])
-      } catch (e) {
-        setError('No se pudieron cargar las recomendaciones')
-      } finally {
-        setLoading(false)
-      }
-    }
-    cargarRecomendaciones()
-  }, [user])
+  const { recomendaciones, loading, error } = useRecomendaciones(user)
 
   const hora = new Date().getHours()
   const saludo = hora < 12 ? 'Buenos días' : hora < 18 ? 'Buenas tardes' : 'Buenas noches'
 
   return (
-    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 2rem' }}>
+    <>
+      <style>{`
+        .dash-container {
+          max-width: 1280px;
+          margin: 0 auto;
+          padding: 60px 2rem;
+          font-family: 'DM Sans', sans-serif;
+        }
+        
+        .dash-greeting {
+          animation: slideDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          margin-bottom: 60px;
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+        
+        .dash-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 6px 16px;
+          border-radius: 999px;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          font-size: 14px;
+          color: var(--text-secondary);
+          margin-bottom: 20px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+        }
+        
+        .dash-title {
+          font-family: 'Playfair Display', serif;
+          font-size: clamp(36px, 5vw, 56px);
+          font-weight: 900;
+          color: var(--text-primary);
+          line-height: 1.1;
+          margin: 0 0 16px;
+        }
 
-      {/* SALUDO */}
-      <div style={{ marginBottom: 40 }}>
-        <p style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 6 }}>{saludo} 👋</p>
-        <h1 style={{
-          fontFamily: "'Playfair Display', serif",
-          fontSize: 'clamp(28px, 4vw, 42px)',
-          fontWeight: 900, color: 'var(--text-primary)',
-          lineHeight: 1.2, margin: 0,
-        }}>
-          Hola, <span style={{ color: 'var(--accent)' }}>{user.name.split(' ')[0]}</span>
-        </h1>
-        <p style={{ fontSize: 15, color: 'var(--text-secondary)', marginTop: 8 }}>
-          Tienes <strong style={{ color: 'var(--text-primary)' }}>{user.stats.favoritos}</strong> prendas en favoritos y <strong style={{ color: 'var(--text-primary)' }}>{user.stats.compras}</strong> compras realizadas.
-        </p>
-      </div>
+        .dash-title-accent {
+          background: linear-gradient(135deg, var(--accent) 0%, #A8724D 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+        
 
-      {/* ACCESOS RÁPIDOS */}
-      <div style={{ marginBottom: 48 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Accesos rápidos</h2>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          {ACCESOS_RAPIDOS.map(({ icon: Icon, label, href, color }) => (
-            <Link key={label} href={href} style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              padding: '12px 20px', borderRadius: 14,
-              backgroundColor: 'var(--bg-card)',
-              border: '1px solid var(--border)',
-              textDecoration: 'none', color: 'var(--text-primary)',
-              fontSize: 14, fontWeight: 600,
-              transition: 'transform 0.2s, box-shadow 0.2s',
-            }}
-              className="hover:-translate-y-0.5 hover:shadow-md"
-            >
-              <div style={{
-                width: 32, height: 32, borderRadius: 10,
-                backgroundColor: color + '20',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <Icon size={16} style={{ color }} />
-              </div>
-              {label}
-            </Link>
-          ))}
+        .dash-section-header {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          margin-bottom: 32px;
+        }
+        
+        .dash-section-icon {
+          width: 48px;
+          height: 48px;
+          border-radius: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+        }
+
+        .dash-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 32px;
+        }
+        
+        .dash-card {
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-radius: 24px;
+          overflow: hidden;
+          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+          text-decoration: none;
+          color: inherit;
+          display: block;
+        }
+        
+        .dash-card:hover {
+          transform: translateY(-8px);
+          box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+        }
+        
+        .dash-card-image-wrapper {
+          height: 240px;
+          position: relative;
+          overflow: hidden;
+          background: var(--bg-secondary);
+        }
+        
+        .dash-card-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transition: transform 0.7s ease;
+        }
+        
+        .dash-card:hover .dash-card-image {
+          transform: scale(1.08);
+        }
+        
+        .dash-card-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+        
+        .dash-card:hover .dash-card-overlay {
+          opacity: 1;
+        }
+
+        .dash-error {
+          background: rgba(181, 101, 77, 0.08);
+          border: 1px solid rgba(181, 101, 77, 0.25);
+          border-radius: 24px;
+          padding: 40px;
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 16px;
+        }
+
+        .dash-skeleton {
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-radius: 24px;
+          padding: 16px;
+          animation: pulse 2s infinite ease-in-out;
+        }
+
+        .dash-skeleton-img {
+          height: 200px;
+          background: var(--bg-secondary);
+          border-radius: 12px;
+          margin-bottom: 20px;
+        }
+
+        .dash-skeleton-line {
+          height: 12px;
+          background: var(--bg-secondary);
+          border-radius: 6px;
+          margin-bottom: 12px;
+        }
+
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateY(-20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+          0% { opacity: 0.6; }
+          50% { opacity: 1; }
+          100% { opacity: 0.6; }
+        }
+      `}</style>
+      
+      <div className="dash-container">
+        {/* SALUDO */}
+        <div className="dash-greeting">
+          <div className="dash-badge" style={{ fontSize: 16, padding: '8px 20px', margin: '0 0 20px 0' }}>
+            {saludo}, <span style={{ fontWeight: 800, color: 'var(--accent)' }}>{user.name.split(' ')[0]}</span> <span style={{ animation: 'bounce 2s infinite' }}>👋</span>
+          </div>
+          <p style={{ fontSize: 20, color: 'var(--text-secondary)', maxWidth: 600, lineHeight: 1.6, margin: '0 auto', textAlign: 'center' }}>
+            Tu estilo está impecable hoy. Tienes <strong style={{ color: 'var(--text-primary)' }}>{user.stats.favoritos}</strong> prendas guardadas y <strong style={{ color: 'var(--text-primary)' }}>{user.stats.compras}</strong> compras realizadas.
+          </p>
         </div>
+
+        {/* NAVBAR INTERACTIVA (Accesos Rápidos) */}
+        <DashboardNavbar accesos={ACCESOS_RAPIDOS} />
+
+        {/* RECOMENDACIONES */}
+        <RecomendacionesGrid 
+          loading={loading} 
+          error={error} 
+          recomendaciones={recomendaciones} 
+        />
       </div>
-
-      {/* RECOMENDACIONES IA */}
-      <div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{
-              width: 32, height: 32, borderRadius: 10,
-              backgroundColor: 'var(--accent-light)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <Sparkles size={16} style={{ color: 'var(--accent)' }} />
-            </div>
-            <div>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-                Recomendado para ti
-              </h2>
-              <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '2px 0 0' }}>
-                Basado en tus preferencias · Generado con IA
-              </p>
-            </div>
-          </div>
-          <Link href="/explorar" style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            fontSize: 13, fontWeight: 600, color: 'var(--accent)', textDecoration: 'none',
-          }}>
-            Ver más <ArrowRight size={14} />
-          </Link>
-        </div>
-
-        {loading && (
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: '60px 0', gap: 12, color: 'var(--text-muted)',
-          }}>
-            <Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} />
-            <span style={{ fontSize: 14 }}>Analizando tus preferencias...</span>
-            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-          </div>
-        )}
-
-        {error && (
-          <div style={{
-            padding: '20px', borderRadius: 14,
-            backgroundColor: '#FEF2F2', border: '1px solid #FECACA',
-            color: '#991B1B', fontSize: 14,
-          }}>
-            {error}
-          </div>
-        )}
-
-        {!loading && !error && (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-            gap: 20,
-          }}>
-            {recomendaciones.map((prenda) => (
-              <div key={prenda.id_prenda} style={{
-                backgroundColor: 'var(--bg-card)',
-                border: '1px solid var(--border)',
-                borderRadius: 16, overflow: 'hidden',
-                cursor: 'pointer',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-              }}
-                className="hover:-translate-y-1 hover:shadow-lg"
-              >
-                <div style={{ height: 180, overflow: 'hidden', backgroundColor: 'var(--bg-secondary)', position: 'relative' }}>
-                  {prenda.imagen_principal ? (
-                    <img
-                      src={prenda.imagen_principal}
-                      alt={prenda.titulo}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  ) : (
-                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: 12 }}>
-                      Sin imagen
-                    </div>
-                  )}
-                  <div style={{
-                    position: 'absolute', top: 8, right: 8,
-                    backgroundColor: 'var(--accent)',
-                    borderRadius: 999, padding: '2px 8px',
-                    fontSize: 10, fontWeight: 700, color: 'white',
-                  }}>
-                    IA ✦
-                  </div>
-                </div>
-                <div style={{ padding: '14px' }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 4px', lineHeight: 1.3 }}
-                    className="line-clamp-2"
-                  >
-                    {prenda.titulo}
-                  </p>
-                  <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--accent)', margin: '0 0 6px' }}>
-                    ${Number(prenda.precio).toLocaleString('es-CO')} COP
-                  </p>
-                  {prenda.razon && (
-                    <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, lineHeight: 1.4, fontStyle: 'italic' }}>
-                      {prenda.razon}
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+    </>
   )
 }

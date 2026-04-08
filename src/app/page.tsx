@@ -3,6 +3,8 @@ import { Search, ShieldCheck, Leaf, Tag } from 'lucide-react'
 import { ProductCard, type Product } from '@/components/products/ProductCard'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase/supabase'
+import { PublicNavbar } from '@/components/layout/PublicNavbar'
+import { AutoCarousel } from '@/components/products/AutoCarousel'
 
 const VALUES = [
   { icon: ShieldCheck, title: 'Compra Segura', description: 'Todos los vendedores son verificados. Tu pago está protegido hasta que recibas tu prenda.' },
@@ -42,7 +44,7 @@ export default async function HomePage() {
 
   return (
     <main style={{ minHeight: '100vh' }}>
-
+      <PublicNavbar />
       {/* HERO */}
       <section style={{ backgroundColor: 'var(--bg-primary)', padding: '80px 2rem 96px', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: -80, right: -80, width: 400, height: 400, borderRadius: '50%', backgroundColor: 'var(--accent)', opacity: 0.05, filter: 'blur(60px)', pointerEvents: 'none' }} />
@@ -57,11 +59,7 @@ export default async function HomePage() {
           <p style={{ fontSize: 18, color: 'var(--text-secondary)', maxWidth: 600, margin: '0 auto 40px', lineHeight: 1.7 }}>
             Compra y vende ropa única con estilo. VINT conecta a personas que aman la moda sostenible y los precios que sí tienen sentido.
           </p>
-          <div style={{ maxWidth: 560, margin: '0 auto 24px', display: 'flex', alignItems: 'center', gap: 12, backgroundColor: 'var(--bg-card)', border: '2px solid var(--border)', borderRadius: 16, padding: '10px 10px 10px 16px' }}>
-            <Search size={18} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-            <input type="search" placeholder="Busca chaquetas, jeans, vestidos..." style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: 15, color: 'var(--text-primary)', fontFamily: "'DM Sans', sans-serif" }} />
-            <button style={{ backgroundColor: 'var(--accent)', color: 'white', border: 'none', padding: '10px 24px', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Buscar</button>
-          </div>
+
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href="/vender" style={{ backgroundColor: 'var(--accent)', color: 'white', padding: '12px 28px', borderRadius: 12, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>Comenzar a Vender →</Link>
             <Link href="/explorar" style={{ backgroundColor: 'transparent', color: 'var(--accent)', border: '2px solid var(--accent)', padding: '12px 28px', borderRadius: 12, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>Explorar Productos</Link>
@@ -100,13 +98,17 @@ export default async function HomePage() {
             <Link href="/explorar" style={{ fontSize: 14, fontWeight: 600, color: 'var(--accent)', textDecoration: 'none' }}>Ver todas →</Link>
           </div>
 
-          <ul style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, listStyle: 'none' }}>
+          <AutoCarousel>
             {products.map((product) => (
-              <li key={product.id}>
+              <li key={product.id} style={{ 
+                flex: '0 0 calc(33.333% - 16px)', 
+                minWidth: 280, 
+                scrollSnapAlign: 'start' 
+              }}>
                 <ProductCard product={product} />
               </li>
             ))}
-          </ul>
+          </AutoCarousel>
 
           <div style={{ textAlign: 'center', marginTop: 48 }}>
             <Link href="/explorar" style={{ backgroundColor: 'var(--accent)', color: 'white', padding: '14px 36px', borderRadius: 12, fontSize: 15, fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
