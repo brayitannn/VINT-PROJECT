@@ -6,17 +6,34 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { FavoritesModal } from '../products/FavoritesModal'
+import { NotificationsPanel, type NotificationPrefs } from './NotificationsPanel'
+import { useNotifications } from '@/hooks/useNotifications'
 import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { useCart } from './CartContext'
 import { CartDrawer } from './CartDrawer'
+
+const DEFAULT_PREFS: NotificationPrefs = {
+  emailOfertas: true,
+  emailNuevas: false,
+  emailResumen: true,
+  pushMensajes: true,
+  pushVentas: true,
+  pushFavoritos: false,
+}
 
 export function Navbar() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [favoritesOpen, setFavoritesOpen] = useState(false)
+  const [notifOpen, setNotifOpen] = useState(false)
+  const [notifPrefs, setNotifPrefs] = useState<NotificationPrefs>(DEFAULT_PREFS)
   const menuRef = useRef<HTMLDivElement>(null)
+  const notifRef = useRef<HTMLDivElement>(null)
+
+  // Hook de notificaciones en tiempo real — se llama aquí para compartir datos con el panel
+  const { notifications, unreadCount, loading: notifLoading, markAllRead, dismiss } = useNotifications(notifPrefs)
   const pathname = usePathname()
   const router = useRouter()
   const { user, signOut, loading } = useAuth()
@@ -36,7 +53,14 @@ export function Navbar() {
   const isPerfil = pathname === '/perfil';
   const isProtectedRoute = isDashboard || isInventoryPage || isExplorar || isPerfil;
 
-  useEffect(() => setMounted(true), [])
+  useEffect(() => {
+    setMounted(true)
+    // Cargar prefs guardadas desde localStorage
+    try {
+      const saved = localStorage.getItem('vint_notif_prefs')
+      if (saved) setNotifPrefs(JSON.parse(saved))
+    } catch {}
+  }, [])
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -104,8 +128,37 @@ export function Navbar() {
           {(!loading && user) ? (
             /* VISTA DE USUARIO AUTENTICADO */
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <button style={iconButtonStyle} className="nav-icon-btn"><Bell size={18} /></button>
+              {/* Notifications Bell */}
+              <div ref={notifRef} style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setNotifOpen(!notifOpen)}
+                  style={{ ...iconButtonStyle, position: 'relative' }}
+                  className="nav-icon-btn"
+                >
+                  <Bell size={18} />
+                  {unreadCount > 0 && (
+                    <span style={{
+                      position: 'absolute', top: -3, right: -3,
+                      width: 16, height: 16, borderRadius: '50%',
+                      backgroundColor: '#EF4444', color: 'white',
+                      fontSize: 9, fontWeight: 800,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      pointerEvents: 'none',
+                    }}>{unreadCount > 9 ? '9+' : unreadCount}</span>
+                  )}
+                </button>
+                <NotificationsPanel
+                  isOpen={notifOpen}
+                  onClose={() => setNotifOpen(false)}
+                  notifications={notifications}
+                  unreadCount={unreadCount}
+                  loading={notifLoading}
+                  markAllRead={markAllRead}
+                  dismiss={dismiss}
+                />
+              </div>
               
+
               {/* Cart icon with badge */}
               <div style={{ position: 'relative' }}>
                 <button

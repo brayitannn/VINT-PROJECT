@@ -167,3 +167,29 @@ export async function getCategories(): Promise<{id: number, nombre: string}[]> {
     { id: 3, nombre: 'Unisex' },
   ]
 }
+
+export async function getMarcas(): Promise<{id_marca: number, nombre: string}[]> {
+  // Catálogo extraído directamente de tu base de datos para sincronización manual:
+  const marcas = [
+    { id_marca: 1, nombre: 'Nike' },
+    { id_marca: 2, nombre: 'Adidas' },
+    { id_marca: 3, nombre: 'Zara' },
+    { id_marca: 4, nombre: 'H&M' },
+    { id_marca: 5, nombre: 'Levi\'s' },
+    { id_marca: 6, nombre: 'Pull&Bear' },
+    { id_marca: 7, nombre: 'Bershka' },
+    { id_marca: 8, nombre: 'Tommy Hilfiger' },
+    { id_marca: 9, nombre: 'Sin marca' },
+    { id_marca: 32, nombre: 'Chevignon' },
+    { id_marca: 33, nombre: 'Tennis' },
+    { id_marca: 34, nombre: 'Arturo Calle' },
+    { id_marca: 35, nombre: 'Americanino' },
+    { id_marca: 36, nombre: 'Calvin Klein' },
+    { id_marca: 37, nombre: 'GAP' },
+    { id_marca: 38, nombre: 'Forever 21' },
+    { id_marca: 39, nombre: 'Mango' },
+    { id_marca: 40, nombre: 'Stradivarius' }
+  ];
+
+  return marcas.sort((a,b) => a.nombre.localeCompare(b.nombre));
+}

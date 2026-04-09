@@ -8,6 +8,7 @@ interface Props {
   product?: Product | null
   onClose: () => void
   onSubmit: (data: ProductInsert | ProductUpdate) => Promise<{ error: string | null }>
+  marcas?: {id_marca: number, nombre: string}[]
 }
 
 const EMPTY: any = {
@@ -25,10 +26,6 @@ const EMPTY: any = {
   imagen_url: '',
 }
 
-const BRANDS = [
-  'Nike', 'Adidas', 'Zara', 'Levi\'s', 'Gucci', 'Prada', 'H&M', 'Pull&Bear', 'Bershka'
-]
-
 const CONDITION_OPTIONS = [
   { value: 'NUEVO', label: 'Nuevo con etiquetas' },
   { value: 'COMO_NUEVO', label: 'Como nuevo' },
@@ -42,9 +39,8 @@ const STATUS_OPTIONS: { value: ProductStatus; label: string }[] = [
   { value: 'VENDIDO', label: 'Vendido' },
 ]
 
-export function ProductModal({ open, product, onClose, onSubmit }: Props) {
+export function ProductModal({ open, product, onClose, onSubmit, marcas = [] }: Props) {
   const [form, setForm] = useState<any>(EMPTY)
-  const [marcaInput, setMarcaInput] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [fieldError, setFieldError] = useState<string | null>(null)
   const isEdit = !!product
@@ -52,16 +48,14 @@ export function ProductModal({ open, product, onClose, onSubmit }: Props) {
   useEffect(() => {
     if (product) {
       setForm({ ...product })
-      setMarcaInput(product.id_marca?.toString() || '') // Simplificado
     } else {
       setForm(EMPTY)
-      setMarcaInput('')
     }
     setFieldError(null)
   }, [product, open])
 
   const set = (key: keyof ProductInsert, value: string | number) =>
-    setForm((f) => ({ ...f, [key]: value }))
+    setForm((f: any) => ({ ...f, [key]: value }))
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -229,45 +223,58 @@ export function ProductModal({ open, product, onClose, onSubmit }: Props) {
             </div>
             <div className="field">
               <label className="field-label">Marca</label>
-              <input
+              <select
                 className="field-input"
-                value={marcaInput}
-                onChange={(e) => {
-                  setMarcaInput(e.target.value)
-                  // En el mockup, mapeamos marcas conocidas a IDs o dejamos 1 por defecto
-                  const known = BRANDS.find(b => b.toLowerCase() === e.target.value.toLowerCase())
-                  set('id_marca', known ? 2 : 1) // Nike (2) o Genérico (1) para el mockup
-                }}
-                placeholder="Escribe la marca (Nike, Zara...)"
-                list="brand-suggestions"
-              />
-              <datalist id="brand-suggestions">
-                {BRANDS.map(b => <option key={b} value={b} />)}
-              </datalist>
+                value={form.id_marca}
+                onChange={(e) => set('id_marca', parseInt(e.target.value))}
+              >
+                {marcas?.map(m => (
+                  <option key={m.id_marca} value={m.id_marca}>{m.nombre}</option>
+                ))}
+              </select>
             </div>
 
             {/* Image Selection */}
             <div className="field col-span-2">
-              <label className="field-label">Imagen de la prenda</label>
+              <label className="field-label">Imagen de la prenda (Opcional por ahora)</label>
               <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                <div style={{ 
-                  width: 120, height: 120, border: '2px dashed var(--color-border)', 
-                  borderRadius: 12, overflow: 'hidden', display: 'flex', 
-                  alignItems: 'center', justifyContent: 'center', background: 'var(--color-surface)'
-                }}>
+                <label 
+                  htmlFor="imagen-upload"
+                  style={{ 
+                    width: 120, height: 120, border: '2px dashed var(--color-border)', 
+                    borderRadius: 12, overflow: 'hidden', display: 'flex', 
+                    alignItems: 'center', justifyContent: 'center', background: 'var(--color-surface)',
+                    cursor: 'pointer', flexShrink: 0
+                  }}
+                  title="Toca para subir foto desde tu galería"
+                >
                   {form.imagen_url ? (
                     <img src={form.imagen_url} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
                     <span style={{ fontSize: 24, color: 'var(--color-text-muted)' }}>+</span>
                   )}
-                </div>
+                </label>
+
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   <input
+                    id="imagen-upload"
                     type="file"
-                    accept="image/*"
+                    accept="image/png, image/jpeg, image/webp"
                     onChange={handleFileChange}
-                    style={{ fontSize: 13 }}
+                    style={{ display: 'none' }}
                   />
+                  <button 
+                    type="button"
+                    onClick={() => document.getElementById('imagen-upload')?.click()}
+                    style={{
+                      background: 'none', border: '1px solid var(--accent)', color: 'var(--accent)',
+                      borderRadius: 6, padding: '4px 10px', fontSize: 13, cursor: 'pointer',
+                      fontWeight: 600, width: 'fit-content'
+                    }}
+                  >
+                    Buscar en Galería
+                  </button>
+
                   <p style={{ margin: 0, fontSize: 12, color: 'var(--color-text-muted)' }}>
                     O pega una URL:
                   </p>
