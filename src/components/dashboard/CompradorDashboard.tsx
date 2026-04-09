@@ -5,22 +5,27 @@ import { type MockUser } from '@/lib/supabase/mock-user'
 import { useRecomendaciones } from '@/hooks/useRecomendaciones'
 import { DashboardNavbar, AccesoRapido } from './DashboardNavbar'
 import { RecomendacionesGrid } from './RecomendacionesGrid'
+import { FavoritesModal } from '@/components/products/FavoritesModal'
+import { useState } from 'react'
+import { useFavorites } from '@/components/layout/FavoritesContext'
 
 interface CompradorDashboardProps {
   user: MockUser
 }
 
-const ACCESOS_RAPIDOS: AccesoRapido[] = [
-  { id: 'explorar', icon: Search, label: 'Explorar', href: '/explorar', accent: '#8B5E3C' },
-  { id: 'favoritos', icon: Heart, label: 'Favoritos', href: '/favoritos', accent: '#8B5E3C' },
-  { id: 'compras', icon: ShoppingBag, label: 'Mis Compras', href: '/compras', accent: '#8B5E3C' },
-]
-
 export function CompradorDashboard({ user }: CompradorDashboardProps) {
   const { recomendaciones, loading, error } = useRecomendaciones(user)
+  const [favoritesOpen, setFavoritesOpen] = useState(false)
+  const { favoriteIds } = useFavorites()
 
   const hora = new Date().getHours()
   const saludo = hora < 12 ? 'Buenos días' : hora < 18 ? 'Buenas tardes' : 'Buenas noches'
+
+  const ACCESOS_RAPIDOS: AccesoRapido[] = [
+    { id: 'explorar', icon: Search, label: 'Explorar', href: '/explorar', accent: '#8B5E3C' },
+    { id: 'favoritos', icon: Heart, label: 'Favoritos', onClick: () => setFavoritesOpen(true), accent: '#8B5E3C' },
+    { id: 'compras', icon: ShoppingBag, label: 'Mis Compras', href: '/compras', accent: '#8B5E3C' },
+  ]
 
   return (
     <>
@@ -190,15 +195,60 @@ export function CompradorDashboard({ user }: CompradorDashboardProps) {
       `}</style>
       
       <div className="dash-container">
-        {/* SALUDO */}
-        <div className="dash-greeting">
-          <div className="dash-badge" style={{ fontSize: 16, padding: '8px 20px', margin: '0 0 20px 0' }}>
-            {saludo}, <span style={{ fontWeight: 800, color: 'var(--accent)' }}>{user.name.split(' ')[0]}</span> <span style={{ animation: 'bounce 2s infinite' }}>👋</span>
+        {/* GREETING SECTION (POTENTIALLY IMPROVED) */}
+        <div className="dash-greeting" style={{ 
+          marginBottom: 40, 
+          marginTop: -20, // Ajuste para subirlo un poco
+          position: 'relative',
+          padding: '40px 0'
+        }}>
+          {/* Subtle Decorative Glow */}
+          <div style={{
+            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+            width: '300px', height: '100px', background: 'var(--accent)', filter: 'blur(100px)', opacity: 0.05,
+            zIndex: -1
+          }}></div>
+
+          <div className="dash-badge" style={{ 
+            fontSize: 14, background: 'rgba(139, 94, 60, 0.05)', 
+            border: '1px solid rgba(139, 94, 60, 0.1)',
+            padding: '6px 16px', color: 'var(--accent)', fontWeight: 700,
+            letterSpacing: '0.05em', textTransform: 'uppercase'
+          }}>
+            {saludo}
           </div>
-          <p style={{ fontSize: 20, color: 'var(--text-secondary)', maxWidth: 600, lineHeight: 1.6, margin: '0 auto', textAlign: 'center' }}>
-            Tu estilo está impecable hoy. Tienes <strong style={{ color: 'var(--text-primary)' }}>{user.stats.favoritos}</strong> prendas guardadas y <strong style={{ color: 'var(--text-primary)' }}>{user.stats.compras}</strong> compras realizadas.
+          
+          <h1 style={{
+            fontFamily: "'Playfair Display', serif",
+            fontSize: 'clamp(40px, 6vw, 64px)',
+            fontWeight: 900,
+            color: 'var(--text-primary)',
+            margin: '12px 0',
+            lineHeight: 1
+          }}>
+            Hola, <span style={{ 
+              background: 'linear-gradient(135deg, var(--accent) 0%, #A8724D 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
+            }}>{user.name.split(' ')[0]}</span> <span style={{ fontSize: '0.8em', animation: 'bounce 2s infinite', display: 'inline-block' }}>✦</span>
+          </h1>
+          
+          <p style={{ 
+            fontSize: 22, 
+            color: 'var(--text-secondary)', 
+            maxWidth: 600, 
+            lineHeight: 1.6, 
+            margin: '0 auto', 
+            textAlign: 'center',
+            fontStyle: 'italic',
+            opacity: 0.9,
+            fontFamily: "'Playfair Display', serif"
+          }}>
+            Tu estilo está impecable hoy.
           </p>
         </div>
+
+        {/* Las stats cards permanecen removidas */}
 
         {/* NAVBAR INTERACTIVA (Accesos Rápidos) */}
         <DashboardNavbar accesos={ACCESOS_RAPIDOS} />
@@ -210,6 +260,9 @@ export function CompradorDashboard({ user }: CompradorDashboardProps) {
           recomendaciones={recomendaciones} 
         />
       </div>
+
+      {/* MODAL DE FAVORITOS */}
+      <FavoritesModal isOpen={favoritesOpen} onClose={() => setFavoritesOpen(false)} />
     </>
   )
 }

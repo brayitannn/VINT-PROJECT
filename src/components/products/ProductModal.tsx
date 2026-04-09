@@ -10,8 +10,8 @@ interface Props {
   onSubmit: (data: ProductInsert | ProductUpdate) => Promise<{ error: string | null }>
 }
 
-const EMPTY: ProductInsert = {
-  id_usuario: 1, // Por ahora quemado, debería venir del UserContext
+const EMPTY: any = {
+  id_usuario: 1, 
   id_categoria: 1,
   id_marca: 1,
   titulo: '',
@@ -25,6 +25,17 @@ const EMPTY: ProductInsert = {
   imagen_url: '',
 }
 
+const BRANDS = [
+  'Nike', 'Adidas', 'Zara', 'Levi\'s', 'Gucci', 'Prada', 'H&M', 'Pull&Bear', 'Bershka'
+]
+
+const CONDITION_OPTIONS = [
+  { value: 'NUEVO', label: 'Nuevo con etiquetas' },
+  { value: 'COMO_NUEVO', label: 'Como nuevo' },
+  { value: 'USADO', label: 'Buen estado' },
+  { value: 'DESGASTADO', label: 'Usado con detalles' },
+]
+
 const STATUS_OPTIONS: { value: ProductStatus; label: string }[] = [
   { value: 'DISPONIBLE', label: 'Disponible' },
   { value: 'OCULTO', label: 'Oculto' },
@@ -32,29 +43,19 @@ const STATUS_OPTIONS: { value: ProductStatus; label: string }[] = [
 ]
 
 export function ProductModal({ open, product, onClose, onSubmit }: Props) {
-  const [form, setForm] = useState<ProductInsert>(EMPTY)
+  const [form, setForm] = useState<any>(EMPTY)
+  const [marcaInput, setMarcaInput] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [fieldError, setFieldError] = useState<string | null>(null)
   const isEdit = !!product
 
   useEffect(() => {
     if (product) {
-      setForm({
-        id_usuario: product.id_usuario,
-        id_categoria: product.id_categoria,
-        id_marca: product.id_marca,
-        titulo: product.titulo,
-        descripcion: product.descripcion ?? '',
-        talla: product.talla ?? '',
-        color: product.color ?? '',
-        precio: product.precio,
-        genero: product.genero ?? '',
-        condicion: product.condicion ?? '',
-        estado_publicacion: product.estado_publicacion,
-        imagen_url: product.imagen_url ?? '',
-      })
+      setForm({ ...product })
+      setMarcaInput(product.id_marca?.toString() || '') // Simplificado
     } else {
       setForm(EMPTY)
+      setMarcaInput('')
     }
     setFieldError(null)
   }, [product, open])
@@ -76,6 +77,28 @@ export function ProductModal({ open, product, onClose, onSubmit }: Props) {
     setSubmitting(false)
     if (error) setFieldError(error)
     else onClose()
+  }
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setSubmitting(true)
+    setFieldError(null)
+
+    try {
+      // Simulamos la subida por ahora para que el usuario vea el cambio en la UI
+      // En una implementación real usaríamos uploadProductImage del lib
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        set('imagen_url', reader.result as string)
+        setSubmitting(false)
+      }
+      reader.readAsDataURL(file)
+    } catch (err: any) {
+      setFieldError("Error al cargar la imagen: " + err.message)
+      setSubmitting(false)
+    }
   }
 
   if (!open) return null
@@ -181,40 +204,81 @@ export function ProductModal({ open, product, onClose, onSubmit }: Props) {
                 value={form.condicion as string}
                 onChange={(e) => set('condicion', e.target.value)}
               >
-                <option value="NUEVO">Nuevo</option>
-                <option value="USADO">Usado</option>
+                {CONDITION_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
               </select>
             </div>
 
-            {/* Categoría & Marca (Por ahora numérico/quemado) */}
+            {/* Categoría & Marca (Mejorado) */}
             <div className="field">
-              <label className="field-label">ID Categoría</label>
-              <input
+              <label className="field-label">Categoría</label>
+              <select
                 className="field-input"
-                type="number"
                 value={form.id_categoria}
-                onChange={(e) => set('id_categoria', parseInt(e.target.value) || 1)}
-              />
+                onChange={(e) => set('id_categoria', parseInt(e.target.value))}
+              >
+                {[
+                  { id: 1, nombre: 'Hombre' },
+                  { id: 2, nombre: 'Mujer' },
+                  { id: 3, nombre: 'Unisex' },
+                  { id: 4, nombre: 'Accesorios' },
+                  { id: 5, nombre: 'Calzado' }
+                ].map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+              </select>
             </div>
             <div className="field">
-              <label className="field-label">ID Marca</label>
+              <label className="field-label">Marca</label>
               <input
                 className="field-input"
-                type="number"
-                value={form.id_marca}
-                onChange={(e) => set('id_marca', parseInt(e.target.value) || 1)}
+                value={marcaInput}
+                onChange={(e) => {
+                  setMarcaInput(e.target.value)
+                  // En el mockup, mapeamos marcas conocidas a IDs o dejamos 1 por defecto
+                  const known = BRANDS.find(b => b.toLowerCase() === e.target.value.toLowerCase())
+                  set('id_marca', known ? 2 : 1) // Nike (2) o Genérico (1) para el mockup
+                }}
+                placeholder="Escribe la marca (Nike, Zara...)"
+                list="brand-suggestions"
               />
+              <datalist id="brand-suggestions">
+                {BRANDS.map(b => <option key={b} value={b} />)}
+              </datalist>
             </div>
 
-            {/* Image URL */}
+            {/* Image Selection */}
             <div className="field col-span-2">
-              <label className="field-label">URL de imagen (Galería futura)</label>
-              <input
-                className="field-input"
-                value={form.imagen_url as string}
-                onChange={(e) => set('imagen_url', e.target.value)}
-                placeholder="https://images.unsplash.com/..."
-              />
+              <label className="field-label">Imagen de la prenda</label>
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                <div style={{ 
+                  width: 120, height: 120, border: '2px dashed var(--color-border)', 
+                  borderRadius: 12, overflow: 'hidden', display: 'flex', 
+                  alignItems: 'center', justifyContent: 'center', background: 'var(--color-surface)'
+                }}>
+                  {form.imagen_url ? (
+                    <img src={form.imagen_url} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <span style={{ fontSize: 24, color: 'var(--color-text-muted)' }}>+</span>
+                  )}
+                </div>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    style={{ fontSize: 13 }}
+                  />
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--color-text-muted)' }}>
+                    O pega una URL:
+                  </p>
+                  <input
+                    className="field-input"
+                    value={form.imagen_url as string}
+                    onChange={(e) => set('imagen_url', e.target.value)}
+                    placeholder="https://images.unsplash.com/..."
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Description */}

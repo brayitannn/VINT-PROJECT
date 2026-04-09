@@ -10,11 +10,7 @@ interface VendedorDashboardProps {
   user: MockUser
 }
 
-const ACCESOS_RAPIDOS: AccesoRapido[] = [
-  { id: 'publicar', icon: Plus, label: 'Publicar Prenda', href: '/dashboard/prendas/nueva', accent: '#8B5E3C' },
-  { id: 'mis-prendas', icon: Package, label: 'Mis Prendas', href: '/dashboard/prendas', accent: '#8B5E3C' },
-  { id: 'catalogo', icon: Tag, label: 'Ver Catálogo', href: '/explorar', accent: '#8B5E3C' },
-]
+// Accesos rápidos removidos de aquí para centralizarlos en el hub
 
 export function VendedorDashboard({ user }: VendedorDashboardProps) {
   const hora = new Date().getHours()
@@ -53,20 +49,83 @@ export function VendedorDashboard({ user }: VendedorDashboardProps) {
           box-shadow: 0 4px 12px rgba(0,0,0,0.02);
         }
 
-        .crud-banner {
-          background-color: var(--bg-card);
+        .crud-hub {
+          background: var(--bg-card);
           border: 1px solid var(--border);
-          border-radius: 24px;
-          padding: 32px;
+          border-radius: 32px;
+          padding: 48px;
+          display: flex;
+          flex-direction: column;
+          gap: 40px;
+          position: relative;
+          overflow: hidden;
+          background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);
+          box-shadow: 0 20px 50px rgba(0,0,0,0.05);
+          animation: fadeIn 1s ease forwards 0.2s;
+          opacity: 0;
+        }
+
+        .hub-glow {
+          position: absolute;
+          top: -100px;
+          right: -100px;
+          width: 300px;
+          height: 300px;
+          background: var(--accent);
+          filter: blur(120px);
+          opacity: 0.1;
+          z-index: 0;
+        }
+
+        .hub-content {
+          position: relative;
+          z-index: 1;
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          gap: 40px;
+          flex-wrap: wrap;
+        }
+
+        .hub-actions {
+          display: flex;
+          gap: 16px;
+          flex-wrap: wrap;
+        }
+
+        .hub-btn {
           display: flex;
           align-items: center;
-          justify-content: space-between;
-          gap: 20px;
-          flex-wrap: wrap;
-          background: linear-gradient(135deg, var(--bg-card) 0%, var(--accent-light) 100%);
-          animation: fadeIn 0.8s ease forwards 0.4s;
-          opacity: 0;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+          gap: 10px;
+          padding: 16px 32px;
+          border-radius: 16px;
+          font-weight: 700;
+          font-size: 15px;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          text-decoration: none;
+        }
+
+        .hub-btn-primary {
+          background: var(--accent);
+          color: white;
+          box-shadow: 0 10px 25px rgba(139, 94, 60, 0.25);
+        }
+
+        .hub-btn-primary:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 15px 35px rgba(139, 94, 60, 0.35);
+        }
+
+        .hub-btn-secondary {
+          background: var(--bg-secondary);
+          color: var(--text-primary);
+          border: 1px solid var(--border);
+        }
+
+        .hub-btn-secondary:hover {
+          background: var(--bg-card);
+          transform: translateY(-3px);
+          border-color: var(--accent);
         }
 
         @keyframes slideDown {
@@ -84,47 +143,113 @@ export function VendedorDashboard({ user }: VendedorDashboardProps) {
       `}</style>
 
       <div className="dash-container">
-        {/* SALUDO ANIMADO (Idéntico a comprador) */}
-        <div className="dash-greeting">
-          <div className="dash-badge" style={{ margin: '0 0 20px 0' }}>
-            {saludo}, <span style={{ fontWeight: 800, color: 'var(--accent)' }}>{user.name.split(' ')[0]}</span> <span style={{ animation: 'bounce 2s infinite' }}>👋</span>
+        {/* GREETING SECTION (ENHANCED) */}
+        <div className="dash-greeting" style={{ 
+          marginBottom: 40, 
+          marginTop: -20,
+          position: 'relative',
+          padding: '40px 0'
+        }}>
+          <div style={{
+            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+            width: '300px', height: '100px', background: 'var(--accent)', filter: 'blur(100px)', opacity: 0.05,
+            zIndex: -1
+          }}></div>
+
+          <div className="dash-badge" style={{ 
+            fontSize: 14, background: 'rgba(139, 94, 60, 0.05)', 
+            border: '1px solid rgba(139, 94, 60, 0.1)',
+            padding: '6px 16px', color: 'var(--accent)', fontWeight: 700,
+            letterSpacing: '0.05em', textTransform: 'uppercase'
+          }}>
+            {saludo}
           </div>
-          <p style={{ fontSize: 20, color: 'var(--text-secondary)', maxWidth: 600, lineHeight: 1.6, margin: '0 auto', textAlign: 'center' }}>
-            Tu negocio va por buen camino. Tienes <strong style={{ color: 'var(--text-primary)' }}>{user.stats.publicaciones}</strong> prendas publicadas actualmente.
+          
+          <h1 style={{
+            fontFamily: "'Playfair Display', serif",
+            fontSize: 'clamp(40px, 6vw, 64px)',
+            fontWeight: 900,
+            color: 'var(--text-primary)',
+            margin: '12px 0',
+            lineHeight: 1
+          }}>
+            Hola, <span style={{ 
+              background: 'linear-gradient(135deg, var(--accent) 0%, #A8724D 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
+            }}>{user.name.split(' ')[0]}</span> <span style={{ fontSize: '0.8em', animation: 'bounce 2s infinite', display: 'inline-block' }}>✦</span>
+          </h1>
+          
+          <p style={{ 
+            fontSize: 22, 
+            color: 'var(--text-secondary)', 
+            maxWidth: 600, 
+            lineHeight: 1.6, 
+            margin: '0 auto', 
+            textAlign: 'center',
+            fontStyle: 'italic',
+            opacity: 0.9,
+            fontFamily: "'Playfair Display', serif"
+          }}>
+            Tu negocio va por buen camino.
           </p>
         </div>
 
-        {/* NAVBAR INTERACTIVA (Accesos Rápidos idénticos al comprador) */}
-        <DashboardNavbar accesos={ACCESOS_RAPIDOS} />
+        {/* Stats cards removidos */}
 
-        {/* MÓDULO CRUD BANNER */}
-        <div className="crud-banner">
-          <div>
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              backgroundColor: 'var(--accent-light)', color: 'var(--accent)',
-              border: '1px solid var(--accent)', borderRadius: 999,
-              fontSize: 12, fontWeight: 700, padding: '6px 14px', marginBottom: 16,
-            }}>
-              ✦ Gestión de prendas
+        {/* CENTRAL MANAGEMENT HUB */}
+        <div className="crud-hub">
+          <div className="hub-glow"></div>
+          
+          <div className="hub-content">
+            <div style={{ flex: 1, minWidth: 300 }}>
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                backgroundColor: 'rgba(139, 94, 60, 0.1)', color: 'var(--accent)',
+                borderRadius: 999, fontSize: 13, fontWeight: 800,
+                padding: '8px 20px', marginBottom: 24,
+                backdropFilter: 'blur(10px)',
+                letterSpacing: '0.05em',
+                textTransform: 'uppercase'
+              }}>
+                ✦ Centro de Gestión
+              </div>
+              
+              <h2 style={{ 
+                fontFamily: "'Playfair Display', serif",
+                fontSize: 'clamp(32px, 4vw, 48px)',
+                fontWeight: 900,
+                color: 'var(--text-primary)',
+                margin: '0 0 16px',
+                lineHeight: 1.1
+              }}>
+                Administra tu Catálogo Personal
+              </h2>
+              
+              <p style={{ 
+                fontSize: 18, 
+                color: 'var(--text-secondary)', 
+                margin: 0, 
+                maxWidth: 550, 
+                lineHeight: 1.6,
+                opacity: 0.8
+              }}>
+                Crea nuevas publicaciones, edita detalles de tus prendas o gestiona tu inventario en tiempo real. Todo desde una interfaz diseñada para tu éxito.
+              </p>
             </div>
-            <h3 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 8px' }}>
-              Administra tus publicaciones
-            </h3>
-            <p style={{ fontSize: 16, color: 'var(--text-secondary)', margin: 0, maxWidth: 450, lineHeight: 1.6 }}>
-              Crea, edita y elimina tus prendas desde un solo lugar. Todo conectado en tiempo real con tu catálogo público.
-            </p>
+
+            <div className="hub-actions">
+              <Link href="/products?new=true" className="hub-btn hub-btn-primary">
+                <Plus size={20} /> Publicar Nueva Prenda
+              </Link>
+              <Link href="/products" className="hub-btn hub-btn-secondary">
+                <Package size={20} /> Mis Prendas
+              </Link>
+              <Link href="/explorar" className="hub-btn hub-btn-secondary" style={{ opacity: 0.7 }}>
+                <Tag size={20} /> Ver como Comprador
+              </Link>
+            </div>
           </div>
-          <Link href="/products" style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            backgroundColor: 'var(--accent)', color: 'white',
-            padding: '14px 28px', borderRadius: 14,
-            textDecoration: 'none', fontSize: 15, fontWeight: 700,
-            whiteSpace: 'nowrap', transition: 'all 0.2s',
-            boxShadow: '0 4px 12px rgba(139, 94, 60, 0.3)'
-          }} className="hover:scale-105">
-            Ir a mis prendas <ArrowRight size={18} />
-          </Link>
         </div>
 
       </div>

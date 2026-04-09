@@ -6,7 +6,8 @@ export interface AccesoRapido {
   id: string;
   icon: React.ElementType;
   label: string;
-  href: string;
+  href?: string;
+  onClick?: () => void;
   accent: string;
 }
 
@@ -47,6 +48,8 @@ export function DashboardNavbar({ accesos }: DashboardNavbarProps) {
           background: transparent;
           transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
           border: 1px solid transparent;
+          cursor: pointer;
+          font-family: inherit;
         }
         
         .dash-nav-item-content {
@@ -88,20 +91,15 @@ export function DashboardNavbar({ accesos }: DashboardNavbarProps) {
             const Icon = nav.icon;
             const isHovered = hoveredNav === nav.id;
             
-            return (
-              <Link 
-                key={nav.id} 
-                href={nav.href}
-                className="dash-nav-item"
-                onMouseEnter={() => setHoveredNav(nav.id)}
-                onMouseLeave={() => setHoveredNav(null)}
-                style={{
-                  backgroundColor: isHovered ? `${nav.accent}15` : 'transparent',
-                  borderColor: isHovered ? `${nav.accent}30` : 'transparent',
-                  transform: isHovered ? 'translateY(-4px)' : 'none',
-                  boxShadow: isHovered ? `0 8px 24px ${nav.accent}20` : 'none',
-                }}
-              >
+            const sharedStyle = {
+              backgroundColor: isHovered ? `${nav.accent}15` : 'transparent',
+              borderColor: isHovered ? `${nav.accent}30` : 'transparent',
+              transform: isHovered ? 'translateY(-4px)' : 'none',
+              boxShadow: isHovered ? `0 8px 24px ${nav.accent}20` : 'none',
+            };
+
+            const inner = (
+              <>
                 <div className="dash-nav-item-content">
                   <div className="dash-nav-icon" style={{ 
                     background: isHovered ? nav.accent : 'var(--bg-secondary)',
@@ -111,9 +109,7 @@ export function DashboardNavbar({ accesos }: DashboardNavbarProps) {
                   }}>
                     <Icon size={22} />
                   </div>
-                  <span className="dash-nav-text" style={{ 
-                    color: isHovered ? nav.accent : 'var(--text-primary)' 
-                  }}>
+                  <span className="dash-nav-text" style={{ color: isHovered ? nav.accent : 'var(--text-primary)' }}>
                     {nav.label}
                   </span>
                 </div>
@@ -122,6 +118,34 @@ export function DashboardNavbar({ accesos }: DashboardNavbarProps) {
                   transform: isHovered ? 'translateX(0)' : 'translateX(-10px)',
                   color: nav.accent 
                 }} />
+              </>
+            );
+
+            if (nav.onClick) {
+              return (
+                <button
+                  key={nav.id}
+                  className="dash-nav-item"
+                  onMouseEnter={() => setHoveredNav(nav.id)}
+                  onMouseLeave={() => setHoveredNav(null)}
+                  onClick={nav.onClick}
+                  style={sharedStyle}
+                >
+                  {inner}
+                </button>
+              );
+            }
+
+            return (
+              <Link
+                key={nav.id}
+                href={nav.href!}
+                className="dash-nav-item"
+                onMouseEnter={() => setHoveredNav(nav.id)}
+                onMouseLeave={() => setHoveredNav(null)}
+                style={sharedStyle}
+              >
+                {inner}
               </Link>
             );
           })}

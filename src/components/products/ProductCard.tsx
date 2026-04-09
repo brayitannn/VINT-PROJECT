@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { Heart, ShoppingCart } from 'lucide-react'
-import { useState } from 'react'
+import { useFavorites } from '@/components/layout/FavoritesContext'
 
 export interface Product {
   id: number
@@ -35,12 +35,14 @@ function getConditionStyle(condition: Product['condition']): React.CSSProperties
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const [isLiked, setIsLiked] = useState(false)
+  const { isFavorito, toggleFavorito } = useFavorites()
+  const productId = product.id.toString()
+  const isLiked = isFavorito(productId)
 
   const handleLike = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    setIsLiked(!isLiked)
+    toggleFavorito(productId)
   }
 
   return (
@@ -80,6 +82,7 @@ export function ProductCard({ product }: ProductCardProps) {
             color: isLiked ? '#EC4899' : '#9CA3AF',
           }}
           className="hover:scale-110 hover:bg-white"
+          title={isLiked ? 'Quitar de favoritos' : 'Añadir a favoritos'}
         >
           <Heart size={18} color="currentColor" fill={isLiked ? "currentColor" : "none"} />
         </button>

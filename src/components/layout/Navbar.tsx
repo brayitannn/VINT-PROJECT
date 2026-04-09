@@ -5,6 +5,7 @@ import { Sun, Moon, Bell, ShoppingCart, User, ChevronDown, LogOut, Settings, Pac
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { FavoritesModal } from '../products/FavoritesModal'
 import { usePathname } from 'next/navigation'
 import { useRole } from './RoleContext'
 import { MOCK_USER } from '@/lib/supabase/mock-user'
@@ -13,6 +14,7 @@ export function Navbar() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [favoritesOpen, setFavoritesOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
   const { role, setRole } = useRole()
@@ -23,11 +25,12 @@ export function Navbar() {
   }
 
   const isDashboard = pathname?.startsWith('/dashboard')
-  const isInventoryPage = pathname?.startsWith('/products') // Esta es tu ruta del pantallazo
+  const isInventoryPage = pathname?.startsWith('/products')
   const isExplorar = pathname === '/explorar'
+  const isPerfil = pathname === '/perfil'
   
-  // Si estamos en dashboard o inventario, activamos la Navbar de usuario logueado
-  const isProtectedRoute = isDashboard || isInventoryPage
+  // Si estamos en dashboard, inventario, explorar o perfil, activamos la Navbar de usuario logueado
+  const isProtectedRoute = isDashboard || isInventoryPage || isExplorar || isPerfil
 
   useEffect(() => setMounted(true), [])
 
@@ -46,6 +49,7 @@ export function Navbar() {
     border: '1px solid var(--border)', background: 'transparent',
     color: 'var(--text-primary)', cursor: 'pointer',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
+    transition: 'all 0.2s ease',
   }
 
   const initials = MOCK_USER.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
@@ -103,7 +107,11 @@ export function Navbar() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
 
           {mounted && (
-            <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} style={iconButtonStyle}>
+            <button 
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} 
+              style={iconButtonStyle}
+              className="nav-icon-btn"
+            >
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </button>
           )}
@@ -111,7 +119,20 @@ export function Navbar() {
           {isProtectedRoute ? (
             /* VISTA DE USUARIO AUTENTICADO */
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <button style={iconButtonStyle}><Bell size={18} /></button>
+              <button style={iconButtonStyle} className="nav-icon-btn"><Bell size={18} /></button>
+              
+              {/* Cart icon with badge */}
+              <div style={{ position: 'relative' }}>
+                <button style={iconButtonStyle} className="nav-icon-btn"><ShoppingCart size={18} /></button>
+                <span style={{
+                  position: 'absolute', top: -3, right: -3,
+                  width: 16, height: 16, borderRadius: '50%',
+                  backgroundColor: 'var(--accent)', color: 'white',
+                  fontSize: 9, fontWeight: 800,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  pointerEvents: 'none',
+                }}>0</span>
+              </div>
               
               <div ref={menuRef} style={{ position: 'relative' }}>
                 <button
@@ -152,26 +173,51 @@ export function Navbar() {
                   }}>
                     <div style={{ padding: '16px', borderBottom: '1px solid var(--border)', backgroundColor: 'var(--bg-secondary)' }}>
                       <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{MOCK_USER.name}</p>
-                      <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '2px 0 0', textTransform: 'capitalize' }}>Vista: {role}</p>
+                      <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '2px 0 0' }}>{MOCK_USER.email}</p>
                     </div>
                     <div style={{ padding: '8px' }}>
                       <DropdownItem href="/dashboard" icon={<LayoutDashboard size={15} />} label="Mi Dashboard" onClick={() => setMenuOpen(false)} />
                       {role === 'comprador' ? (
                         <>
-                          <DropdownItem href="/explorar" icon={<Heart size={15} />} label="Favoritos" onClick={() => setMenuOpen(false)} />
-                          <DropdownItem href="/explorar" icon={<ShoppingCart size={15} />} label="Compras" onClick={() => setMenuOpen(false)} />
+                          <button 
+                            onClick={() => { setFavoritesOpen(true); setMenuOpen(false); }}
+                            style={{ 
+                              width: '100%', 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: 10, 
+                              padding: '10px 12px', 
+                              borderRadius: 10, 
+                              border: 'none',
+                              backgroundColor: 'transparent',
+                              cursor: 'pointer',
+                              color: 'var(--text-primary)', 
+                              fontSize: 13, 
+                              fontWeight: 500,
+                              textAlign: 'left',
+                              transition: 'background-color 0.2s'
+                            }} 
+                            className="dropdown-item-hover"
+                          >
+                            <span style={{ color: 'var(--text-muted)' }}><Heart size={15} /></span>
+                            Favoritos
+                          </button>
                         </>
                       ) : (
                         <DropdownItem href="/products" icon={<Package size={15} />} label="Inventario" onClick={() => setMenuOpen(false)} />
                       )}
                       <DropdownItem href="/perfil" icon={<Settings size={15} />} label="Configuración" onClick={() => setMenuOpen(false)} />
                       <div style={{ borderTop: '1px solid var(--border)', marginTop: 8, paddingTop: 8 }}>
-                        <button style={{
-                          width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-                          padding: '10px 12px', borderRadius: 10, border: 'none',
-                          backgroundColor: 'transparent', cursor: 'pointer',
-                          color: '#EF4444', fontSize: 13, fontWeight: 500,
-                        }}>
+                        <button 
+                          style={{
+                            width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                            padding: '10px 12px', borderRadius: 10, border: 'none',
+                            backgroundColor: 'transparent', cursor: 'pointer',
+                            color: '#EF4444', fontSize: 13, fontWeight: 500,
+                            transition: 'background-color 0.2s'
+                          }}
+                          className="hover-bg-red"
+                        >
                           <LogOut size={15} /> Cerrar Sesión
                         </button>
                       </div>
@@ -181,15 +227,6 @@ export function Navbar() {
               </div>
             </div>
 
-          ) : isExplorar ? (
-            /* VISTA EXPLORAR */
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <button style={iconButtonStyle}><Bell size={18} /></button>
-              <button style={iconButtonStyle}><ShoppingCart size={18} /></button>
-              <Link href="/perfil" style={{ ...iconButtonStyle, backgroundColor: 'var(--text-primary)', color: 'var(--bg-primary)', border: 'none' }}>
-                <User size={18} />
-              </Link>
-            </div>
           ) : (
             /* VISTA INVITADO */
             <>
@@ -205,14 +242,29 @@ export function Navbar() {
           from { opacity: 0; transform: translateY(-6px); }
           to { opacity: 1; transform: translateY(0); }
         }
+        .nav-icon-btn:hover {
+          background-color: var(--bg-secondary) !important;
+          border-color: var(--accent) !important;
+          color: var(--accent) !important;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .dropdown-item-hover:hover {
+          background-color: var(--bg-secondary) !important;
+        }
+        .hover-bg-red:hover {
+          background-color: rgba(239,68,68,0.08) !important;
+        }
       `}</style>
+      
+      <FavoritesModal isOpen={favoritesOpen} onClose={() => setFavoritesOpen(false)} />
     </header>
   )
 }
 
 function DropdownItem({ href, icon, label, onClick }: { href: string; icon: React.ReactNode; label: string; onClick: () => void }) {
   return (
-    <Link href={href} onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, textDecoration: 'none', color: 'var(--text-primary)', fontSize: 13, fontWeight: 500 }} className="hover:bg-[var(--bg-secondary)]">
+    <Link href={href} onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, textDecoration: 'none', color: 'var(--text-primary)', fontSize: 13, fontWeight: 500, transition: 'background-color 0.2s' }} className="dropdown-item-hover">
       <span style={{ color: 'var(--text-muted)' }}>{icon}</span>
       {label}
     </Link>

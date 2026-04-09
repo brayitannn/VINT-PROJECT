@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useProducts } from '@/hooks/useProducts'
 import { ProductTable } from '@/components/products/ProductTable'
 import { ProductModal } from '@/components/products/ProductModal'
@@ -28,6 +29,8 @@ export default function ProductsPage() {
     goToPage,
   } = useProducts()
 
+  const searchParams = useSearchParams()
+
   // Modal state
   const [modalOpen, setModalOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
@@ -36,6 +39,14 @@ export default function ProductsPage() {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null)
   const [deletingBulk, setDeletingBulk] = useState(false)
+
+  // Auto-open modal if ?new=true
+  useEffect(() => {
+    if (searchParams.get('new') === 'true') {
+      setEditingProduct(null)
+      setModalOpen(true)
+    }
+  }, [searchParams])
 
   // ── Handlers ────────────────────────────────────────────────────────────────
   const openCreate = () => {
