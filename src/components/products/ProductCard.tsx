@@ -1,168 +1,141 @@
-/*
-  ProductCard.tsx
+'use client'
 
-  Tarjeta de producto individual de VINT.
-  Es Server Component (sin 'use client') porque solo muestra datos,
-  no necesita estado ni eventos del navegador. Esto lo hace más
-  rápido porque se renderiza directo en el servidor.
-
-  Recibe un objeto product y renderiza:
-  - Imagen con badge de estado de la prenda
-  - Nombre y talla
-  - Calificación y nombre del vendedor
-  - Precio en formato COP
-  - Botón de favorito accesible
-
-  La interfaz Product define exactamente qué datos espera
-  cada tarjeta, garantizando type-safety con TypeScript.
-*/
-
-import { Heart, Star } from 'lucide-react'
 import Image from 'next/image'
-
-/* TIPOS */
+import { Heart, ShoppingCart } from 'lucide-react'
+import { useState } from 'react'
 
 export interface Product {
   id: number
   name: string
-  price: number          /* precio en pesos colombianos */
-  size: string           /* talla: XS, S, M, L, XL */
+  price: number
+  size: string
   condition: 'Excelente' | 'Muy Bueno' | 'Bueno'
   seller: string
   image: string
-  rating: number         /* calificación del vendedor de 1 a 5 */
+  rating: number
 }
 
 interface ProductCardProps {
   product: Product
 }
 
-/* HELPERS */
-
-/*
-  Formatea un número como precio en COP.
-  Ejemplo: 45000 → "$45.000 COP"
-  Usamos toLocaleString con 'es-CO' para el formato colombiano
-  que usa punto como separador de miles.
-*/
-
 function formatPrice(price: number): string {
   return `$${price.toLocaleString('es-CO')} COP`
 }
 
-/*
-  Devuelve los colores del badge según el estado de la prenda.
-  Los colores están calculados para cumplir con WCAG AA
-  (contraste mínimo de 4.5:1 entre texto y fondo).
-*/
-
 function getConditionStyle(condition: Product['condition']): React.CSSProperties {
   switch (condition) {
     case 'Excelente':
-      return { backgroundColor: '#D1FAE5', color: '#065F46' }  /* contraste 7.2:1 ✅ */
+      return { backgroundColor: '#D1FAE5', color: '#065F46' }
     case 'Muy Bueno':
-      return { backgroundColor: '#FEF3C7', color: '#92400E' }  /* contraste 5.1:1 ✅ */
+      return { backgroundColor: '#FEF3C7', color: '#92400E' }
     case 'Bueno':
-      return { backgroundColor: '#E0E7FF', color: '#3730A3' }  /* contraste 6.8:1 ✅ */
+      return { backgroundColor: '#E0E7FF', color: '#3730A3' }
   }
 }
 
-/* COMPONENTE */
-
 export function ProductCard({ product }: ProductCardProps) {
+  const [isLiked, setIsLiked] = useState(false)
+
+  const handleLike = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsLiked(!isLiked)
+  }
+
   return (
     <article
       style={{
         backgroundColor: 'var(--bg-card)',
         border: '1px solid var(--border)',
         boxShadow: '0 2px 12px var(--shadow)',
+        borderRadius: 20,
+        overflow: 'hidden',
+        transition: 'box-shadow 0.3s ease, transform 0.3s ease',
+        cursor: 'pointer',
+        display: 'flex', flexDirection: 'column'
       }}
-      className="rounded-2xl overflow-hidden group hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-      aria-label={`Producto: ${product.name}, ${formatPrice(product.price)}`}
+      className="group hover:-translate-y-1 hover:shadow-lg h-full"
     >
-
-      {/* IMAGEN */}
-
-      <div className="relative aspect-[4/5] overflow-hidden bg-gray-100">
+      <div style={{ position: 'relative', overflow: 'hidden', height: 230, backgroundColor: 'var(--bg-secondary)' }}>
         <Image
           src={product.image}
-          alt={`Foto de ${product.name} en estado ${product.condition}`}
-          fill
-          className="object-cover group-hover:scale-105 transition-transform duration-500"
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+          alt={`Foto de ${product.name}`}
+          width={400}
+          height={230}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          sizes="(max-width: 768px) 100vw, 33vw"
         />
-
-        {/* Badge de estado */}
-
-        <span
-          style={getConditionStyle(product.condition)}
-          className="absolute top-3 left-3 text-xs font-semibold px-2.5 py-1 rounded-full"
-          aria-label={`Estado: ${product.condition}`}
-        >
-          {product.condition}
-        </span>
-
-        {/*
-          Botón de favorito: aparece solo cuando el usuario
-          pasa el mouse por encima de la tarjeta (group-hover).
-          En móvil siempre es visible porque no hay hover.
-        */}
-
         <button
+          onClick={handleLike}
           style={{
-            backgroundColor: 'var(--bg-card)',
-            color: 'var(--text-muted)',
+            position: 'absolute', top: 12, right: 12,
+            width: 36, height: 36, borderRadius: '50%',
+            backgroundColor: 'rgba(255, 255, 255, 0.85)',
+            border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', zIndex: 10,
+            backdropFilter: 'blur(4px)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            transition: 'all 0.2s',
+            color: isLiked ? '#EC4899' : '#9CA3AF',
           }}
-          className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center shadow-sm hover:text-red-500 hover:scale-110 transition-all duration-200 opacity-0 group-hover:opacity-100"
-          aria-label={`Agregar ${product.name} a favoritos`}
+          className="hover:scale-110 hover:bg-white"
         >
-          <Heart size={15} />
+          <Heart size={18} color="currentColor" fill={isLiked ? "currentColor" : "none"} />
         </button>
       </div>
 
-      {/* INFORMACIÓN */}
-
-      <div className="p-4">
-
-        {/* Nombre y talla */}
-
-        <div className="flex items-start justify-between gap-2 mb-1">
-          <h3
-            style={{ color: 'var(--text-primary)' }}
-            className="font-semibold text-sm leading-snug line-clamp-2 flex-1"
+      <div style={{ padding: '20px 20px 24px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
+          <h3 style={{ fontWeight: 700, fontSize: 16, color: 'var(--text-primary)', lineHeight: 1.3 }}
+            className="line-clamp-2"
           >
             {product.name}
           </h3>
-          <span
-            style={{
-              backgroundColor: 'var(--bg-secondary)',
-              color: 'var(--text-secondary)',
-            }}
-            className="text-xs font-medium px-2 py-0.5 rounded-md shrink-0"
-            aria-label={`Talla: ${product.size}`}
-          >
-            {product.size}
+          <span style={{
+            ...getConditionStyle(product.condition),
+            fontSize: 11, fontWeight: 700, padding: '4px 10px',
+            borderRadius: 999, whiteSpace: 'nowrap', flexShrink: 0,
+          }}>
+            {product.condition}
           </span>
         </div>
 
-        {/* Vendedor con rating */}
-
-        <div className="flex items-center gap-1 mb-3">
-          <Star size={11} style={{ color: 'var(--accent)' }} fill="var(--accent)" aria-hidden="true" />
-          <span style={{ color: 'var(--text-muted)' }} className="text-xs">
-            {product.rating.toFixed(1)} · {product.seller}
-          </span>
-        </div>
-
-        {/* Precio */}
-
-        <p
-          style={{ color: 'var(--accent)' }}
-          className="font-bold text-base"
-          aria-label={`Precio: ${formatPrice(product.price)}`}
-        >
+        <p style={{ fontWeight: 800, fontSize: 20, color: 'var(--accent)', marginBottom: 20 }}>
           {formatPrice(product.price)}
         </p>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{
+              width: 30, height: 30, borderRadius: '50%',
+              backgroundColor: 'var(--bg-secondary)',
+              color: 'var(--accent)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 13, fontWeight: 700, flexShrink: 0,
+            }}>
+              {product.seller.charAt(0)}
+            </div>
+            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>
+              {product.seller}
+            </span>
+          </div>
+
+          <button
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            style={{
+              backgroundColor: 'var(--accent)', color: 'white',
+              border: 'none', borderRadius: 12,
+              width: 36, height: 36,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', transition: 'all 0.2s',
+            }}
+            title="Añadir al carrito"
+            className="hover:scale-105 hover:bg-[var(--accent-hover)] shadow-sm hover:shadow-md"
+          >
+            <ShoppingCart size={18} />
+          </button>
+        </div>
       </div>
     </article>
   )

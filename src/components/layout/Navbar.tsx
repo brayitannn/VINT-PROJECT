@@ -1,201 +1,220 @@
 'use client'
 
-/*
-  Navbar.tsx
-
-  Barra de navegación principal de VINT.
-  Es Client Component ('use client') porque necesita:
-  - useTheme() para leer y cambiar el tema activo
-  - useState para abrir/cerrar el menú móvil
-  - useEffect para evitar el hydration mismatch del tema
-
-  Estructura:
-  - Logo circular con la "V"
-  - Links: Explorar y Top Vendedores
-  - Botón sol/luna para cambiar tema
-  - Botón Registrarse
-  - Menú hamburguesa para pantallas pequeñas
-*/
-
 import { useTheme } from 'next-themes'
-import { Sun, Moon, Menu, X } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { Sun, Moon, Bell, ShoppingCart, User, ChevronDown, LogOut, Settings, Package, Heart, LayoutDashboard } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
+import { usePathname } from 'next/navigation'
+import { useRole } from './RoleContext'
+import { MOCK_USER } from '@/lib/supabase/mock-user'
 
 export function Navbar() {
   const { theme, setTheme } = useTheme()
-  const [menuOpen, setMenuOpen] = useState(false)
-
-  /*
-    mounted evita el "hydration mismatch".
-    El servidor renderiza sin saber el tema del usuario.
-    Si mostramos el ícono de luna/sol antes de que el cliente
-    hidrate puede haber un parpadeo visual.
-    Solución: no renderizar el botón hasta estar en el cliente.
-  */
-
   const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const pathname = usePathname()
+  const { role, setRole } = useRole()
 
-  const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark')
+  // --- DETECCIÓN DE RUTAS CORREGIDA ---
+  if (pathname === '/') {
+    return null;
   }
 
+  const isDashboard = pathname?.startsWith('/dashboard')
+  const isInventoryPage = pathname?.startsWith('/products') // Esta es tu ruta del pantallazo
+  const isExplorar = pathname === '/explorar'
+  
+  // Si estamos en dashboard o inventario, activamos la Navbar de usuario logueado
+  const isProtectedRoute = isDashboard || isInventoryPage
+
+  useEffect(() => setMounted(true), [])
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const iconButtonStyle: React.CSSProperties = {
+    width: 38, height: 38, borderRadius: '50%',
+    border: '1px solid var(--border)', background: 'transparent',
+    color: 'var(--text-primary)', cursor: 'pointer',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+  }
+
+  const initials = MOCK_USER.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+
   return (
-    <header
-      style={{
-        backgroundColor: 'var(--bg-primary)',
-        borderBottom: '1px solid var(--border)',
-      }}
-      className="sticky top-0 z-50 transition-all duration-300"
-    >
-
-      {/* Contenedor principal */}
-
-      <nav
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between"
-        role="navigation"
-        aria-label="Navegación principal"
-      >
+    <header style={{
+      backgroundColor: 'var(--bg-primary)',
+      borderBottom: '1px solid var(--border)',
+      position: 'sticky', top: 0, zIndex: 50,
+      transition: 'background-color 0.3s ease',
+    }}>
+      <nav style={{
+        maxWidth: 1280, margin: '0 auto',
+        padding: '0 2rem', height: 64,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      }}>
 
         {/* LOGO */}
-
-        <Link href="/" className="flex items-center gap-3 group" aria-label="Ir al inicio de Vint">
-          <div
-            style={{ backgroundColor: 'var(--accent)' }}
-            className="w-9 h-9 rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-200"
-            aria-hidden="true"
-          >
-            <span className="font-display font-black text-white text-lg leading-none">V</span>
-          </div>
-          <span
-            style={{ color: 'var(--text-primary)' }}
-            className="font-display font-bold text-xl tracking-tight"
-          >
-            Vint
-          </span>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+          <Image src="/logo1.png" alt="Vint" width={32} height={32} />
+          <span style={{
+            fontFamily: "'Playfair Display', serif",
+            fontWeight: 700, fontSize: 20, color: 'var(--text-primary)',
+          }}>Vint</span>
         </Link>
 
-        {/* LINKS (solo en escritorio) */}
+        {/* SWITCH DE ROL (Aparecerá en /products) */}
+        {isProtectedRoute && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 4,
+            backgroundColor: 'var(--bg-secondary)',
+            border: '1px solid var(--border)',
+            borderRadius: 999, padding: '4px',
+          }}>
+            {(['comprador', 'vendedor'] as const).map((r) => (
+              <button
+                key={r}
+                onClick={() => setRole(r)}
+                style={{
+                  padding: '6px 16px', borderRadius: 999, border: 'none',
+                  fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                  backgroundColor: role === r ? 'var(--accent)' : 'transparent',
+                  color: role === r ? 'white' : 'var(--text-secondary)',
+                  transition: 'all 0.2s ease',
+                  textTransform: 'capitalize',
+                }}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+        )}
 
-        <ul className="hidden md:flex items-center gap-8" role="list">
-          <li>
-            <Link
-              href="/explorar"
-              style={{ color: 'var(--text-secondary)' }}
-              className="font-medium text-sm hover:text-[var(--accent)] transition-colors duration-200"
-            >
-              Explorar
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/top-vendedores"
-              style={{ color: 'var(--text-secondary)' }}
-              className="font-medium text-sm hover:text-[var(--accent)] transition-colors duration-200"
-            >
-              Top Vendedores
-            </Link>
-          </li>
-        </ul>
-
-        {/* ACCIONES (solo en escritorio) */}
-
-        <div className="hidden md:flex items-center gap-3">
-
-          {/*
-            Botón de cambio de tema.
-            Solo se renderiza cuando mounted es true para evitar
-            el parpadeo de hydration que mencionamos arriba.
-          */}
+        {/* ACCIONES DERECHA */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
 
           {mounted && (
-            <button
-              onClick={toggleTheme}
-              style={{
-                color: 'var(--text-secondary)',
-                border: '1px solid var(--border)',
-              }}
-              className="w-9 h-9 rounded-full flex items-center justify-center hover:text-[var(--accent)] hover:border-[var(--accent)] transition-all duration-200"
-              aria-label={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-            >
-              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} style={iconButtonStyle}>
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </button>
           )}
 
-          <Link
-            href="/registro"
-            style={{ backgroundColor: 'var(--accent)', color: '#FFFFFF' }}
-            className="px-5 py-2 rounded-full text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors duration-200 shadow-sm"
-          >
-            Registrarse
-          </Link>
+          {isProtectedRoute ? (
+            /* VISTA DE USUARIO AUTENTICADO */
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <button style={iconButtonStyle}><Bell size={18} /></button>
+              
+              <div ref={menuRef} style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setMenuOpen(!menuOpen)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '6px 12px 6px 6px',
+                    borderRadius: 999, border: '1px solid var(--border)',
+                    backgroundColor: 'var(--bg-card)', cursor: 'pointer',
+                  }}
+                >
+                  <div style={{
+                    width: 28, height: 28, borderRadius: '50%',
+                    backgroundColor: 'var(--accent)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 11, fontWeight: 700, color: 'white',
+                  }}>
+                    {initials}
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                    {MOCK_USER.name.split(' ')[0]}
+                  </span>
+                  <ChevronDown size={14} style={{
+                    color: 'var(--text-muted)',
+                    transform: menuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.2s ease',
+                  }} />
+                </button>
+
+                {menuOpen && (
+                  <div style={{
+                    position: 'absolute', top: 'calc(100% + 8px)', right: 0,
+                    width: 220, backgroundColor: 'var(--bg-card)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 16, overflow: 'hidden',
+                    boxShadow: '0 8px 32px var(--shadow)',
+                    animation: 'fadeIn 0.2s ease-out'
+                  }}>
+                    <div style={{ padding: '16px', borderBottom: '1px solid var(--border)', backgroundColor: 'var(--bg-secondary)' }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{MOCK_USER.name}</p>
+                      <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '2px 0 0', textTransform: 'capitalize' }}>Vista: {role}</p>
+                    </div>
+                    <div style={{ padding: '8px' }}>
+                      <DropdownItem href="/dashboard" icon={<LayoutDashboard size={15} />} label="Mi Dashboard" onClick={() => setMenuOpen(false)} />
+                      {role === 'comprador' ? (
+                        <>
+                          <DropdownItem href="/explorar" icon={<Heart size={15} />} label="Favoritos" onClick={() => setMenuOpen(false)} />
+                          <DropdownItem href="/explorar" icon={<ShoppingCart size={15} />} label="Compras" onClick={() => setMenuOpen(false)} />
+                        </>
+                      ) : (
+                        <DropdownItem href="/products" icon={<Package size={15} />} label="Inventario" onClick={() => setMenuOpen(false)} />
+                      )}
+                      <DropdownItem href="/perfil" icon={<Settings size={15} />} label="Configuración" onClick={() => setMenuOpen(false)} />
+                      <div style={{ borderTop: '1px solid var(--border)', marginTop: 8, paddingTop: 8 }}>
+                        <button style={{
+                          width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                          padding: '10px 12px', borderRadius: 10, border: 'none',
+                          backgroundColor: 'transparent', cursor: 'pointer',
+                          color: '#EF4444', fontSize: 13, fontWeight: 500,
+                        }}>
+                          <LogOut size={15} /> Cerrar Sesión
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+          ) : isExplorar ? (
+            /* VISTA EXPLORAR */
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <button style={iconButtonStyle}><Bell size={18} /></button>
+              <button style={iconButtonStyle}><ShoppingCart size={18} /></button>
+              <Link href="/perfil" style={{ ...iconButtonStyle, backgroundColor: 'var(--text-primary)', color: 'var(--bg-primary)', border: 'none' }}>
+                <User size={18} />
+              </Link>
+            </div>
+          ) : (
+            /* VISTA INVITADO */
+            <>
+              <button style={{ background: 'transparent', border: 'none', fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', cursor: 'pointer' }}>Ingresar</button>
+              <Link href="/registro" style={{ backgroundColor: 'var(--accent)', color: 'white', padding: '8px 20px', borderRadius: 999, fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>Registrarse</Link>
+            </>
+          )}
         </div>
-
-        {/* BOTÓN HAMBURGUESA (solo en móvil) */}
-
-        <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          style={{ color: 'var(--text-primary)' }}
-          className="md:hidden w-9 h-9 flex items-center justify-center"
-          aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
-          aria-expanded={menuOpen}
-        >
-          {menuOpen ? <X size={22} /> : <Menu size={22} />}
-        </button>
       </nav>
 
-      {/* MENÚ MÓVIL — se muestra solo cuando menuOpen es true */}
-      
-      {menuOpen && (
-        <div
-          style={{
-            backgroundColor: 'var(--bg-primary)',
-            borderTop: '1px solid var(--border)',
-          }}
-          className="md:hidden px-4 py-4 flex flex-col gap-4"
-          role="menu"
-        >
-          <Link
-            href="/explorar"
-            style={{ color: 'var(--text-primary)' }}
-            className="font-medium text-base py-2"
-            onClick={() => setMenuOpen(false)}
-            role="menuitem"
-          >
-            Explorar
-          </Link>
-          <Link
-            href="/top-vendedores"
-            style={{ color: 'var(--text-primary)' }}
-            className="font-medium text-base py-2"
-            onClick={() => setMenuOpen(false)}
-            role="menuitem"
-          >
-            Top Vendedores
-          </Link>
-          <div className="flex items-center gap-3 pt-2 border-t" style={{ borderColor: 'var(--border)' }}>
-            {mounted && (
-              <button
-                onClick={toggleTheme}
-                style={{ color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
-                className="w-9 h-9 rounded-full flex items-center justify-center"
-                aria-label={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-              >
-                {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-              </button>
-            )}
-            <Link
-              href="/registro"
-              style={{ backgroundColor: 'var(--accent)', color: '#FFFFFF' }}
-              className="flex-1 text-center px-5 py-2 rounded-full text-sm font-semibold"
-              onClick={() => setMenuOpen(false)}
-            >
-              Registrarse
-            </Link>
-          </div>
-        </div>
-      )}
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(-6px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </header>
+  )
+}
+
+function DropdownItem({ href, icon, label, onClick }: { href: string; icon: React.ReactNode; label: string; onClick: () => void }) {
+  return (
+    <Link href={href} onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, textDecoration: 'none', color: 'var(--text-primary)', fontSize: 13, fontWeight: 500 }} className="hover:bg-[var(--bg-secondary)]">
+      <span style={{ color: 'var(--text-muted)' }}>{icon}</span>
+      {label}
+    </Link>
   )
 }
