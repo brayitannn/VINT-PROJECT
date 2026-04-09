@@ -14,7 +14,6 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { ThemeProvider } from '@/components/layout/ThemeProvider'
 import { Navbar } from '@/components/layout/Navbar'
-import { RoleProvider } from '@/components/layout/RoleContext'
 import { FavoritesProvider } from '@/components/layout/FavoritesContext'
 import { AuthProvider } from '@/context/AuthContext'
 
@@ -54,12 +53,10 @@ export default function RootLayout({
 
         <ThemeProvider>
           <AuthProvider>
-            <RoleProvider>
-              <FavoritesProvider>
-                <Navbar />
-                {children}
-              </FavoritesProvider>
-            </RoleProvider>
+            <FavoritesProvider>
+              <Navbar />
+              {children}
+            </FavoritesProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

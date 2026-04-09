@@ -52,12 +52,13 @@ export function PublicNavbar() {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, borderLeft: '1px solid var(--border)', paddingLeft: 16 }}>
             <Link href="/login" style={{ 
-              background: 'transparent', border: 'none', fontSize: 14, fontWeight: 600, 
-              color: 'var(--text-primary)', cursor: 'pointer', textDecoration: 'none'
-            }}>
+              backgroundColor: 'var(--text-primary)', color: 'var(--bg-primary)', 
+              padding: '10px 24px', borderRadius: 999, fontSize: 14, fontWeight: 600, 
+              textDecoration: 'none', transition: 'transform 0.2s, opacity 0.2s'
+            }} className="hover:opacity-90 hover:-translate-y-0.5">
               Ingresar
             </Link>
-            <Link href="/registro" style={{ 
+            <Link href="/register" style={{ 
               backgroundColor: 'var(--text-primary)', color: 'var(--bg-primary)', 
               padding: '10px 24px', borderRadius: 999, fontSize: 14, fontWeight: 600, 
               textDecoration: 'none', transition: 'transform 0.2s, opacity 0.2s'

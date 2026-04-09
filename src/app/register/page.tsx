@@ -1,19 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, Suspense, useEffect } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { Loader2, Check } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 import { getSupabaseClient } from "@/lib/supabase/client";
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { signIn } = useAuth();
   const supabase = getSupabaseClient();
 
@@ -22,8 +22,15 @@ export default function RegisterPage() {
     email: "",
     password: "",
     confirmPassword: "",
-    userType: "buyer",
+    userType: "comprador",
   });
+
+  useEffect(() => {
+    const roleParam = searchParams.get("role");
+    if (roleParam === "vendedor") {
+      setFormData(prev => ({ ...prev, userType: "vendedor" }));
+    }
+  }, [searchParams]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +44,7 @@ export default function RegisterPage() {
       return;
     }
     if (formData.password.length < 6) {
-      setError("Mínimo 6 caracteres");
+      setError("La contraseña debe tener mínimo 6 caracteres");
       return;
     }
 
@@ -56,14 +63,16 @@ export default function RegisterPage() {
 
       if (signUpError) throw signUpError;
       await signIn(formData.email, formData.password);
-      router.push("/");
+      
+      // ✅ Redirigir al dashboard según el rol escogido
+      router.push(`/dashboard/${formData.userType}`);
+      
     } catch (err: any) {
       if (err.message?.includes("User already registered")) {
         setError("Este correo ya está registrado");
       } else {
         setError("Error al crear la cuenta");
       }
-    } finally {
       setLoading(false);
     }
   };
@@ -76,169 +85,206 @@ export default function RegisterPage() {
   ];
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center px-4 py-16"
-      style={{ backgroundColor: "var(--bg-primary)" }}
+    <div 
+      className="w-full max-w-[500px] p-8 sm:p-12 relative z-10"
+      style={{
+        backgroundColor: "var(--bg-card)",
+        borderRadius: "20px",
+        boxShadow: "0 20px 60px var(--shadow)",
+      }}
     >
-      <div className="w-full max-w-md animate-fade-in-up">
+      <div className="mb-8 text-center flex flex-col items-center">
+        <h1
+          className="font-display text-4xl sm:text-[40px] mb-2 tracking-wide font-bold"
+          style={{ color: "var(--text-primary)" }}
+        >
+          Únete a VINT ✨
+        </h1>
+        <p className="text-[15px]" style={{ color: "var(--text-secondary)" }}>
+          Únete a la mejor comunidad de moda vintage
+        </p>
+      </div>
 
-        <div className="text-center mb-8">
-          <h1 className="font-display text-4xl font-bold" style={{ color: "var(--text-primary)" }}>
-            Vint
-          </h1>
-          <p className="mt-2 text-sm" style={{ color: "var(--text-secondary)" }}>
-            Ropa de segunda mano
-          </p>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        {error && (
+          <div
+            className="text-[15px] font-medium text-center rounded-xl py-3 px-4"
+            style={{
+              backgroundColor: "#fee2e2",
+              color: "#b91c1c",
+              border: "1px solid #fecaca",
+            }}
+          >
+            {error}
+          </div>
+        )}
+
+        <div className="flex flex-col gap-6">
+          {fields.map((field) => (
+            <div key={field.id} className="flex flex-col gap-2 relative">
+              <label
+                htmlFor={field.id}
+                className="uppercase font-semibold ml-1"
+                style={{ 
+                  fontSize: "11px", 
+                  letterSpacing: "0.12em", 
+                  color: "var(--accent)" 
+                }}
+              >
+                {field.label}
+              </label>
+              <Input
+                id={field.id}
+                type={field.type}
+                placeholder={field.placeholder}
+                value={(formData as any)[field.id]}
+                onChange={(e) => setFormData({ ...formData, [field.id]: e.target.value })}
+                required
+                className="h-12 w-full text-[15px] px-4 transition-all duration-300 outline-none vint-input-glow vint-placeholder"
+                style={{
+                  borderRadius: "12px",
+                  backgroundColor: "var(--bg-secondary)",
+                  border: "1px solid transparent",
+                  color: "var(--text-primary)",
+                }}
+              />
+            </div>
+          ))}
         </div>
 
-        <Card
-          className="border shadow-lg"
-          style={{
-            backgroundColor: "var(--bg-card)",
-            borderColor: "var(--border)",
-            boxShadow: "0 8px 32px var(--shadow)",
-          }}
-        >
-          <CardHeader className="px-8 pt-8 pb-2 space-y-1">
-            <CardTitle
-              className="text-2xl font-bold text-center font-display"
-              style={{ color: "var(--text-primary)" }}
-            >
-              Crear Cuenta
-            </CardTitle>
-            <CardDescription
-              className="text-center text-sm"
-              style={{ color: "var(--text-secondary)" }}
-            >
-              Únete a la comunidad de Ropa S.H.
-            </CardDescription>
-          </CardHeader>
+        <div className="flex flex-col gap-3 pt-2 pb-1">
+          <label
+            className="uppercase font-semibold ml-1"
+            style={{ fontSize: "11px", letterSpacing: "0.12em", color: "var(--accent)" }}
+          >
+            Selecciona tu perfil principal
+          </label>
 
-          <CardContent className="px-8 pb-8 pt-4">
-            <form onSubmit={handleSubmit} className="space-y-5">
-
-              {error && (
-                <div className="text-red-500 text-sm text-center bg-red-50 rounded-lg py-2 px-3">
-                  {error}
-                </div>
-              )}
-
-              {fields.map((field) => (
-                <div key={field.id} className="space-y-1.5">
-                  <Label
-                    htmlFor={field.id}
-                    className="text-sm font-medium"
-                    style={{ color: "var(--text-primary)" }}
-                  >
-                    {field.label}
-                  </Label>
-                  <Input
-                    id={field.id}
-                    type={field.type}
-                    placeholder={field.placeholder}
-                    value={(formData as any)[field.id]}
-                    onChange={(e) => setFormData({ ...formData, [field.id]: e.target.value })}
-                    required
-                    style={{
-                      backgroundColor: "var(--bg-secondary)",
-                      borderColor: "var(--border)",
-                      color: "var(--text-primary)",
-                    }}
-                    className="h-11 rounded-lg"
-                  />
-                </div>
-              ))}
-
-              <div className="space-y-3">
-                <Label
-                  className="text-sm font-medium"
-                  style={{ color: "var(--text-primary)" }}
+          <RadioGroup
+            value={formData.userType}
+            onValueChange={(value) => setFormData({ ...formData, userType: value })}
+            className="grid grid-cols-2 gap-4"
+          >
+            {[
+              { value: "comprador", label: "Quiero Comprar" },
+              { value: "vendedor", label: "Quiero Vender" },
+            ].map((type) => {
+              const isSelected = formData.userType === type.value;
+              return (
+                <div
+                  key={type.value}
+                  className="relative flex flex-row items-center justify-center p-3 cursor-pointer transition-all duration-300"
+                  style={{
+                    borderRadius: "12px",
+                    backgroundColor: isSelected ? "var(--bg-primary)" : "var(--bg-secondary)",
+                    border: isSelected ? "1px solid var(--accent)" : "1px solid transparent",
+                    boxShadow: isSelected ? "0 2px 10px var(--shadow)" : "none",
+                  }}
+                  onClick={() => setFormData({ ...formData, userType: type.value })}
                 >
-                  Tipo de cuenta
-                </Label>
-
-                <RadioGroup
-                  value={formData.userType}
-                  onValueChange={(value) => setFormData({ ...formData, userType: value })}
-                  className="space-y-2"
-                >
-                  {[
-                    { value: "buyer", label: "Comprador", desc: "Busco comprar ropa de segunda mano" },
-                    { value: "seller", label: "Vendedor", desc: "Quiero vender mi ropa" },
-                  ].map((type) => (
-                    <div
-                      key={type.value}
-                      className="flex items-center space-x-3 rounded-lg border p-3 cursor-pointer transition-all hover:opacity-80"
-                      style={{
-                        borderColor: formData.userType === type.value ? "var(--accent)" : "var(--border)",
-                        backgroundColor: formData.userType === type.value ? "var(--accent-light)" : "transparent",
-                      }}
-                    >
-                      <RadioGroupItem value={type.value} id={type.value} />
-                      <Label
-                        htmlFor={type.value}
-                        className="flex-1 cursor-pointer"
-                      >
-                        <div className="font-medium text-sm" style={{ color: "var(--text-primary)" }}>
-                          {type.label}
-                        </div>
-                        <div className="text-xs mt-0.5" style={{ color: "var(--text-secondary)" }}>
-                          {type.desc}
-                        </div>
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              </div>
-
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full h-11 rounded-lg font-medium text-white transition-all"
-                style={{
-                  background: "linear-gradient(to right, var(--accent), #c2763a)",
-                  opacity: loading ? 0.7 : 1,
-                }}
-              >
-                {loading ? "Creando..." : "Crear Cuenta"}
-              </Button>
-
-              <div className="relative my-2">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t" style={{ borderColor: "var(--border)" }} />
-                </div>
-                <div className="relative flex justify-center text-xs">
+                  <RadioGroupItem value={type.value} id={type.value} className="sr-only" />
+                  {isSelected && (
+                     <Check className="absolute left-3 w-4 h-4" style={{ color: "var(--accent)" }} />
+                  )}
                   <span
-                    className="px-3"
-                    style={{
-                      backgroundColor: "var(--bg-card)",
-                      color: "var(--text-muted)",
+                    className="text-[14px] font-semibold text-center mt-[1px]"
+                    style={{ 
+                      color: isSelected ? "var(--accent)" : "var(--text-muted)",
+                      marginLeft: isSelected ? "12px" : "0",
+                      transition: "margin 0.3s ease"
                     }}
                   >
-                    ¿Ya tienes cuenta?
+                    {type.label}
                   </span>
                 </div>
-              </div>
+              )
+            })}
+          </RadioGroup>
+        </div>
 
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full h-11 rounded-lg font-medium transition-all"
-                style={{
-                  borderColor: "var(--accent)",
-                  color: "var(--accent)",
-                  backgroundColor: "transparent",
-                }}
-                onClick={() => router.push("/login")}
-              >
-                Iniciar sesión
-              </Button>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full h-[52px] text-[15px] font-bold text-white mt-4 border-0 hover-scale flex items-center justify-center gap-2 relative overflow-hidden"
+          style={{
+            borderRadius: "12px",
+            background: "linear-gradient(to right, var(--accent), var(--accent-hover))",
+            boxShadow: "0 8px 20px var(--shadow)",
+            opacity: loading ? 0.7 : 1,
+          }}
+        >
+          {loading ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" /> Creando cuenta...
+            </>
+          ) : "Crear cuenta gratis"}
+        </button>
 
-            </form>
-          </CardContent>
-        </Card>
+        <div className="relative py-4 flex items-center justify-center w-full">
+          <div className="flex-1 border-t" style={{ borderColor: "var(--border)" }}></div>
+          <span
+            className="px-4 uppercase font-semibold"
+            style={{
+              fontSize: "11px",
+              letterSpacing: "0.1em",
+              color: "var(--text-muted)",
+            }}
+          >
+            ¿Ya tienes cuenta?
+          </span>
+          <div className="flex-1 border-t" style={{ borderColor: "var(--border)" }}></div>
+        </div>
 
-      </div>
+        <div className="text-center pb-2">
+          <Link
+             href="/login"
+             className="font-bold text-[15px] hover:opacity-80 transition-opacity drop-shadow-sm"
+             style={{ color: "var(--accent)" }}
+          >
+             Iniciar sesión
+          </Link>
+        </div>
+        
+        <div className="mt-2 text-center text-xs">
+         <Link href="/" className="font-medium hover:underline" style={{ color: "var(--text-muted)" }}>
+            &larr; Volver al inicio
+         </Link>
+        </div>
+      </form>
     </div>
   );
+}
+
+export default function RegisterPage() {
+  return (
+    <div
+      className="min-h-screen py-16 px-4 flex items-center justify-center relative animate-fade-in-up my-auto"
+      style={{ backgroundColor: "var(--bg-primary)" }}
+    >
+      <style jsx global>{`
+        .vint-input-glow:focus {
+          box-shadow: 0 0 0 2px var(--accent) !important;
+          border-color: var(--accent) !important;
+        }
+        .vint-placeholder::placeholder {
+          color: var(--text-muted) !important;
+          opacity: 0.8;
+        }
+        .hover-scale {
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .hover-scale:hover {
+          transform: scale(1.02);
+          box-shadow: 0 10px 25px var(--shadow);
+        }
+      `}</style>
+      
+      {/* Texture Layer */}
+      <div className="absolute inset-0 pointer-events-none mix-blend-multiply opacity-[0.04]" style={{ backgroundImage: "url('data:image/svg+xml;utf8,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')" }}></div>
+
+      <Suspense fallback={<div className="relative z-10 w-full max-w-[500px] flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-[var(--accent)]" /></div>}>
+        <RegisterForm />
+      </Suspense>
+    </div>
+  )
 }

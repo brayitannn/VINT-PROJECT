@@ -1,14 +1,13 @@
 'use client'
 
 import { useTheme } from 'next-themes'
-import { Sun, Moon, Bell, ShoppingCart, User, ChevronDown, LogOut, Settings, Package, Heart, LayoutDashboard } from 'lucide-react'
+import { Sun, Moon, Bell, ShoppingCart, ChevronDown, LogOut, Settings, Package, Heart, LayoutDashboard } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { FavoritesModal } from '../products/FavoritesModal'
-import { usePathname } from 'next/navigation'
-import { useRole } from './RoleContext'
-import { MOCK_USER } from '@/lib/supabase/mock-user'
+import { usePathname, useRouter } from 'next/navigation'
+import { useAuth } from '@/context/AuthContext'
 
 export function Navbar() {
   const { theme, setTheme } = useTheme()
@@ -17,20 +16,22 @@ export function Navbar() {
   const [favoritesOpen, setFavoritesOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
-  const { role, setRole } = useRole()
+  const router = useRouter()
+  const { user, signOut, loading } = useAuth()
 
-  // --- DETECCIÓN DE RUTAS CORREGIDA ---
-  if (pathname === '/') {
-    return null;
-  }
-
-  const isDashboard = pathname?.startsWith('/dashboard')
-  const isInventoryPage = pathname?.startsWith('/products')
-  const isExplorar = pathname === '/explorar'
-  const isPerfil = pathname === '/perfil'
+  let role = user?.user_metadata?.role || 'comprador';
+  if (role === "buyer") role = "comprador";
+  if (role === "seller") role = "vendedor";
   
-  // Si estamos en dashboard, inventario, explorar o perfil, activamos la Navbar de usuario logueado
-  const isProtectedRoute = isDashboard || isInventoryPage || isExplorar || isPerfil
+  const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuario';
+  const userEmail = user?.email || '';
+  const initials = userName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+
+  const isDashboard = pathname?.startsWith('/dashboard');
+  const isInventoryPage = pathname?.startsWith('/products');
+  const isExplorar = pathname === '/explorar';
+  const isPerfil = pathname === '/perfil';
+  const isProtectedRoute = isDashboard || isInventoryPage || isExplorar || isPerfil;
 
   useEffect(() => setMounted(true), [])
 
@@ -44,6 +45,16 @@ export function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  const handleLogout = async () => {
+    await signOut();
+    router.push('/login');
+  };
+
+  // --- DETECCIÓN DE RUTAS PARA HOME ---
+  if (pathname === '/') {
+    return null;
+  }
+
   const iconButtonStyle: React.CSSProperties = {
     width: 38, height: 38, borderRadius: '50%',
     border: '1px solid var(--border)', background: 'transparent',
@@ -51,8 +62,6 @@ export function Navbar() {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     transition: 'all 0.2s ease',
   }
-
-  const initials = MOCK_USER.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
 
   return (
     <header style={{
@@ -76,33 +85,6 @@ export function Navbar() {
           }}>Vint</span>
         </Link>
 
-        {/* SWITCH DE ROL (Aparecerá en /products) */}
-        {isProtectedRoute && (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 4,
-            backgroundColor: 'var(--bg-secondary)',
-            border: '1px solid var(--border)',
-            borderRadius: 999, padding: '4px',
-          }}>
-            {(['comprador', 'vendedor'] as const).map((r) => (
-              <button
-                key={r}
-                onClick={() => setRole(r)}
-                style={{
-                  padding: '6px 16px', borderRadius: 999, border: 'none',
-                  fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                  backgroundColor: role === r ? 'var(--accent)' : 'transparent',
-                  color: role === r ? 'white' : 'var(--text-secondary)',
-                  transition: 'all 0.2s ease',
-                  textTransform: 'capitalize',
-                }}
-              >
-                {r}
-              </button>
-            ))}
-          </div>
-        )}
-
         {/* ACCIONES DERECHA */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
 
@@ -116,7 +98,7 @@ export function Navbar() {
             </button>
           )}
 
-          {isProtectedRoute ? (
+          {(!loading && user) ? (
             /* VISTA DE USUARIO AUTENTICADO */
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <button style={iconButtonStyle} className="nav-icon-btn"><Bell size={18} /></button>
@@ -153,7 +135,7 @@ export function Navbar() {
                     {initials}
                   </div>
                   <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
-                    {MOCK_USER.name.split(' ')[0]}
+                    {userName.split(' ')[0]}
                   </span>
                   <ChevronDown size={14} style={{
                     color: 'var(--text-muted)',
@@ -172,8 +154,8 @@ export function Navbar() {
                     animation: 'fadeIn 0.2s ease-out'
                   }}>
                     <div style={{ padding: '16px', borderBottom: '1px solid var(--border)', backgroundColor: 'var(--bg-secondary)' }}>
-                      <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{MOCK_USER.name}</p>
-                      <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '2px 0 0' }}>{MOCK_USER.email}</p>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{userName}</p>
+                      <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '2px 0 0' }}>{userEmail}</p>
                     </div>
                     <div style={{ padding: '8px' }}>
                       <DropdownItem href="/dashboard" icon={<LayoutDashboard size={15} />} label="Mi Dashboard" onClick={() => setMenuOpen(false)} />
@@ -209,6 +191,7 @@ export function Navbar() {
                       <DropdownItem href="/perfil" icon={<Settings size={15} />} label="Configuración" onClick={() => setMenuOpen(false)} />
                       <div style={{ borderTop: '1px solid var(--border)', marginTop: 8, paddingTop: 8 }}>
                         <button 
+                          onClick={handleLogout}
                           style={{
                             width: '100%', display: 'flex', alignItems: 'center', gap: 10,
                             padding: '10px 12px', borderRadius: 10, border: 'none',
@@ -229,10 +212,12 @@ export function Navbar() {
 
           ) : (
             /* VISTA INVITADO */
-            <>
-              <button style={{ background: 'transparent', border: 'none', fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', cursor: 'pointer' }}>Ingresar</button>
-              <Link href="/registro" style={{ backgroundColor: 'var(--accent)', color: 'white', padding: '8px 20px', borderRadius: 999, fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>Registrarse</Link>
-            </>
+            (!loading && (
+              <>
+                <Link href="/login" style={{ background: 'transparent', border: 'none', fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', cursor: 'pointer', marginRight: 12, textDecoration: 'none' }}>Ingresar</Link>
+                <Link href="/register" style={{ backgroundColor: 'var(--text-primary)', color: 'var(--bg-primary)', padding: '10px 24px', borderRadius: 999, fontSize: 14, fontWeight: 600, textDecoration: 'none' }} className="hover:opacity-90 transition-opacity">Registrarse</Link>
+              </>
+            ))
           )}
         </div>
       </nav>

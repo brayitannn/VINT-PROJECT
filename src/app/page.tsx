@@ -61,8 +61,8 @@ export default async function HomePage() {
           </p>
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/vender" style={{ backgroundColor: 'var(--accent)', color: 'white', padding: '12px 28px', borderRadius: 12, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>Comenzar a Vender →</Link>
-            <Link href="/explorar" style={{ backgroundColor: 'transparent', color: 'var(--accent)', border: '2px solid var(--accent)', padding: '12px 28px', borderRadius: 12, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>Explorar Productos</Link>
+            <Link href="/register?role=vendedor" style={{ backgroundColor: 'var(--accent)', color: 'white', padding: '12px 28px', borderRadius: 12, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>Comenzar a Vender →</Link>
+            <Link href="/login" style={{ backgroundColor: 'transparent', color: 'var(--accent)', border: '2px solid var(--accent)', padding: '12px 28px', borderRadius: 12, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>Explorar Productos</Link>
           </div>
         </div>
       </section>
@@ -95,7 +95,7 @@ export default async function HomePage() {
               <h2 style={{ fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, color: 'var(--text-primary)' }}>De lo mejor que podras encontrar</h2>
               <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 6 }}>Selección precisa de las mejores publicaciones del día</p>
             </div>
-            <Link href="/explorar" style={{ fontSize: 14, fontWeight: 600, color: 'var(--accent)', textDecoration: 'none' }}>Ver todas →</Link>
+            <Link href="/login" style={{ fontSize: 14, fontWeight: 600, color: 'var(--accent)', textDecoration: 'none' }}>Ver todas →</Link>
           </div>
 
           <AutoCarousel>
@@ -111,7 +111,7 @@ export default async function HomePage() {
           </AutoCarousel>
 
           <div style={{ textAlign: 'center', marginTop: 48 }}>
-            <Link href="/explorar" style={{ backgroundColor: 'var(--accent)', color: 'white', padding: '14px 36px', borderRadius: 12, fontSize: 15, fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+            <Link href="/login" style={{ backgroundColor: 'var(--accent)', color: 'white', padding: '14px 36px', borderRadius: 12, fontSize: 15, fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
               Ver Todos los Productos →
             </Link>
           </div>
