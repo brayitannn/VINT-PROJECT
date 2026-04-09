@@ -13,6 +13,7 @@ export default function ProductsPage() {
   const {
     products,
     categories,
+    marcas,
     loading,
     error,
     filters,
@@ -242,6 +243,7 @@ export default function ProductsPage() {
       <ProductModal
         open={modalOpen}
         product={editingProduct}
+        marcas={marcas}
         onClose={() => setModalOpen(false)}
         onSubmit={handleModalSubmit}
       />

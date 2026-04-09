@@ -1,14 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTheme } from 'next-themes'
 import { useRole } from '@/components/layout/RoleContext'
-import { MOCK_USER } from '@/lib/supabase/mock-user'
+import { useSearchParams } from 'next/navigation'
 import {
   User, Lock, Bell, Shield, Palette, HelpCircle,
   AlertTriangle, ChevronRight, Camera, Save, Check,
   Sun, Moon, Eye, EyeOff, MessageCircle, FileText, Trash2
 } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
+import { createClient } from '@/lib/supabase/client'
 
 type Section = 'perfil' | 'cuenta' | 'notificaciones' | 'privacidad' | 'apariencia' | 'ayuda' | 'peligro'
 
@@ -125,14 +127,50 @@ function ToggleRow({ label, description, checked, onChange }: { label: string; d
 // ── Sections ────────────────────────────────────────────────────────────────
 
 function PerfilSection() {
-  const [name, setName] = useState(MOCK_USER.name)
-  const [username, setUsername] = useState(MOCK_USER.username)
-  const [email, setEmail] = useState(MOCK_USER.email)
-  const [location, setLocation] = useState(MOCK_USER.location)
-  const [saved, setSaved] = useState(false)
-  const initials = MOCK_USER.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+  const { user } = useAuth()
+  const supabase = createClient()
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleSave = () => { setSaved(true); setTimeout(() => setSaved(false), 2500) }
+  const realName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuario'
+  const realEmail = user?.email || ''
+  const realUsername = realEmail.split('@')[0]
+  const avatarUrl: string | null = user?.user_metadata?.avatar_url || null
+  const realLocation = user?.user_metadata?.location || 'Colombia'
+
+  const [name, setName] = useState(realName)
+  const [username, setUsername] = useState(realUsername)
+  const [email] = useState(realEmail)
+  const [location, setLocation] = useState(realLocation)
+  const [saved, setSaved] = useState(false)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(avatarUrl)
+  const [uploading, setUploading] = useState(false)
+
+  const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+
+  const handleSave = async () => {
+    if (!user) return
+    await supabase.auth.updateUser({ data: { name, location } })
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2500)
+  }
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !user) return
+    setUploading(true)
+    const ext = file.name.split('.').pop()
+    const path = `avatars/${user.id}.${ext}`
+    const { data, error } = await supabase.storage
+      .from('avatars')
+      .upload(path, file, { upsert: true, contentType: file.type })
+    if (!error && data) {
+      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path)
+      const publicUrl = urlData.publicUrl
+      await supabase.auth.updateUser({ data: { avatar_url: publicUrl } })
+      setAvatarPreview(publicUrl)
+    }
+    setUploading(false)
+  }
 
   return (
     <>
@@ -146,25 +184,44 @@ function PerfilSection() {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 28, fontWeight: 800, color: 'white',
               boxShadow: '0 8px 24px rgba(139,94,60,0.3)',
-            }}>{initials}</div>
-            <button style={{
-              position: 'absolute', bottom: 0, right: 0,
-              width: 28, height: 28, borderRadius: '50%', border: '2px solid var(--bg-primary)',
-              backgroundColor: 'var(--accent)', color: 'white',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+              overflow: 'hidden',
             }}>
+              {avatarPreview
+                ? <img src={avatarPreview} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : initials}
+            </div>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                position: 'absolute', bottom: 0, right: 0,
+                width: 28, height: 28, borderRadius: '50%', border: '2px solid var(--bg-primary)',
+                backgroundColor: 'var(--accent)', color: 'white',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+              }}
+            >
               <Camera size={13} />
             </button>
           </div>
           <div>
-            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 4px' }}>{MOCK_USER.name}</p>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 12px' }}>@{MOCK_USER.username}</p>
-            <button style={{
-              padding: '8px 16px', borderRadius: 10, border: '1px solid var(--border)',
-              backgroundColor: 'transparent', color: 'var(--text-primary)',
-              fontSize: 13, fontWeight: 600, cursor: 'pointer',
-            }}>
-              Subir nueva foto
+            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 4px' }}>{name}</p>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 12px' }}>@{username}</p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              style={{ display: 'none' }}
+              onChange={handleAvatarChange}
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              style={{
+                padding: '8px 16px', borderRadius: 10, border: '1px solid var(--border)',
+                backgroundColor: 'transparent', color: uploading ? 'var(--text-muted)' : 'var(--text-primary)',
+                fontSize: 13, fontWeight: 600, cursor: uploading ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {uploading ? 'Subiendo...' : 'Subir nueva foto'}
             </button>
           </div>
         </div>
@@ -175,7 +232,7 @@ function PerfilSection() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px' }}>
           <FieldRow label="Nombre completo"><Input value={name} onChange={setName} /></FieldRow>
           <FieldRow label="Nombre de usuario"><Input value={username} onChange={setUsername} placeholder="@username" /></FieldRow>
-          <FieldRow label="Email"><Input value={email} onChange={setEmail} type="email" /></FieldRow>
+          <FieldRow label="Email"><Input value={email} onChange={() => {}} type="email" /></FieldRow>
           <FieldRow label="Ciudad"><Input value={location} onChange={setLocation} placeholder="Bogotá, Colombia" /></FieldRow>
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
@@ -243,13 +300,23 @@ function CuentaSection() {
 }
 
 function NotificacionesSection() {
-  const [notifs, setNotifs] = useState({
-    emailOfertas: true, emailNuevas: false, emailResumen: true,
-    pushMensajes: true, pushVentas: true, pushFavoritos: false,
+  const [notifs, setNotifs] = useState(() => {
+    try {
+      const saved = typeof window !== 'undefined' ? localStorage.getItem('vint_notif_prefs') : null
+      if (saved) return JSON.parse(saved)
+    } catch {}
+    return {
+      emailOfertas: true, emailNuevas: false, emailResumen: true,
+      pushMensajes: true, pushVentas: true, pushFavoritos: false,
+    }
   })
   const [saved, setSaved] = useState(false)
-  const set = (key: keyof typeof notifs) => (v: boolean) => setNotifs(n => ({ ...n, [key]: v }))
-  const handleSave = () => { setSaved(true); setTimeout(() => setSaved(false), 2500) }
+  const set = (key: keyof typeof notifs) => (v: boolean) => setNotifs((n: typeof notifs) => ({ ...n, [key]: v }))
+  const handleSave = () => {
+    localStorage.setItem('vint_notif_prefs', JSON.stringify(notifs))
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2500)
+  }
 
   return (
     <SectionCard title="Preferencias de Notificaciones" description="Controla qué mensajes recibes y cómo">
@@ -271,12 +338,20 @@ function NotificacionesSection() {
 }
 
 function PrivacidadSection() {
-  const [priv, setPriv] = useState({
-    perfilPublico: true, mostrarUbicacion: true, mostrarCompras: false,
+  const [priv, setPriv] = useState(() => {
+    try {
+      const saved = typeof window !== 'undefined' ? localStorage.getItem('vint_privacy_prefs') : null
+      if (saved) return JSON.parse(saved)
+    } catch {}
+    return { perfilPublico: true, mostrarUbicacion: true, mostrarCompras: false }
   })
   const [saved, setSaved] = useState(false)
-  const set = (key: keyof typeof priv) => (v: boolean) => setPriv(p => ({ ...p, [key]: v }))
-  const handleSave = () => { setSaved(true); setTimeout(() => setSaved(false), 2500) }
+  const set = (key: keyof typeof priv) => (v: boolean) => setPriv((p: typeof priv) => ({ ...p, [key]: v }))
+  const handleSave = () => {
+    localStorage.setItem('vint_privacy_prefs', JSON.stringify(priv))
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2500)
+  }
 
   return (
     <SectionCard title="Configuración de Privacidad" description="Controla qué información está disponible para otros usuarios">
@@ -293,6 +368,13 @@ function PrivacidadSection() {
 function AparienciaSection() {
   const { theme, setTheme } = useTheme()
   const { role, setRole } = useRole()
+  const [saved, setSaved] = useState(false)
+
+  const handleSave = () => {
+    // next-themes persiste automáticamente en localStorage, solo damos feedback
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2500)
+  }
 
   return (
     <>
@@ -328,8 +410,10 @@ function AparienciaSection() {
             )
           })}
         </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+          <SaveButton onClick={handleSave} saved={saved} />
+        </div>
       </SectionCard>
-
     </>
   )
 }
@@ -425,8 +509,40 @@ function PeligroSection() {
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 
+function UserPill() {
+  const { user } = useAuth()
+  const name = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuario'
+  const email = user?.email || ''
+  const username = email.split('@')[0]
+  const avatarUrl: string | null = user?.user_metadata?.avatar_url || null
+  const initials = name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+  return (
+    <>
+      <div style={{ width: 40, height: 40, borderRadius: '50%', backgroundColor: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: 'white', overflow: 'hidden', flexShrink: 0 }}>
+        {avatarUrl ? <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
+      </div>
+      <div>
+        <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{name.split(' ')[0]}</p>
+        <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>@{username}</p>
+      </div>
+    </>
+  )
+}
+
 export function PerfilClient() {
-  const [active, setActive] = useState<Section>('perfil')
+  const searchParams = useSearchParams()
+  const tabFromUrl = searchParams.get('tab') as Section | null
+  const VALID_TABS: Section[] = ['perfil', 'cuenta', 'notificaciones', 'privacidad', 'apariencia', 'ayuda', 'peligro']
+  const [active, setActive] = useState<Section>(
+    tabFromUrl && VALID_TABS.includes(tabFromUrl) ? tabFromUrl : 'perfil'
+  )
+
+  // Sincronizar si el usuario llega con un ?tab= diferente después de montar
+  useEffect(() => {
+    if (tabFromUrl && VALID_TABS.includes(tabFromUrl)) {
+      setActive(tabFromUrl)
+    }
+  }, [tabFromUrl])
 
   const SECTION_CONTENT: Record<Section, React.ReactNode> = {
     perfil: <PerfilSection />,
@@ -466,13 +582,7 @@ export function PerfilClient() {
             <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 20, overflow: 'hidden', padding: 8 }}>
               {/* User pill */}
               <div style={{ padding: '16px 12px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid var(--border)', paddingBottom: 16, marginBottom: 8 }}>
-                <div style={{ width: 40, height: 40, borderRadius: '50%', backgroundColor: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: 'white' }}>
-                  {MOCK_USER.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
-                </div>
-                <div>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{MOCK_USER.name.split(' ')[0]}</p>
-                  <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>@{MOCK_USER.username}</p>
-                </div>
+                <UserPill />
               </div>
 
               {SIDEBAR_ITEMS.map(item => {
