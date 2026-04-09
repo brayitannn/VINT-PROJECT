@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import type { User } from "@supabase/supabase-js";
 import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 
-import { getSupabaseClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 
 type AuthContextType = {
   user: User | null;
@@ -21,7 +21,7 @@ type Props = {
 };
 
 export function AuthProvider({ children }: Props) {
-  const supabase = getSupabaseClient(); // ✅ cliente correcto
+  const supabase = createClient(); // ✅ cliente correcto
 
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);

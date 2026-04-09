@@ -12,3 +12,5 @@ export function getSupabaseClient() {
 
   return supabaseClient;
 }
+
+export const createClient = getSupabaseClient;

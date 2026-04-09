@@ -1,14 +1,8 @@
-    'use client'
+'use client'
 
-    /* el ThemeProvider.tsx
-
-        tecnicamente lo que hace es envolver la aplicación para darle en general el sistema de temas
-        al usar next-themes que maneja dos cosas automáticamente: Guardar la preferencia del usuario en localStorage, Aplicar el atributo data-theme al <html>
-
-    */
-
-    import { ThemeProvider as NextThemesProvider } from 'next-themes'
-    import { ReactNode } from 'react'
+import { ThemeProvider as NextThemesProvider, useTheme } from 'next-themes'
+export { useTheme }
+import { ReactNode } from 'react'
 
     interface Props {
         children: ReactNode
