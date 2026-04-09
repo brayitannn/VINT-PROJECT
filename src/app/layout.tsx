@@ -15,6 +15,7 @@ import './globals.css'
 import { ThemeProvider } from '@/components/layout/ThemeProvider'
 import { Navbar } from '@/components/layout/Navbar'
 import { FavoritesProvider } from '@/components/layout/FavoritesContext'
+import { CartProvider } from '@/components/layout/CartContext'
 import { AuthProvider } from '@/context/AuthContext'
 
 
@@ -54,8 +55,10 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <FavoritesProvider>
-              <Navbar />
-              {children}
+              <CartProvider>
+                <Navbar />
+                {children}
+              </CartProvider>
             </FavoritesProvider>
           </AuthProvider>
         </ThemeProvider>

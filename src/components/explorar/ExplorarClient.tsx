@@ -6,6 +6,7 @@ import { Search, X, LayoutGrid, List, ArrowUpDown } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { ProductCard, type Product } from '@/components/products/ProductCard'
 import { FilterSidebar, type Filters } from '@/components/explorar/FilterSidebar'
+import { ProductDetailModal } from '@/components/products/ProductDetailModal'
 
 type SortOption = 'reciente' | 'precio_asc' | 'precio_desc'
 
@@ -79,6 +80,7 @@ export function ExplorarClient() {
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [searchInput, setSearchInput] = useState(filters.search)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
 
   // Sync URL with filters
   const syncURL = useCallback((f: Filters, s: SortOption) => {
@@ -376,13 +378,19 @@ export function ExplorarClient() {
               ? <EmptyState query={filters.search} />
               : products.map((p, i) => (
                   <li key={p.id} className="product-item" style={{ opacity: 0, animationDelay: `${i * 0.04}s` }}>
-                    <ProductCard product={p} />
+                    <ProductCard product={p} onOpen={setSelectedProduct} />
                   </li>
                 ))
             }
           </ul>
         </div>
       </div>
+
+      {/* Product detail modal */}
+      <ProductDetailModal
+        product={selectedProduct}
+        onClose={() => setSelectedProduct(null)}
+      />
     </>
   )
 }

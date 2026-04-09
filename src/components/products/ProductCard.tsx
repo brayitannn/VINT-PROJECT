@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { Heart, ShoppingCart } from 'lucide-react'
 import { useFavorites } from '@/components/layout/FavoritesContext'
+import { useCart } from '@/components/layout/CartContext'
 
 export interface Product {
   id: number
@@ -17,6 +18,7 @@ export interface Product {
 
 interface ProductCardProps {
   product: Product
+  onOpen?: (product: Product) => void
 }
 
 function formatPrice(price: number): string {
@@ -34,10 +36,12 @@ function getConditionStyle(condition: Product['condition']): React.CSSProperties
   }
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, onOpen }: ProductCardProps) {
   const { isFavorito, toggleFavorito } = useFavorites()
+  const { addItem, isInCart } = useCart()
   const productId = product.id.toString()
   const isLiked = isFavorito(productId)
+  const inCart = isInCart(product.id)
 
   const handleLike = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -45,8 +49,19 @@ export function ProductCard({ product }: ProductCardProps) {
     toggleFavorito(productId)
   }
 
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    addItem(product)
+  }
+
+  const handleCardClick = () => {
+    onOpen?.(product)
+  }
+
   return (
     <article
+      onClick={handleCardClick}
       style={{
         backgroundColor: 'var(--bg-card)',
         border: '1px solid var(--border)',
@@ -125,16 +140,18 @@ export function ProductCard({ product }: ProductCardProps) {
           </div>
 
           <button
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            onClick={handleAddToCart}
             style={{
-              backgroundColor: 'var(--accent)', color: 'white',
+              backgroundColor: inCart ? '#10B981' : 'var(--accent)',
+              color: 'white',
               border: 'none', borderRadius: 12,
               width: 36, height: 36,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer', transition: 'all 0.2s',
+              transform: 'scale(1)',
             }}
-            title="Añadir al carrito"
-            className="hover:scale-105 hover:bg-[var(--accent-hover)] shadow-sm hover:shadow-md"
+            title={inCart ? 'Ya en el carrito — agregar otro' : 'Añadir al carrito'}
+            className="hover:scale-105 shadow-sm hover:shadow-md"
           >
             <ShoppingCart size={18} />
           </button>

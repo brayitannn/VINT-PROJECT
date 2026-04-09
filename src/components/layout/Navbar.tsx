@@ -8,6 +8,8 @@ import Image from 'next/image'
 import { FavoritesModal } from '../products/FavoritesModal'
 import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
+import { useCart } from './CartContext'
+import { CartDrawer } from './CartDrawer'
 
 export function Navbar() {
   const { theme, setTheme } = useTheme()
@@ -18,6 +20,7 @@ export function Navbar() {
   const pathname = usePathname()
   const router = useRouter()
   const { user, signOut, loading } = useAuth()
+  const { totalItems, openCart } = useCart()
 
   let role = user?.user_metadata?.role || 'comprador';
   if (role === "buyer") role = "comprador";
@@ -105,15 +108,28 @@ export function Navbar() {
               
               {/* Cart icon with badge */}
               <div style={{ position: 'relative' }}>
-                <button style={iconButtonStyle} className="nav-icon-btn"><ShoppingCart size={18} /></button>
-                <span style={{
-                  position: 'absolute', top: -3, right: -3,
-                  width: 16, height: 16, borderRadius: '50%',
-                  backgroundColor: 'var(--accent)', color: 'white',
-                  fontSize: 9, fontWeight: 800,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  pointerEvents: 'none',
-                }}>0</span>
+                <button
+                  onClick={openCart}
+                  style={iconButtonStyle}
+                  className="nav-icon-btn"
+                  aria-label="Abrir carrito"
+                >
+                  <ShoppingCart size={18} />
+                </button>
+                {totalItems > 0 && (
+                  <span style={{
+                    position: 'absolute', top: -3, right: -3,
+                    minWidth: 16, height: 16, borderRadius: '50%',
+                    backgroundColor: 'var(--accent)', color: 'white',
+                    fontSize: 9, fontWeight: 800,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    pointerEvents: 'none',
+                    padding: '0 3px',
+                    animation: 'cartBadgePop 0.25s ease',
+                  }}>
+                    {totalItems > 99 ? '99+' : totalItems}
+                  </span>
+                )}
               </div>
               
               <div ref={menuRef} style={{ position: 'relative' }}>
@@ -227,6 +243,11 @@ export function Navbar() {
           from { opacity: 0; transform: translateY(-6px); }
           to { opacity: 1; transform: translateY(0); }
         }
+        @keyframes cartBadgePop {
+          0% { transform: scale(0.5); opacity: 0; }
+          70% { transform: scale(1.2); }
+          100% { transform: scale(1); opacity: 1; }
+        }
         .nav-icon-btn:hover {
           background-color: var(--bg-secondary) !important;
           border-color: var(--accent) !important;
@@ -243,6 +264,7 @@ export function Navbar() {
       `}</style>
       
       <FavoritesModal isOpen={favoritesOpen} onClose={() => setFavoritesOpen(false)} />
+      <CartDrawer />
     </header>
   )
 }
