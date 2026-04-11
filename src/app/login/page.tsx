@@ -1,22 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft, Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { getSupabaseClient } from "@/lib/supabase/client";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const { signIn } = useAuth();
   const supabase = getSupabaseClient();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,227 +35,199 @@ export default function LoginPage() {
       router.push(`/dashboard/${role}`);
       
     } catch (err: any) {
-      setError(err.message || "Error al iniciar sesión");
+      setError("Credenciales incorrectas. Intenta de nuevo.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div
-      className="min-h-screen py-10 px-4 flex items-center justify-center relative animate-fade-in-up"
-      style={{ backgroundColor: "var(--bg-primary)" }}
-    >
+    <div className="w-full max-w-[440px] relative z-10 flex flex-col pt-12">
+      <div className="flex flex-col gap-6 mb-10">
+        <Link 
+          href="/" 
+          className="inline-flex items-center gap-2 text-sm font-semibold transition-colors hover:opacity-70" 
+          style={{ color: "var(--accent)" }}
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Volver a Vint
+        </Link>
+        <div className="flex flex-col gap-2">
+          <h2 className="text-[32px] font-bold tracking-tight leading-tight" style={{ color: "var(--text-primary)" }}>Bienvenido</h2>
+          <p className="text-[15px] font-medium" style={{ color: "var(--text-muted)" }}>Ingresa tus credenciales para continuar.</p>
+        </div>
+      </div>
+      
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        {error && (
+          <div className="text-[14px] text-center p-4 rounded-2xl mb-2 font-medium bg-red-50 text-red-600 border border-red-100">
+            {error}
+          </div>
+        )}
+
+        <div className="flex flex-col gap-4">
+          <div className="relative group">
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)] transition-colors group-focus-within:text-[var(--accent)] z-20 pointer-events-none" />
+            <Input
+              type="email"
+              placeholder="Correo electrónico"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full h-[60px] text-[16px] transition-all duration-300 outline-none vint-input bg-[var(--bg-secondary)]"
+              style={{
+                 borderRadius: "18px",
+                 border: "1.5px solid color-mix(in srgb, var(--border) 60%, transparent)",
+                 color: "var(--text-primary)",
+                 paddingLeft: "52px",
+                 paddingRight: "20px"
+              }}
+            />
+          </div>
+
+          <div className="relative group">
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)] transition-colors group-focus-within:text-[var(--accent)] z-20 pointer-events-none" />
+            <Input
+              type={showPassword ? "text" : "password"}
+              placeholder="Contraseña"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full h-[60px] text-[16px] transition-all duration-300 outline-none vint-input bg-[var(--bg-secondary)]"
+              style={{
+                 borderRadius: "18px",
+                 border: "1.5px solid color-mix(in srgb, var(--border) 60%, transparent)",
+                 color: "var(--text-primary)",
+                 paddingLeft: "52px",
+                 paddingRight: "52px"
+              }}
+            />
+            <button 
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+            >
+              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            </button>
+          </div>
+        </div>
+
+        <div className="flex justify-end mt-1">
+          <Link 
+            href="/forgot-password" 
+            className="text-sm font-semibold hover:underline"
+            style={{ color: "var(--accent)" }}
+          >
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full h-[60px] text-[17px] font-bold text-white rounded-[100px] shadow-soft flex items-center justify-center gap-2 relative overflow-hidden mt-2"
+          style={{
+            background: "linear-gradient(135deg, var(--accent), var(--accent-hover))",
+            opacity: loading ? 0.7 : 1,
+            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          }}
+        >
+          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Iniciar sesión"}
+        </button>
+        
+        <div className="mt-6 pt-6 border-t border-[var(--border)] text-center">
+            <p className="text-[15px] text-[var(--text-muted)]">
+                ¿Aún no tienes cuenta?{" "}
+                <Link 
+                    href="/register" 
+                    className="font-bold hover:underline"
+                    style={{ color: "var(--accent)" }}
+                >
+                    Regístrate aquí
+                </Link>
+            </p>
+        </div>
+
+      </form>
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <div className="min-h-screen flex flex-col md:flex-row relative w-full overflow-hidden bg-[var(--bg-primary)]">
       <style jsx global>{`
-        .vint-input-glow:focus {
-          box-shadow: 0 0 0 2px var(--accent) !important;
-          border-color: var(--accent) !important;
-        }
-        .vint-placeholder::placeholder {
+        .vint-input::placeholder {
           color: var(--text-muted) !important;
-          opacity: 0.8;
+          opacity: 0.7;
+          font-weight: 500;
         }
-        .hover-scale {
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        .vint-input:focus {
+          box-shadow: 0 0 0 2px var(--accent) !important;
+          border-color: transparent !important;
+          background-color: transparent !important;
         }
-        .hover-scale:hover {
-          transform: scale(1.02);
-          box-shadow: 0 8px 20px var(--shadow);
+        .shadow-soft:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 30px color-mix(in srgb, var(--accent) 30%, transparent);
         }
-        .outline-hover-tint {
-          transition: background-color 0.3s ease;
+        .animate-fade-in-up {
+          animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
-        .outline-hover-tint:hover {
-          background-color: color-mix(in srgb, var(--accent) 8%, transparent);
-        }
-        /* Color amber for the checkmark */
-        #remember[data-state=checked] {
-          background-color: var(--accent) !important;
-          border-color: var(--accent) !important;
-        }
-        .vint-link {
-          transition: color 0.3s ease;
-        }
-        .vint-link:hover {
-          color: var(--accent) !important;
+        @keyframes fadeInUp {
+          0% { opacity: 0; transform: translateY(30px) scale(0.98); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
         }
       `}</style>
       
-      {/* Texture Layer */}
-      <div className="absolute inset-0 pointer-events-none mix-blend-multiply opacity-[0.04]" style={{ backgroundImage: "url('data:image/svg+xml;utf8,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')" }}></div>
-
-      <div 
-        className="w-full max-w-[460px] p-8 sm:p-12 relative z-10"
-        style={{
-          backgroundColor: "var(--bg-card)",
-          borderRadius: "20px",
-          boxShadow: "0 20px 60px var(--shadow)",
-        }}
-      >
-        <div className="mb-8 text-center flex flex-col items-center">
-          <h1
-            className="font-display text-4xl sm:text-[40px] mb-2 font-bold"
-            style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}
-          >
-            ¡Hola de nuevo! ✨
-          </h1>
-          <p className="text-[15px]" style={{ color: "var(--text-secondary)" }}>
-            Ingresa a tu cuenta para continuar
-          </p>
+      {/* Left Section - Image */}
+      <div className="hidden md:flex md:w-1/2 relative overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-1000 ease-out sm:scale-105"
+          style={{ backgroundImage: "url('/bg-login.jpg')" }}
+        />
+        <div className="absolute inset-0 bg-black/30 mix-blend-multiply" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent" />
+        
+        {/* Logo overlay on image */}
+        <div className="absolute top-12 left-12 z-20">
+            <Link href="/" className="hover:opacity-80 transition-opacity">
+              <h1 
+                className="text-[48px] font-bold tracking-tighter leading-none font-display text-white" 
+                style={{ textShadow: "0 2px 20px rgba(0,0,0,0.3)" }}
+              >
+                  vint
+              </h1>
+            </Link>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-[22px]">
-          {error && (
-            <div
-              className="text-sm font-medium text-center rounded-xl py-3 px-4"
-              style={{
-                backgroundColor: "#fee2e2",
-                color: "#b91c1c",
-                border: "1px solid #fecaca",
-              }}
-            >
-              {error}
-            </div>
-          )}
+        <div className="absolute bottom-20 left-12 z-20 max-w-md">
+            <h2 className="text-4xl font-bold text-white leading-tight font-display mb-4">
+                Redescubre la moda,<br/>revoluciona tu estilo.
+            </h2>
+            <p className="text-lg text-white/80 font-medium">
+                Únete a la comunidad más exclusiva de moda circular en Colombia.
+            </p>
+        </div>
+      </div>
 
-          <div className="flex flex-col gap-[22px]">
-            <div className="flex flex-col gap-2 relative">
-              <label
-                htmlFor="email"
-                className="uppercase font-semibold ml-1"
-                style={{ 
-                  fontSize: "11px", 
-                  letterSpacing: "0.12em", 
-                  color: "var(--accent)" 
-                }}
-              >
-                Correo electrónico
-              </label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="tu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="h-12 w-full text-[15px] px-4 transition-all duration-300 outline-none vint-input-glow vint-placeholder"
-                style={{
-                  borderRadius: "12px",
-                  backgroundColor: "var(--bg-secondary)",
-                  border: "1px solid transparent",
-                  color: "var(--text-primary)",
-                }}
-              />
-            </div>
+      {/* Right Section - Form */}
+      <div className="w-full md:w-1/2 flex flex-col items-center relative z-10 min-h-screen overflow-y-auto">
+         
+         {/* Mobile Logo Only */}
+         <div className="md:hidden flex flex-col items-center pt-12 mb-4 animate-fade-in-up">
+            <Link href="/">
+              <h1 className="text-[48px] font-bold tracking-tighter text-[var(--accent)] font-display">vint</h1>
+            </Link>
+         </div>
+         
+         <div className="animate-fade-in-up w-full flex flex-1 justify-center items-center pt-32 pb-12 px-6 sm:px-12" style={{ animationDelay: "0.1s" }}>
+           <Suspense fallback={<div className="py-20"><Loader2 className="w-12 h-12 animate-spin text-[var(--accent)]" /></div>}>
+             <LoginForm />
+           </Suspense>
+         </div>
 
-            <div className="flex flex-col gap-2 relative">
-              <div className="flex items-center justify-between ml-1 w-full">
-                <label
-                  htmlFor="password"
-                  className="uppercase font-semibold"
-                  style={{ 
-                    fontSize: "11px", 
-                    letterSpacing: "0.12em", 
-                    color: "var(--accent)" 
-                  }}
-                >
-                  Contraseña
-                </label>
-                <Link
-                  href="/forgot-password"
-                  className="hover:underline transition-all"
-                  style={{ fontSize: "11px", color: "var(--accent)", fontWeight: "600", letterSpacing: "0.05em" }}
-                >
-                  ¿La olvidaste?
-                </Link>
-              </div>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="h-12 w-full text-[15px] px-4 transition-all duration-300 outline-none vint-input-glow vint-placeholder"
-                style={{
-                  borderRadius: "12px",
-                  backgroundColor: "var(--bg-secondary)",
-                  border: "1px solid transparent",
-                  color: "var(--text-primary)",
-                }}
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-3 ml-1">
-            <Checkbox 
-              id="remember" 
-              className="h-[18px] w-[18px] transition-colors" 
-              style={{ borderRadius: "4px", border: '1.5px solid var(--accent)' }} 
-            />
-            <label
-              htmlFor="remember"
-              className="text-[13px] cursor-pointer select-none"
-              style={{ color: "var(--text-secondary)", fontWeight: "500" }}
-            >
-              Mantener mi sesión iniciada
-            </label>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full h-[52px] text-[15px] font-bold text-white mt-2 border-0 hover-scale flex items-center justify-center gap-2 relative overflow-hidden"
-            style={{
-              borderRadius: "14px",
-              background: "linear-gradient(to right, var(--accent), var(--accent-hover))",
-              boxShadow: "0 8px 20px var(--shadow)",
-              opacity: loading ? 0.7 : 1,
-            }}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" /> Ingresando...
-              </>
-            ) : "Ingresar a VINT"}
-          </button>
-
-          <div className="relative py-2 flex items-center justify-center w-full">
-            <div className="flex-1 border-t" style={{ borderColor: "var(--border)" }}></div>
-            <span
-              className="px-4 uppercase font-semibold"
-              style={{
-                fontSize: "11px",
-                letterSpacing: "0.1em",
-                color: "var(--text-muted)",
-              }}
-            >
-              ¿Eres nuevo?
-            </span>
-            <div className="flex-1 border-t" style={{ borderColor: "var(--border)" }}></div>
-          </div>
-
-          <button
-            type="button"
-            className="outline-hover-tint w-full h-[52px] text-[15px] font-bold flex items-center justify-center relative overflow-hidden transition-all duration-300"
-            style={{
-              borderRadius: "14px",
-              border: "1.5px solid var(--accent)",
-              backgroundColor: "transparent",
-              color: "var(--accent)",
-            }}
-            onClick={() => router.push("/register")}
-          >
-            Crear una cuenta gratis
-          </button>
-
-          <div className="mt-2 text-center text-[13px]">
-           <Link href="/" className="font-semibold vint-link" style={{ color: "var(--text-secondary)" }}>
-              &larr; Volver al inicio
-           </Link>
-          </div>
-        </form>
       </div>
     </div>
-  );
-}
+  )
+}

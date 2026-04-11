@@ -6,21 +6,12 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { FavoritesModal } from '../products/FavoritesModal'
-import { NotificationsPanel, type NotificationPrefs } from './NotificationsPanel'
-import { useNotifications } from '@/hooks/useNotifications'
+import { NotificationsPanel } from './NotificationsPanel'
+import { useNotificationsContext } from './NotificationsContext'
 import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { useCart } from './CartContext'
 import { CartDrawer } from './CartDrawer'
-
-const DEFAULT_PREFS: NotificationPrefs = {
-  emailOfertas: true,
-  emailNuevas: false,
-  emailResumen: true,
-  pushMensajes: true,
-  pushVentas: true,
-  pushFavoritos: false,
-}
 
 export function Navbar() {
   const { theme, setTheme } = useTheme()
@@ -28,38 +19,17 @@ export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [favoritesOpen, setFavoritesOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
-  const [notifPrefs, setNotifPrefs] = useState<NotificationPrefs>(DEFAULT_PREFS)
   const menuRef = useRef<HTMLDivElement>(null)
   const notifRef = useRef<HTMLDivElement>(null)
 
-  // Hook de notificaciones en tiempo real — se llama aquí para compartir datos con el panel
-  const { notifications, unreadCount, loading: notifLoading, markAllRead, dismiss } = useNotifications(notifPrefs)
+  const { unreadCount, notifications, markAllRead, dismiss, loading: notifLoading } = useNotificationsContext()
   const pathname = usePathname()
   const router = useRouter()
   const { user, signOut, loading } = useAuth()
   const { totalItems, openCart } = useCart()
 
-  let role = user?.user_metadata?.role || 'comprador';
-  if (role === "buyer") role = "comprador";
-  if (role === "seller") role = "vendedor";
-  
-  const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuario';
-  const userEmail = user?.email || '';
-  const initials = userName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
-
-  const isDashboard = pathname?.startsWith('/dashboard');
-  const isInventoryPage = pathname?.startsWith('/products');
-  const isExplorar = pathname === '/explorar';
-  const isPerfil = pathname === '/perfil';
-  const isProtectedRoute = isDashboard || isInventoryPage || isExplorar || isPerfil;
-
   useEffect(() => {
     setMounted(true)
-    // Cargar prefs guardadas desde localStorage
-    try {
-      const saved = localStorage.getItem('vint_notif_prefs')
-      if (saved) setNotifPrefs(JSON.parse(saved))
-    } catch {}
   }, [])
 
   useEffect(() => {
@@ -75,76 +45,52 @@ export function Navbar() {
   const handleLogout = async () => {
     await signOut();
     router.push('/login');
-  };
+  }
 
-  // --- DETECCIÓN DE RUTAS PARA HOME ---
-  if (pathname === '/') {
+  // Ocultar Navbar en páginas de autenticación
+  const hiddenRoutes = ['/', '/login', '/register', '/forgot-password'];
+  if (hiddenRoutes.includes(pathname || '')) {
     return null;
   }
 
-  const iconButtonStyle: React.CSSProperties = {
-    width: 38, height: 38, borderRadius: '50%',
-    border: '1px solid var(--border)', background: 'transparent',
-    color: 'var(--text-primary)', cursor: 'pointer',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    transition: 'all 0.2s ease',
-  }
+  const role = user?.user_metadata?.role || 'comprador';
+  const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuario';
+  const initials = userName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
 
   return (
-    <header style={{
-      backgroundColor: 'var(--bg-primary)',
-      borderBottom: '1px solid var(--border)',
-      position: 'sticky', top: 0, zIndex: 50,
-      transition: 'background-color 0.3s ease',
-    }}>
-      <nav style={{
-        maxWidth: 1280, margin: '0 auto',
-        padding: '0 2rem', height: 64,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      }}>
-
+    <header className="sticky top-0 z-50 w-full border-b border-[var(--border)] bg-[var(--bg-primary)] transition-colors duration-300">
+      <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-8">
         {/* LOGO */}
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+        <Link href="/" className="flex items-center gap-2">
           <Image src="/logo1.png" alt="Vint" width={32} height={32} />
-          <span style={{
-            fontFamily: "'Playfair Display', serif",
-            fontWeight: 700, fontSize: 20, color: 'var(--text-primary)',
-          }}>Vint</span>
+          <span className="font-display text-xl font-bold text-[var(--text-primary)]">Vint</span>
         </Link>
 
-        {/* ACCIONES DERECHA */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-
+        {/* ACCIONES */}
+        <div className="flex items-center gap-4 pr-10">
+          {/* TEMA */}
           {mounted && (
-            <button 
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} 
-              style={iconButtonStyle}
-              className="nav-icon-btn"
+            <button
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-primary)] transition-all hover:border-[var(--accent)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)]"
             >
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </button>
           )}
 
-          {(!loading && user) ? (
-            /* VISTA DE USUARIO AUTENTICADO */
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              {/* Notifications Bell */}
-              <div ref={notifRef} style={{ position: 'relative' }}>
+          {!loading && user ? (
+            <div className="flex items-center gap-4">
+              {/* NOTIFICACIONES */}
+              <div ref={notifRef} className="relative">
                 <button
                   onClick={() => setNotifOpen(!notifOpen)}
-                  style={{ ...iconButtonStyle, position: 'relative' }}
-                  className="nav-icon-btn"
+                  className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-primary)] transition-all hover:border-[var(--accent)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)]"
                 >
                   <Bell size={18} />
                   {unreadCount > 0 && (
-                    <span style={{
-                      position: 'absolute', top: -3, right: -3,
-                      width: 16, height: 16, borderRadius: '50%',
-                      backgroundColor: '#EF4444', color: 'white',
-                      fontSize: 9, fontWeight: 800,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      pointerEvents: 'none',
-                    }}>{unreadCount > 9 ? '9+' : unreadCount}</span>
+                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
                   )}
                 </button>
                 <NotificationsPanel
@@ -152,181 +98,137 @@ export function Navbar() {
                   onClose={() => setNotifOpen(false)}
                   notifications={notifications}
                   unreadCount={unreadCount}
-                  loading={notifLoading}
                   markAllRead={markAllRead}
                   dismiss={dismiss}
+                  loading={notifLoading}
                 />
               </div>
-              
 
-              {/* Cart icon with badge */}
-              <div style={{ position: 'relative' }}>
+              {/* CARRITO */}
+              <div className="relative">
                 <button
                   onClick={openCart}
-                  style={iconButtonStyle}
-                  className="nav-icon-btn"
-                  aria-label="Abrir carrito"
+                  className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-primary)] transition-all hover:border-[var(--accent)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)]"
                 >
                   <ShoppingCart size={18} />
+                  {totalItems > 0 && (
+                    <span className="absolute -right-1 -top-1 flex min-w-[16px] h-4 items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[10px] font-bold text-white shadow-sm">
+                      {totalItems > 99 ? '99+' : totalItems}
+                    </span>
+                  )}
                 </button>
-                {totalItems > 0 && (
-                  <span style={{
-                    position: 'absolute', top: -3, right: -3,
-                    minWidth: 16, height: 16, borderRadius: '50%',
-                    backgroundColor: 'var(--accent)', color: 'white',
-                    fontSize: 9, fontWeight: 800,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    pointerEvents: 'none',
-                    padding: '0 3px',
-                    animation: 'cartBadgePop 0.25s ease',
-                  }}>
-                    {totalItems > 99 ? '99+' : totalItems}
-                  </span>
-                )}
               </div>
-              
-              <div ref={menuRef} style={{ position: 'relative' }}>
+
+              {/* MENU USUARIO */}
+              <div ref={menuRef} className="relative">
                 <button
                   onClick={() => setMenuOpen(!menuOpen)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '6px 12px 6px 6px',
-                    borderRadius: 999, border: '1px solid var(--border)',
-                    backgroundColor: 'var(--bg-card)', cursor: 'pointer',
-                  }}
+                  className="flex items-center gap-3 rounded-full border border-[var(--border)] bg-[var(--bg-card)] p-1.5 pr-5 transition-all duration-300 hover:border-[var(--accent)] hover:bg-[var(--bg-secondary)] hover:shadow-sm active:scale-[0.98]"
                 >
-                  <div style={{
-                    width: 28, height: 28, borderRadius: '50%',
-                    backgroundColor: 'var(--accent)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 11, fontWeight: 700, color: 'white',
-                  }}>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-hover)] text-[11px] font-extrabold text-white uppercase shadow-sm border border-white/20">
                     {initials}
                   </div>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                  <span className="text-[14px] font-bold text-[var(--text-primary)] hidden sm:inline-block tracking-tight">
                     {userName.split(' ')[0]}
                   </span>
-                  <ChevronDown size={14} style={{
-                    color: 'var(--text-muted)',
-                    transform: menuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                    transition: 'transform 0.2s ease',
-                  }} />
+                  <ChevronDown size={14} className={`ml-1 text-[var(--text-muted)] transition-transform duration-300 ${menuOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {menuOpen && (
-                  <div style={{
-                    position: 'absolute', top: 'calc(100% + 8px)', right: 0,
-                    width: 220, backgroundColor: 'var(--bg-card)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 16, overflow: 'hidden',
-                    boxShadow: '0 8px 32px var(--shadow)',
-                    animation: 'fadeIn 0.2s ease-out'
-                  }}>
-                    <div style={{ padding: '16px', borderBottom: '1px solid var(--border)', backgroundColor: 'var(--bg-secondary)' }}>
-                      <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{userName}</p>
-                      <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '2px 0 0' }}>{userEmail}</p>
-                    </div>
-                    <div style={{ padding: '8px' }}>
-                      <DropdownItem href="/dashboard" icon={<LayoutDashboard size={15} />} label="Mi Dashboard" onClick={() => setMenuOpen(false)} />
-                      {role === 'comprador' ? (
-                        <>
-                          <button 
-                            onClick={() => { setFavoritesOpen(true); setMenuOpen(false); }}
-                            style={{ 
-                              width: '100%', 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              gap: 10, 
-                              padding: '10px 12px', 
-                              borderRadius: 10, 
-                              border: 'none',
-                              backgroundColor: 'transparent',
-                              cursor: 'pointer',
-                              color: 'var(--text-primary)', 
-                              fontSize: 13, 
-                              fontWeight: 500,
-                              textAlign: 'left',
-                              transition: 'background-color 0.2s'
-                            }} 
-                            className="dropdown-item-hover"
-                          >
-                            <span style={{ color: 'var(--text-muted)' }}><Heart size={15} /></span>
-                            Favoritos
-                          </button>
-                        </>
-                      ) : (
-                        <DropdownItem href="/products" icon={<Package size={15} />} label="Inventario" onClick={() => setMenuOpen(false)} />
-                      )}
-                      <DropdownItem href="/perfil" icon={<Settings size={15} />} label="Configuración" onClick={() => setMenuOpen(false)} />
-                      <div style={{ borderTop: '1px solid var(--border)', marginTop: 8, paddingTop: 8 }}>
-                        <button 
-                          onClick={handleLogout}
-                          style={{
-                            width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-                            padding: '10px 12px', borderRadius: 10, border: 'none',
-                            backgroundColor: 'transparent', cursor: 'pointer',
-                            color: '#EF4444', fontSize: 13, fontWeight: 500,
-                            transition: 'background-color 0.2s'
-                          }}
-                          className="hover-bg-red"
-                        >
-                          <LogOut size={15} /> Cerrar Sesión
-                        </button>
+                  <div className="absolute right-0 top-full mt-3 w-60 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] z-50 animate-in fade-in slide-in-from-top-2">
+                    {/* HEADER */}
+                    <div className="flex items-center gap-3 px-4 py-4 border-b border-[var(--border)] bg-[var(--bg-secondary)]/50">
+                      <div className="w-10 h-10 rounded-full bg-[var(--accent)] flex-shrink-0 flex items-center justify-center text-[12px] font-bold text-white uppercase shadow-sm">
+                        {initials}
                       </div>
+                      <div className="flex flex-col items-start truncate leading-tight">
+                        <span className="text-[13px] font-bold text-[var(--text-primary)] truncate">
+                          {userName}
+                        </span>
+                        <span className="text-[11px] text-[var(--text-muted)] truncate mt-0.5 font-medium">
+                          {user.email}
+                        </span>
+                        <span className="inline-flex items-center mt-2 bg-[var(--accent)]/10 text-[var(--accent)] text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider border border-[var(--accent)]/10">
+                          {role === 'vendedor' ? 'Vendedor' : 'Comprador'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* ITEMS DEL MENÚ */}
+                    <div className="p-2.5 bg-[var(--bg-card)]">
+                      <div className="space-y-1.5">
+                        <Link 
+                          href="/dashboard" 
+                          onClick={() => setMenuOpen(false)}
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)] transition-all duration-150 group"
+                        >
+                          <LayoutDashboard size={16} className="text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors" />
+                          <span>Dashboard</span>
+                        </Link>
+                        
+                        {role === 'vendedor' ? (
+                          <Link 
+                            href="/products" 
+                            onClick={() => setMenuOpen(false)}
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)] transition-all duration-150 group"
+                          >
+                            <Package size={16} className="text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors" />
+                            <span>Inventario</span>
+                          </Link>
+                        ) : (
+                          <button 
+                            onClick={() => { setFavoritesOpen(true); setMenuOpen(false); }} 
+                            className="flex w-full items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)] transition-all duration-150 group"
+                          >
+                            <Heart size={16} className="text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors" />
+                            <span>Favoritos</span>
+                          </button>
+                        )}
+                        
+                        <Link 
+                          href="/perfil" 
+                          onClick={() => setMenuOpen(false)}
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)] transition-all duration-200 group"
+                        >
+                          <Settings size={16} className="text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors" />
+                          <span>Configuración</span>
+                        </Link>
+                      </div>
+
+                      {/* SEPARADOR */}
+                      <div className="my-3 h-px bg-[var(--border)] opacity-60 mx-1" />
+
+                      {/* BOTÓN CERRAR SESIÓN */}
+                      <button 
+                        onClick={handleLogout} 
+                        className="flex w-full items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all duration-150"
+                      >
+                        <LogOut size={16} />
+                        <span>Cerrar Sesión</span>
+                      </button>
                     </div>
                   </div>
                 )}
               </div>
             </div>
-
           ) : (
             /* VISTA INVITADO */
-            (!loading && (
-              <>
-                <Link href="/login" style={{ background: 'transparent', border: 'none', fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', cursor: 'pointer', marginRight: 12, textDecoration: 'none' }}>Ingresar</Link>
-                <Link href="/register" style={{ backgroundColor: 'var(--text-primary)', color: 'var(--bg-primary)', padding: '10px 24px', borderRadius: 999, fontSize: 14, fontWeight: 600, textDecoration: 'none' }} className="hover:opacity-90 transition-opacity">Registrarse</Link>
-              </>
-            ))
+            <div className="flex items-center gap-6">
+              <Link href="/login" className="text-sm font-bold text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors">
+                Ingresar
+              </Link>
+              <Link 
+                href="/register" 
+                className="rounded-full bg-[var(--text-primary)] px-6 py-2.5 text-sm font-bold text-[var(--bg-primary)] transition-all hover:opacity-90 active:scale-95 shadow-sm"
+              >
+                Registrarse
+              </Link>
+            </div>
           )}
         </div>
       </nav>
-
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(-6px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes cartBadgePop {
-          0% { transform: scale(0.5); opacity: 0; }
-          70% { transform: scale(1.2); }
-          100% { transform: scale(1); opacity: 1; }
-        }
-        .nav-icon-btn:hover {
-          background-color: var(--bg-secondary) !important;
-          border-color: var(--accent) !important;
-          color: var(--accent) !important;
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
-        .dropdown-item-hover:hover {
-          background-color: var(--bg-secondary) !important;
-        }
-        .hover-bg-red:hover {
-          background-color: rgba(239,68,68,0.08) !important;
-        }
-      `}</style>
-      
       <FavoritesModal isOpen={favoritesOpen} onClose={() => setFavoritesOpen(false)} />
       <CartDrawer />
     </header>
-  )
-}
-
-function DropdownItem({ href, icon, label, onClick }: { href: string; icon: React.ReactNode; label: string; onClick: () => void }) {
-  return (
-    <Link href={href} onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, textDecoration: 'none', color: 'var(--text-primary)', fontSize: 13, fontWeight: 500, transition: 'background-color 0.2s' }} className="dropdown-item-hover">
-      <span style={{ color: 'var(--text-muted)' }}>{icon}</span>
-      {label}
-    </Link>
   )
 }

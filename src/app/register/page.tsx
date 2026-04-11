@@ -4,7 +4,7 @@ import { useState, Suspense, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { Loader2, Check } from "lucide-react";
+import { Loader2, Check, ShoppingBag, Store, ArrowLeft, User, Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -25,6 +25,10 @@ function RegisterForm() {
     userType: "comprador",
   });
 
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     const roleParam = searchParams.get("role");
     if (roleParam === "vendedor") {
@@ -32,19 +36,16 @@ function RegisterForm() {
     }
   }, [searchParams]);
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Las contraseñas no coinciden");
+      setError("Las contraseñas no coinciden.");
       return;
     }
     if (formData.password.length < 6) {
-      setError("La contraseña debe tener mínimo 6 caracteres");
+      setError("La contraseña debe tener mínimo 6 caracteres.");
       return;
     }
 
@@ -64,192 +65,211 @@ function RegisterForm() {
       if (signUpError) throw signUpError;
       await signIn(formData.email, formData.password);
       
-      // ✅ Redirigir al dashboard según el rol escogido
       router.push(`/dashboard/${formData.userType}`);
-      
     } catch (err: any) {
       if (err.message?.includes("User already registered")) {
-        setError("Este correo ya está registrado");
+        setError("Este correo ya está registrado.");
       } else {
-        setError("Error al crear la cuenta");
+        setError("Ocurrió un error al crear la cuenta.");
       }
       setLoading(false);
     }
   };
 
-  const fields = [
-    { id: "name", type: "text", placeholder: "María Fernanda Gómez", label: "Nombre completo" },
-    { id: "email", type: "email", placeholder: "tu@email.com", label: "Correo electrónico" },
-    { id: "password", type: "password", placeholder: "••••••••", label: "Contraseña" },
-    { id: "confirmPassword", type: "password", placeholder: "••••••••", label: "Confirmar contraseña" },
-  ];
-
   return (
-    <div 
-      className="w-full max-w-[500px] p-8 sm:p-12 relative z-10"
-      style={{
-        backgroundColor: "var(--bg-card)",
-        borderRadius: "20px",
-        boxShadow: "0 20px 60px var(--shadow)",
-      }}
-    >
-      <div className="mb-8 text-center flex flex-col items-center">
-        <h1
-          className="font-display text-4xl sm:text-[40px] mb-2 tracking-wide font-bold"
-          style={{ color: "var(--text-primary)" }}
+    <div className="w-full max-w-[480px] relative z-10 flex flex-col pt-24">
+      <div className="flex flex-col gap-6 mb-10">
+        <Link 
+          href="/" 
+          className="inline-flex items-center gap-2 text-sm font-semibold transition-colors hover:opacity-70" 
+          style={{ color: "var(--accent)" }}
         >
-          Únete a VINT ✨
-        </h1>
-        <p className="text-[15px]" style={{ color: "var(--text-secondary)" }}>
-          Únete a la mejor comunidad de moda vintage
-        </p>
+          <ArrowLeft className="w-4 h-4" />
+          Volver a Vint
+        </Link>
+        <div className="flex flex-col gap-2">
+          <h2 className="text-[32px] font-bold tracking-tight leading-tight" style={{ color: "var(--text-primary)" }}>Únete a VINT</h2>
+          <p className="text-[15px] font-medium" style={{ color: "var(--text-muted)" }}>Compra y vende moda de nivel.</p>
+        </div>
       </div>
-
+      
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         {error && (
-          <div
-            className="text-[15px] font-medium text-center rounded-xl py-3 px-4"
-            style={{
-              backgroundColor: "#fee2e2",
-              color: "#b91c1c",
-              border: "1px solid #fecaca",
-            }}
-          >
+          <div className="text-[14px] text-center p-4 rounded-2xl mb-2 font-medium bg-red-50 text-red-600 border border-red-100">
             {error}
           </div>
         )}
 
-        <div className="flex flex-col gap-6">
-          {fields.map((field) => (
-            <div key={field.id} className="flex flex-col gap-2 relative">
-              <label
-                htmlFor={field.id}
-                className="uppercase font-semibold ml-1"
-                style={{ 
-                  fontSize: "11px", 
-                  letterSpacing: "0.12em", 
-                  color: "var(--accent)" 
-                }}
-              >
-                {field.label}
-              </label>
+        <div className="flex flex-col gap-4">
+          {/* Nombre completo */}
+          <div className="relative group">
+            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)] transition-colors group-focus-within:text-[var(--accent)] z-20 pointer-events-none" />
+            <Input
+              type="text"
+              placeholder="Nombre completo"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              required
+              className="w-full h-[60px] text-[16px] transition-all duration-300 outline-none vint-input bg-[var(--bg-secondary)]"
+              style={{
+                 borderRadius: "18px",
+                 border: "1.5px solid color-mix(in srgb, var(--border) 60%, transparent)",
+                 color: "var(--text-primary)",
+                 paddingLeft: "52px",
+                 paddingRight: "20px"
+              }}
+            />
+          </div>
+
+          {/* Email */}
+          <div className="relative group">
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)] transition-colors group-focus-within:text-[var(--accent)] z-20 pointer-events-none" />
+            <Input
+              type="email"
+              placeholder="Correo electrónico"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              required
+              className="w-full h-[60px] text-[16px] transition-all duration-300 outline-none vint-input bg-[var(--bg-secondary)]"
+              style={{
+                 borderRadius: "18px",
+                 border: "1.5px solid color-mix(in srgb, var(--border) 60%, transparent)",
+                 color: "var(--text-primary)",
+                 paddingLeft: "52px",
+                 paddingRight: "20px"
+              }}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Password */}
+            <div className="relative group">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)] transition-colors group-focus-within:text-[var(--accent)] z-20 pointer-events-none" />
               <Input
-                id={field.id}
-                type={field.type}
-                placeholder={field.placeholder}
-                value={(formData as any)[field.id]}
-                onChange={(e) => setFormData({ ...formData, [field.id]: e.target.value })}
+                type={showPassword ? "text" : "password"}
+                placeholder="Contraseña"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 required
-                className="h-12 w-full text-[15px] px-4 transition-all duration-300 outline-none vint-input-glow vint-placeholder"
+                className="w-full h-[60px] text-[16px] transition-all duration-300 outline-none vint-input bg-[var(--bg-secondary)]"
                 style={{
-                  borderRadius: "12px",
-                  backgroundColor: "var(--bg-secondary)",
-                  border: "1px solid transparent",
-                  color: "var(--text-primary)",
+                   borderRadius: "18px",
+                   border: "1.5px solid color-mix(in srgb, var(--border) 60%, transparent)",
+                   color: "var(--text-primary)",
+                   paddingLeft: "52px",
+                   paddingRight: "45px"
+                }}
+              />
+              <button 
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors z-30"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+
+            {/* Confirm Password */}
+            <div className="relative group">
+              <Input
+                type="password"
+                placeholder="Confirmar"
+                value={formData.confirmPassword}
+                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                required
+                className="w-full h-[60px] text-[16px] transition-all duration-300 outline-none vint-input bg-[var(--bg-secondary)]"
+                style={{
+                   borderRadius: "18px",
+                   border: "1.5px solid color-mix(in srgb, var(--border) 60%, transparent)",
+                   color: "var(--text-primary)",
+                   paddingLeft: "20px",
                 }}
               />
             </div>
-          ))}
+          </div>
         </div>
 
-        <div className="flex flex-col gap-3 pt-2 pb-1">
-          <label
-            className="uppercase font-semibold ml-1"
-            style={{ fontSize: "11px", letterSpacing: "0.12em", color: "var(--accent)" }}
-          >
-            Selecciona tu perfil principal
-          </label>
-
+        <div className="mt-8 flex flex-col gap-6">
+          <label className="text-[13px] font-bold uppercase tracking-wider block text-center" style={{ color: "var(--text-muted)" }}>¿A qué vienes a Vint?</label>
           <RadioGroup
-            value={formData.userType}
-            onValueChange={(value) => setFormData({ ...formData, userType: value })}
-            className="grid grid-cols-2 gap-4"
+             value={formData.userType}
+             onValueChange={(value) => setFormData({ ...formData, userType: value })}
+             className="grid grid-cols-2 gap-4"
           >
-            {[
-              { value: "comprador", label: "Quiero Comprar" },
-              { value: "vendedor", label: "Quiero Vender" },
-            ].map((type) => {
-              const isSelected = formData.userType === type.value;
-              return (
-                <div
-                  key={type.value}
-                  className="relative flex flex-row items-center justify-center p-3 cursor-pointer transition-all duration-300"
-                  style={{
-                    borderRadius: "12px",
-                    backgroundColor: isSelected ? "var(--bg-primary)" : "var(--bg-secondary)",
-                    border: isSelected ? "1px solid var(--accent)" : "1px solid transparent",
-                    boxShadow: isSelected ? "0 2px 10px var(--shadow)" : "none",
-                  }}
-                  onClick={() => setFormData({ ...formData, userType: type.value })}
-                >
-                  <RadioGroupItem value={type.value} id={type.value} className="sr-only" />
-                  {isSelected && (
-                     <Check className="absolute left-3 w-4 h-4" style={{ color: "var(--accent)" }} />
-                  )}
-                  <span
-                    className="text-[14px] font-semibold text-center mt-[1px]"
-                    style={{ 
-                      color: isSelected ? "var(--accent)" : "var(--text-muted)",
-                      marginLeft: isSelected ? "12px" : "0",
-                      transition: "margin 0.3s ease"
-                    }}
-                  >
-                    {type.label}
-                  </span>
-                </div>
-              )
-            })}
+             {[
+               { value: "comprador", label: "Solo Comprar", icon: ShoppingBag },
+               { value: "vendedor", label: "Quiero Vender", icon: Store },
+             ].map((type) => {
+               const isSelected = formData.userType === type.value;
+               const Icon = type.icon;
+               return (
+                 <label 
+                   key={type.value}
+                   className="relative flex flex-col items-center justify-center p-6 cursor-pointer transition-all duration-400 group overflow-hidden"
+                   style={{
+                      borderRadius: "24px",
+                      border: isSelected ? "2px solid var(--accent)" : "1.5px solid color-mix(in srgb, var(--border) 60%, transparent)",
+                      backgroundColor: isSelected ? "color-mix(in srgb, var(--bg-card) 90%, transparent)" : "var(--bg-secondary)",
+                      transform: isSelected ? "translateY(-4px)" : "translateY(0)",
+                      boxShadow: isSelected ? "0 12px 24px color-mix(in srgb, var(--accent) 15%, transparent)" : "none",
+                   }}
+                 >
+                   <RadioGroupItem value={type.value} id={type.value} className="sr-only" />
+                   
+                   {isSelected && (
+                      <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ background: "radial-gradient(circle at center, var(--accent) 0%, transparent 70%)" }}></div>
+                   )}
+
+                   {isSelected && (
+                     <div className="absolute top-4 right-4 animate-fade-in-up" style={{ animationDuration: '0.2s' }}>
+                       <div className="flex items-center justify-center w-5 h-5 rounded-full text-white" style={{ backgroundColor: "var(--accent)" }}>
+                         <Check className="w-3 h-3 stroke-[3]" />
+                       </div>
+                     </div>
+                   )}
+                   <Icon className="w-9 h-9 mb-3 transition-colors duration-300 relative z-10" style={{ color: isSelected ? "var(--accent)" : "var(--text-muted)" }} />
+                   <span className="text-[15px] font-bold text-center leading-tight relative z-10" style={{ color: isSelected ? "var(--accent)" : "var(--text-primary)" }}>{type.label}</span>
+                 </label>
+               )
+             })}
           </RadioGroup>
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full h-[52px] text-[15px] font-bold text-white mt-4 border-0 hover-scale flex items-center justify-center gap-2 relative overflow-hidden"
+          className="w-full h-[64px] text-[17px] font-bold text-white rounded-[100px] shadow-soft flex items-center justify-center gap-2 relative overflow-hidden mt-2"
           style={{
-            borderRadius: "12px",
-            background: "linear-gradient(to right, var(--accent), var(--accent-hover))",
-            boxShadow: "0 8px 20px var(--shadow)",
+            background: "linear-gradient(135deg, var(--accent), var(--accent-hover))",
             opacity: loading ? 0.7 : 1,
+            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
           }}
         >
-          {loading ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" /> Creando cuenta...
-            </>
-          ) : "Crear cuenta gratis"}
+          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Crear mi cuenta"}
         </button>
-
-        <div className="relative py-4 flex items-center justify-center w-full">
-          <div className="flex-1 border-t" style={{ borderColor: "var(--border)" }}></div>
-          <span
-            className="px-4 uppercase font-semibold"
-            style={{
-              fontSize: "11px",
-              letterSpacing: "0.1em",
-              color: "var(--text-muted)",
-            }}
-          >
-            ¿Ya tienes cuenta?
-          </span>
-          <div className="flex-1 border-t" style={{ borderColor: "var(--border)" }}></div>
-        </div>
-
-        <div className="text-center pb-2">
-          <Link
-             href="/login"
-             className="font-bold text-[15px] hover:opacity-80 transition-opacity drop-shadow-sm"
-             style={{ color: "var(--accent)" }}
-          >
-             Iniciar sesión
-          </Link>
-        </div>
         
-        <div className="mt-2 text-center text-xs">
-         <Link href="/" className="font-medium hover:underline" style={{ color: "var(--text-muted)" }}>
-            &larr; Volver al inicio
-         </Link>
+        <div className="mt-4 text-center">
+            <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+              Al registrarte, aceptas nuestras{" "}
+              <span className="font-semibold cursor-pointer hover:underline" style={{ color: "var(--text-secondary)" }}>Condiciones</span>
+              {" "}y la{" "}
+              <span className="font-semibold cursor-pointer hover:underline" style={{ color: "var(--text-secondary)" }}>Política de Privacidad</span>.
+            </p>
         </div>
+
+        <div className="mt-6 pt-6 border-t border-[var(--border)] text-center">
+            <p className="text-[15px] text-[var(--text-muted)]">
+                ¿Ya tienes una cuenta?{" "}
+                <Link 
+                    href="/login" 
+                    className="font-bold hover:underline"
+                    style={{ color: "var(--accent)" }}
+                >
+                    Inicia sesión
+                </Link>
+            </p>
+        </div>
+
       </form>
     </div>
   );
@@ -257,34 +277,79 @@ function RegisterForm() {
 
 export default function RegisterPage() {
   return (
-    <div
-      className="min-h-screen py-16 px-4 flex items-center justify-center relative animate-fade-in-up my-auto"
-      style={{ backgroundColor: "var(--bg-primary)" }}
-    >
+    <div className="min-h-screen flex flex-col md:flex-row relative w-full overflow-hidden bg-[var(--bg-primary)]">
       <style jsx global>{`
-        .vint-input-glow:focus {
-          box-shadow: 0 0 0 2px var(--accent) !important;
-          border-color: var(--accent) !important;
-        }
-        .vint-placeholder::placeholder {
+        .vint-input::placeholder {
           color: var(--text-muted) !important;
-          opacity: 0.8;
+          opacity: 0.7;
+          font-weight: 500;
         }
-        .hover-scale {
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        .vint-input:focus {
+          box-shadow: 0 0 0 2px var(--accent) !important;
+          border-color: transparent !important;
+          background-color: transparent !important;
         }
-        .hover-scale:hover {
-          transform: scale(1.02);
-          box-shadow: 0 10px 25px var(--shadow);
+        .shadow-soft:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 30px color-mix(in srgb, var(--accent) 30%, transparent);
+        }
+        .animate-fade-in-up {
+          animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes fadeInUp {
+          0% { opacity: 0; transform: translateY(30px) scale(0.98); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
         }
       `}</style>
       
-      {/* Texture Layer */}
-      <div className="absolute inset-0 pointer-events-none mix-blend-multiply opacity-[0.04]" style={{ backgroundImage: "url('data:image/svg+xml;utf8,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')" }}></div>
+      {/* Left Section - Image */}
+      <div className="hidden md:flex md:w-1/2 relative overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-1000 ease-out sm:scale-105"
+          style={{ backgroundImage: "url('/bg-register.jpg')" }}
+        />
+        <div className="absolute inset-0 bg-black/30 mix-blend-multiply" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent" />
+        
+        {/* Logo overlay on image */}
+        <div className="absolute top-12 left-12 z-20">
+            <Link href="/" className="hover:opacity-80 transition-opacity">
+              <h1 
+                className="text-[48px] font-bold tracking-tighter leading-none font-display text-white" 
+                style={{ textShadow: "0 2px 20px rgba(0,0,0,0.3)" }}
+              >
+                  vint
+              </h1>
+            </Link>
+        </div>
 
-      <Suspense fallback={<div className="relative z-10 w-full max-w-[500px] flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-[var(--accent)]" /></div>}>
-        <RegisterForm />
-      </Suspense>
+        <div className="absolute bottom-20 left-12 z-20 max-w-md">
+            <h2 className="text-4xl font-bold text-white leading-tight font-display mb-4">
+                Redefinimos lo retro,<br/>inspiramos el futuro.
+            </h2>
+            <p className="text-lg text-white/80 font-medium">
+                La comunidad de moda vintage más grande de Colombia te está esperando.
+            </p>
+        </div>
+      </div>
+
+      {/* Right Section - Form */}
+      <div className="w-full md:w-1/2 flex flex-col items-center relative z-10 min-h-screen overflow-y-auto">
+         
+         {/* Mobile Logo Only */}
+         <div className="md:hidden flex flex-col items-center pt-12 mb-4 animate-fade-in-up">
+            <Link href="/">
+              <h1 className="text-[48px] font-bold tracking-tighter text-[var(--accent)] font-display">vint</h1>
+            </Link>
+         </div>
+         
+         <div className="animate-fade-in-up w-full flex flex-1 justify-center items-center pt-32 pb-12 px-6 sm:px-12" style={{ animationDelay: "0.1s" }}>
+           <Suspense fallback={<div className="py-20"><Loader2 className="w-12 h-12 animate-spin text-[var(--accent)]" /></div>}>
+             <RegisterForm />
+           </Suspense>
+         </div>
+
+      </div>
     </div>
   )
 }

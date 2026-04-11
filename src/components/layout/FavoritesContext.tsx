@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { getFavoritos, addFavorito, removeFavorito } from '@/lib/favoritos'
+import { createClient } from '@/lib/supabase/client'
+import { useNotificationsContext } from '@/components/layout/NotificationsContext'
 
 interface FavoritesContextType {
   favoriteIds: Set<string>
@@ -20,6 +22,7 @@ const FavoritesContext = createContext<FavoritesContextType>({
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
+  const { addLocalNotification } = useNotificationsContext()
 
   // Carga inicial desde Supabase
   useEffect(() => {
@@ -32,7 +35,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const toggleFavorito = useCallback(async (id_prenda: string) => {
     const isCurrentlyFav = favoriteIds.has(id_prenda)
 
-    // Optimistic update -- cambia la UI antes de esperar la respuesta
+    // Optimistic update — cambia la UI antes de esperar la respuesta
     setFavoriteIds((prev) => {
       const next = new Set(prev)
       if (isCurrentlyFav) {
@@ -43,12 +46,22 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       return next
     })
 
+    // Si se está AGREGANDO: mostrar notificación inmediatamente (antes de confirmar Supabase)
+    if (!isCurrentlyFav) {
+      addLocalNotification({
+        tipo: 'favorito',
+        titulo: '❤️ Prenda añadida a favoritos',
+        cuerpo: 'La prenda fue guardada en tu lista de favoritos. Puedes verla en Mis Favoritos.',
+        leida: false,
+      })
+    }
+
     // Sync con Supabase
     const ok = isCurrentlyFav
       ? await removeFavorito(id_prenda)
       : await addFavorito(id_prenda)
 
-    // Si falla, revertimos
+    // Si falla, revertimos el estado optimista
     if (!ok) {
       setFavoriteIds((prev) => {
         const next = new Set(prev)
@@ -59,8 +72,29 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
         }
         return next
       })
+      return
     }
-  }, [favoriteIds])
+
+    // Si se agregó exitosamente, también la persistimos en Supabase para el historial
+    if (!isCurrentlyFav && ok) {
+      try {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          await supabase.from('notificaciones').insert({
+            usuario_id: user.id,
+            tipo: 'favorito',
+            titulo: '❤️ Prenda añadida a favoritos',
+            cuerpo: 'La prenda fue guardada en tu lista de favoritos. Puedes verla en Mis Favoritos.',
+            leida: false,
+          })
+        }
+      } catch (err) {
+        // Silencioso — la notificación local ya fue mostrada
+        console.warn('[FavoritesContext] No se pudo persistir la notificación:', err)
+      }
+    }
+  }, [favoriteIds, addLocalNotification])
 
   const isFavorito = useCallback(
     (id_prenda: string) => favoriteIds.has(id_prenda),
