@@ -4,10 +4,11 @@ import { useState, Suspense, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { Loader2, Check, ShoppingBag, Store, ArrowLeft, User, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Loader2, Check, ShoppingBag, Store, ArrowLeft, User, Mail, Lock, Eye, EyeOff, ChevronDown } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { VintSelect } from "@/components/ui/VintSelect";
 
 import { getSupabaseClient } from "@/lib/supabase/client";
 
@@ -23,7 +24,11 @@ function RegisterForm() {
     password: "",
     confirmPassword: "",
     userType: "comprador",
+    fechaNacimiento: "",
+    genero: "",
   });
+
+  const hoy = new Date().toISOString().split('T')[0];
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -58,6 +63,8 @@ function RegisterForm() {
           data: {
             name: formData.name,
             role: formData.userType,
+            fecha_nacimiento: formData.fechaNacimiento,
+            genero: formData.genero,
           },
         },
       });
@@ -184,6 +191,43 @@ function RegisterForm() {
                    color: "var(--text-primary)",
                    paddingLeft: "20px",
                 }}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Fecha de Nacimiento */}
+            <div className="flex flex-col gap-2">
+              <label className="text-[12px] font-bold uppercase tracking-wider ml-1" style={{ color: "var(--text-muted)" }}>Fecha de Nacimiento</label>
+              <Input
+                type="date"
+                max={hoy}
+                value={formData.fechaNacimiento}
+                onChange={(e) => setFormData({ ...formData, fechaNacimiento: e.target.value })}
+                required
+                className="w-full h-[60px] text-[16px] transition-all duration-300 outline-none vint-input bg-[var(--bg-secondary)]"
+                style={{
+                   borderRadius: "18px",
+                   border: "1.5px solid color-mix(in srgb, var(--border) 60%, transparent)",
+                   color: "var(--text-muted)",
+                   paddingLeft: "20px",
+                   paddingRight: "20px"
+                }}
+              />
+            </div>
+
+            {/* Género */}
+            <div className="flex flex-col gap-2">
+              <label className="text-[12px] font-bold uppercase tracking-wider ml-1" style={{ color: "var(--text-muted)" }}>Género</label>
+              <VintSelect
+                value={formData.genero}
+                onChange={(val) => setFormData({ ...formData, genero: val })}
+                options={[
+                  { value: "Hombre", label: "Hombre" },
+                  { value: "Mujer", label: "Mujer" },
+                  { value: "Prefiero no decirlo", label: "Prefiero no decirlo" },
+                ]}
+                placeholder="Selecciona una opción"
               />
             </div>
           </div>

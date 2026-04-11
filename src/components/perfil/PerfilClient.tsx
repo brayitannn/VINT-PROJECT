@@ -7,10 +7,21 @@ import { useSearchParams } from 'next/navigation'
 import {
   User, Lock, Bell, Shield, Palette, HelpCircle,
   AlertTriangle, ChevronRight, Camera, Save, Check,
-  Sun, Moon, Eye, EyeOff, MessageCircle, FileText, Trash2
+  Sun, Moon, Eye, EyeOff, MessageCircle, FileText, Trash2, Loader2
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { createClient } from '@/lib/supabase/client'
+import { VintSelect } from '@/components/ui/VintSelect'
+
+const calcularEdad = (fechaNacimiento: string) => {
+  if (!fechaNacimiento) return null
+  const hoy = new Date()
+  const nac = new Date(fechaNacimiento)
+  let edad = hoy.getFullYear() - nac.getFullYear()
+  const m = hoy.getMonth() - nac.getMonth()
+  if (m < 0 || (m === 0 && hoy.getDate() < nac.getDate())) edad--
+  return edad
+}
 
 type Section = 'perfil' | 'cuenta' | 'notificaciones' | 'privacidad' | 'apariencia' | 'ayuda' | 'peligro'
 
@@ -94,19 +105,21 @@ function FieldRow({ label, children }: { label: string; children: React.ReactNod
   )
 }
 
-function Input({ value, onChange, placeholder, type = 'text' }: { value: string; onChange: (v: string) => void; placeholder?: string; type?: string }) {
+function Input({ value, onChange, placeholder, type = 'text', max }: { value: string; onChange: (v: string) => void; placeholder?: string; type?: string; max?: string }) {
   return (
     <input
       type={type}
       value={value}
+      max={max}
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
       style={{
         width: '100%', padding: '12px 16px', borderRadius: 12, fontSize: 14,
         border: '1px solid var(--border)', backgroundColor: 'var(--bg-primary)',
-        color: 'var(--text-primary)', outline: 'none',
+        color: value ? 'var(--text-primary)' : 'var(--text-muted)', outline: 'none',
         fontFamily: "'DM Sans', sans-serif",
         boxSizing: 'border-box',
+        transition: 'all 0.2s'
       }}
     />
   )
@@ -136,20 +149,29 @@ function PerfilSection() {
   const realUsername = realEmail.split('@')[0]
   const avatarUrl: string | null = user?.user_metadata?.avatar_url || null
   const realLocation = user?.user_metadata?.location || 'Colombia'
+  const realBirthday = user?.user_metadata?.fecha_nacimiento || ''
+  const realGender = user?.user_metadata?.genero || ''
 
   const [name, setName] = useState(realName)
   const [username, setUsername] = useState(realUsername)
   const [email] = useState(realEmail)
   const [location, setLocation] = useState(realLocation)
+  const [birthday, setBirthday] = useState(realBirthday)
+  const [gender, setGender] = useState(realGender)
   const [saved, setSaved] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(avatarUrl)
   const [uploading, setUploading] = useState(false)
 
-  const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+  const edad = calcularEdad(birthday)
+  const hoyStr = new Date().toISOString().split('T')[0]
+
+  const initials = name.trim().split(' ').filter(Boolean).map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
 
   const handleSave = async () => {
     if (!user) return
-    await supabase.auth.updateUser({ data: { name, location } })
+    await supabase.auth.updateUser({
+      data: { name, location, fecha_nacimiento: birthday, genero: gender }
+    })
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
   }
@@ -234,6 +256,28 @@ function PerfilSection() {
           <FieldRow label="Nombre de usuario"><Input value={username} onChange={setUsername} placeholder="@username" /></FieldRow>
           <FieldRow label="Email"><Input value={email} onChange={() => {}} type="email" /></FieldRow>
           <FieldRow label="Ciudad"><Input value={location} onChange={setLocation} placeholder="Bogotá, Colombia" /></FieldRow>
+
+          <FieldRow label={`Fecha de Nacimiento ${edad !== null ? `(${edad} años)` : ''}`}>
+            <Input
+              value={birthday}
+              onChange={setBirthday}
+              type="date"
+              max={hoyStr}
+            />
+          </FieldRow>
+
+          <FieldRow label="Género">
+            <VintSelect
+              value={gender}
+              onChange={setGender}
+              options={[
+                { value: "Hombre", label: "Hombre" },
+                { value: "Mujer", label: "Mujer" },
+                { value: "Prefiero no decirlo", label: "Prefiero no decirlo" },
+              ]}
+              placeholder="Selecciona una opción"
+            />
+          </FieldRow>
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
           <SaveButton onClick={handleSave} saved={saved} />
@@ -243,9 +287,13 @@ function PerfilSection() {
   )
 }
 
+// ── CORRECCIÓN 1: estados propios para los inputs de contraseña ──────────────
 function CuentaSection() {
   const [showCurrent, setShowCurrent] = useState(false)
   const [showNew, setShowNew] = useState(false)
+  const [currentPass, setCurrentPass] = useState('')
+  const [newPass, setNewPass] = useState('')
+  const [confirmPass, setConfirmPass] = useState('')
   const [saved, setSaved] = useState(false)
   const handleSave = () => { setSaved(true); setTimeout(() => setSaved(false), 2500) }
 
@@ -254,7 +302,7 @@ function CuentaSection() {
       <SectionCard title="Cambiar Contraseña" description="Usa una contraseña fuerte con al menos 8 caracteres">
         <FieldRow label="Contraseña actual">
           <div style={{ position: 'relative' }}>
-            <Input value="" onChange={() => {}} type={showCurrent ? 'text' : 'password'} placeholder="••••••••" />
+            <Input value={currentPass} onChange={setCurrentPass} type={showCurrent ? 'text' : 'password'} placeholder="••••••••" />
             <button onClick={() => setShowCurrent(!showCurrent)} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
               {showCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
@@ -262,13 +310,15 @@ function CuentaSection() {
         </FieldRow>
         <FieldRow label="Nueva contraseña">
           <div style={{ position: 'relative' }}>
-            <Input value="" onChange={() => {}} type={showNew ? 'text' : 'password'} placeholder="Mín. 8 caracteres" />
+            <Input value={newPass} onChange={setNewPass} type={showNew ? 'text' : 'password'} placeholder="Mín. 8 caracteres" />
             <button onClick={() => setShowNew(!showNew)} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
               {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
         </FieldRow>
-        <FieldRow label="Confirmar nueva contraseña"><Input value="" onChange={() => {}} type="password" placeholder="Repite la nueva contraseña" /></FieldRow>
+        <FieldRow label="Confirmar nueva contraseña">
+          <Input value={confirmPass} onChange={setConfirmPass} type="password" placeholder="Repite la nueva contraseña" />
+        </FieldRow>
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <SaveButton onClick={handleSave} saved={saved} />
         </div>
@@ -371,7 +421,6 @@ function AparienciaSection() {
   const [saved, setSaved] = useState(false)
 
   const handleSave = () => {
-    // next-themes persiste automáticamente en localStorage, solo damos feedback
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
   }
@@ -494,10 +543,12 @@ function PeligroSection() {
               padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer', flexShrink: 0,
               backgroundColor: action.level === 'danger' ? '#EF4444' : 'transparent',
               color: action.level === 'danger' ? 'white' : '#EF4444',
-              border: action.level === 'warn' ? '1px solid #EF4444' : 'none',
+              borderColor: action.level === 'warn' ? '#EF4444' : 'transparent',
+              borderWidth: action.level === 'warn' ? 1 : 0,
+              borderStyle: 'solid',
               fontSize: 13, fontWeight: 700,
               display: 'flex', alignItems: 'center', gap: 6,
-            } as React.CSSProperties}>
+            }}>
               <Trash2 size={14} /> {action.btn}
             </button>
           </div>
@@ -515,7 +566,7 @@ function UserPill() {
   const email = user?.email || ''
   const username = email.split('@')[0]
   const avatarUrl: string | null = user?.user_metadata?.avatar_url || null
-  const initials = name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+  const initials = name.trim().split(' ').filter(Boolean).map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
   return (
     <>
       <div style={{ width: 40, height: 40, borderRadius: '50%', backgroundColor: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: 'white', overflow: 'hidden', flexShrink: 0 }}>
@@ -530,6 +581,7 @@ function UserPill() {
 }
 
 export function PerfilClient() {
+  const { user, loading } = useAuth()
   const searchParams = useSearchParams()
   const tabFromUrl = searchParams.get('tab') as Section | null
   const VALID_TABS: Section[] = ['perfil', 'cuenta', 'notificaciones', 'privacidad', 'apariencia', 'ayuda', 'peligro']
@@ -537,12 +589,28 @@ export function PerfilClient() {
     tabFromUrl && VALID_TABS.includes(tabFromUrl) ? tabFromUrl : 'perfil'
   )
 
-  // Sincronizar si el usuario llega con un ?tab= diferente después de montar
   useEffect(() => {
     if (tabFromUrl && VALID_TABS.includes(tabFromUrl)) {
       setActive(tabFromUrl)
     }
   }, [tabFromUrl])
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-primary)' }}>
+        <Loader2 className="animate-spin" size={40} style={{ color: 'var(--accent)' }} />
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-primary)', gap: 16 }}>
+        <p style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>Debes iniciar sesión para ver esta página</p>
+        <a href="/login" style={{ color: 'var(--accent)', fontWeight: 700, textDecoration: 'none' }}>Ir al Login →</a>
+      </div>
+    )
+  }
 
   const SECTION_CONTENT: Record<Section, React.ReactNode> = {
     perfil: <PerfilSection />,
@@ -581,10 +649,11 @@ export function PerfilClient() {
           <nav style={{ width: 240, flexShrink: 0, position: 'sticky', top: 88 }}>
             <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 20, overflow: 'hidden', padding: 8 }}>
               {/* User pill */}
-              <div style={{ padding: '16px 12px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid var(--border)', paddingBottom: 16, marginBottom: 8 }}>
+              <div style={{ padding: '16px 12px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid var(--border)', marginBottom: 8 }}>
                 <UserPill />
               </div>
 
+              {/* CORRECCIÓN 2: borderRadius y marginBottom únicos por item */}
               {SIDEBAR_ITEMS.map(item => {
                 const Icon = item.icon
                 const isActive = active === item.id
@@ -595,7 +664,7 @@ export function PerfilClient() {
                     onClick={() => setActive(item.id)}
                     style={{
                       width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-                      padding: '11px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
+                      padding: '11px 14px', border: 'none', cursor: 'pointer',
                       backgroundColor: isActive ? (item.danger ? 'rgba(239,68,68,0.1)' : 'rgba(139,94,60,0.1)') : 'transparent',
                       color: item.danger ? '#EF4444' : isActive ? 'var(--accent)' : 'var(--text-secondary)',
                       fontSize: 13, fontWeight: isActive ? 700 : 500, textAlign: 'left',
@@ -618,7 +687,7 @@ export function PerfilClient() {
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ marginBottom: 28 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                {(() => { const Icon = activeItem.icon; return <Icon size={22} style={{ color: activeItem.danger ? '#EF4444' : 'var(--accent)' }} /> })()}
+                {(() => { const Icon = activeItem.icon; return <Icon size={22} style={{ color: activeItem.danger ? '#EF4444' : 'var(--accent)' }} />})()}
                 <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
                   {activeItem.label}
                 </h2>

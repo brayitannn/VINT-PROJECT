@@ -46,23 +46,101 @@ export default async function HomePage() {
     <main style={{ minHeight: '100vh' }}>
       <PublicNavbar />
       {/* HERO */}
-      <section style={{ backgroundColor: 'var(--bg-primary)', padding: '80px 2rem 96px', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: -80, right: -80, width: 400, height: 400, borderRadius: '50%', backgroundColor: 'var(--accent)', opacity: 0.05, filter: 'blur(60px)', pointerEvents: 'none' }} />
+      <section style={{ 
+        padding: '120px 2rem 140px', 
+        position: 'relative', 
+        overflow: 'hidden',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '80vh'
+      }}>
+        {/* Background Image with Blur */}
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+          <Image 
+            src="/hero-bg.jpg" 
+            alt="Hero Background"
+            fill
+            style={{ objectFit: 'cover', filter: 'blur(4px)', scale: '1.05' }}
+            priority
+          />
+          {/* Overlay to ensure text readability */}
+          <div style={{ 
+            position: 'absolute', 
+            inset: 0, 
+            backgroundColor: 'var(--bg-primary)', 
+            opacity: 0.75,
+            backgroundImage: 'radial-gradient(circle at center, transparent 0%, var(--bg-primary) 100%)'
+          }} />
+        </div>
+
         <div style={{ maxWidth: 800, margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderRadius: 999, backgroundColor: 'var(--accent-light)', color: 'var(--accent)', border: '1px solid var(--accent)', fontSize: 13, fontWeight: 500, marginBottom: 32 }}>
+          <div style={{ 
+            display: 'inline-flex', 
+            alignItems: 'center', 
+            gap: 8, 
+            padding: '8px 20px', 
+            borderRadius: 999, 
+            backgroundColor: 'rgba(var(--accent-rgb), 0.1)', 
+            color: 'var(--accent)', 
+            border: '1px solid var(--accent)', 
+            fontSize: 14, 
+            fontWeight: 600, 
+            marginBottom: 32,
+            backdropFilter: 'blur(4px)'
+          }}>
             <span>✦</span> Todo el estilo que quieres a un click de distancia
           </div>
-          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 'clamp(40px, 6vw, 72px)', fontWeight: 900, lineHeight: 1.1, letterSpacing: '-0.02em', color: 'var(--text-primary)', marginBottom: 24 }}>
+          <h1 style={{ 
+            fontFamily: "'Playfair Display', serif", 
+            fontSize: 'clamp(44px, 7vw, 84px)', 
+            fontWeight: 900, 
+            lineHeight: 1.05, 
+            letterSpacing: '-0.03em', 
+            color: 'var(--text-primary)', 
+            marginBottom: 28 
+          }}>
             Ropa con estilo<br />
-            <span style={{ color: 'var(--accent)' }}>De primer Nivel</span>
+            <span style={{ 
+              color: 'var(--accent)', 
+              textShadow: '0 0 30px rgba(var(--accent-rgb), 0.2)' 
+            }}>De primer Nivel</span>
           </h1>
-          <p style={{ fontSize: 18, color: 'var(--text-secondary)', maxWidth: 600, margin: '0 auto 40px', lineHeight: 1.7 }}>
+          <p style={{ 
+            fontSize: 19, 
+            color: 'var(--text-secondary)', 
+            maxWidth: 620, 
+            margin: '0 auto 48px', 
+            lineHeight: 1.8,
+            fontWeight: 450
+          }}>
             Compra y vende ropa única con estilo. VINT conecta a personas que aman la moda sostenible y los precios que sí tienen sentido.
           </p>
 
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/register?role=vendedor" style={{ backgroundColor: 'var(--accent)', color: 'white', padding: '12px 28px', borderRadius: 12, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>Comenzar a Vender →</Link>
-            <Link href="/login" style={{ backgroundColor: 'transparent', color: 'var(--accent)', border: '2px solid var(--accent)', padding: '12px 28px', borderRadius: 12, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>Explorar Productos</Link>
+          <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link href="/register?role=vendedor" style={{ 
+              backgroundColor: 'var(--accent)', 
+              color: 'white', 
+              padding: '16px 36px', 
+              borderRadius: 14, 
+              fontSize: 16, 
+              fontWeight: 700, 
+              textDecoration: 'none',
+              boxShadow: '0 10px 25px -5px rgba(var(--accent-rgb), 0.4)',
+              transition: 'all 0.3s ease'
+            }}>Comenzar a Vender →</Link>
+            <Link href="/login" style={{ 
+              backgroundColor: 'rgba(255, 255, 255, 0.5)', 
+              backdropFilter: 'blur(10px)',
+              color: 'var(--text-primary)', 
+              border: '1px solid var(--border)', 
+              padding: '16px 36px', 
+              borderRadius: 14, 
+              fontSize: 16, 
+              fontWeight: 700, 
+              textDecoration: 'none',
+              transition: 'all 0.3s ease'
+            }}>Explorar Productos</Link>
           </div>
         </div>
       </section>
