@@ -323,28 +323,6 @@ function CuentaSection() {
           <SaveButton onClick={handleSave} saved={saved} />
         </div>
       </SectionCard>
-
-      <SectionCard title="Sesiones Activas" description="Dispositivos con sesión iniciada en tu cuenta">
-        {[
-          { device: 'Chrome en Windows', location: 'Bogotá, Colombia', time: 'Ahora mismo', current: true },
-          { device: 'Safari en iPhone', location: 'Medellín, Colombia', time: 'Hace 2 días' },
-        ].map((session, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', borderBottom: i === 0 ? '1px solid var(--border)' : 'none' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
-                {i === 0 ? '💻' : '📱'}
-              </div>
-              <div>
-                <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{session.device}</p>
-                <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '2px 0 0' }}>{session.location} · {session.time}</p>
-              </div>
-            </div>
-            {session.current
-              ? <span style={{ fontSize: 11, fontWeight: 700, backgroundColor: '#D1FAE5', color: '#065F46', padding: '3px 10px', borderRadius: 999 }}>Actual</span>
-              : <button style={{ fontSize: 12, color: '#EF4444', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Cerrar sesión</button>}
-          </div>
-        ))}
-      </SectionCard>
     </>
   )
 }

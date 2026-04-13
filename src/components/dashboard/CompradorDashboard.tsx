@@ -5,9 +5,6 @@ import { type MockUser } from '@/lib/supabase/mock-user'
 import { useRecomendaciones } from '@/hooks/useRecomendaciones'
 import { DashboardNavbar, AccesoRapido } from './DashboardNavbar'
 import { RecomendacionesGrid } from './RecomendacionesGrid'
-import { FavoritesModal } from '@/components/products/FavoritesModal'
-import { useState } from 'react'
-import { useFavorites } from '@/components/layout/FavoritesContext'
 
 interface CompradorDashboardProps {
   user: MockUser
@@ -15,15 +12,13 @@ interface CompradorDashboardProps {
 
 export function CompradorDashboard({ user }: CompradorDashboardProps) {
   const { recomendaciones, loading, error } = useRecomendaciones(user)
-  const [favoritesOpen, setFavoritesOpen] = useState(false)
-  const { favoriteIds } = useFavorites()
 
   const hora = new Date().getHours()
   const saludo = hora < 12 ? 'Buenos días' : hora < 18 ? 'Buenas tardes' : 'Buenas noches'
 
   const ACCESOS_RAPIDOS: AccesoRapido[] = [
     { id: 'explorar', icon: Search, label: 'Explorar', href: '/explorar', accent: '#8B5E3C' },
-    { id: 'favoritos', icon: Heart, label: 'Favoritos', onClick: () => setFavoritesOpen(true), accent: '#8B5E3C' },
+    { id: 'favoritos', icon: Heart, label: 'Favoritos', href: '/favoritos', accent: '#8B5E3C' },
     { id: 'compras', icon: ShoppingBag, label: 'Mis Compras', href: '/compras', accent: '#8B5E3C' },
   ]
 
@@ -260,9 +255,6 @@ export function CompradorDashboard({ user }: CompradorDashboardProps) {
           recomendaciones={recomendaciones} 
         />
       </div>
-
-      {/* MODAL DE FAVORITOS */}
-      <FavoritesModal isOpen={favoritesOpen} onClose={() => setFavoritesOpen(false)} />
     </>
   )
 }

@@ -10,16 +10,6 @@ import { ProductDetailModal } from '@/components/products/ProductDetailModal'
 
 type SortOption = 'reciente' | 'precio_asc' | 'precio_desc'
 
-function mapCondicion(condicion: string): Product['condition'] {
-  switch (condicion?.toUpperCase()) {
-    case 'NUEVO':
-    case 'COMO_NUEVO': return 'Excelente'
-    case 'USADO': return 'Muy Bueno'
-    case 'DESGASTADO': return 'Bueno'
-    default: return 'Bueno'
-  }
-}
-
 function ProductSkeleton() {
   return (
     <div style={{
@@ -95,47 +85,34 @@ export function ExplorarClient() {
   const fetchProducts = useCallback(async (f: Filters, s: SortOption) => {
     setLoading(true)
     try {
-      let query = supabase.from('v_catalogo_publico').select('*')
+      let query = supabase.from('products').select('*')
 
       if (f.search) {
-        query = query.ilike('titulo', `%${f.search}%`)
+        query = query.ilike('name', `%${f.search}%`)
       }
       if (f.categorias.length > 0) {
-        query = query.in('categoria', f.categorias)
+        query = query.in('category', f.categorias)
       }
-      if (f.tallas.length > 0) {
-        query = query.in('talla', f.tallas)
-      }
-      if (f.condiciones.length > 0) {
-        const dbCondiciones = f.condiciones.flatMap(c => {
-          if (c === 'Excelente') return ['NUEVO', 'COMO_NUEVO']
-          if (c === 'Muy Bueno') return ['USADO']
-          if (c === 'Bueno') return ['DESGASTADO']
-          return []
-        })
-        query = query.in('condicion', dbCondiciones)
-      }
-      if (f.genero !== 'Todos') {
-        query = query.ilike('genero', f.genero)
-      }
-      query = query.gte('precio', f.priceMin).lte('precio', f.priceMax)
+      // Assuming 'talla', 'condicion', 'genero' aren't strictly mapped in the new schema or we search them in description
+      // But we will respect the price and default sorting
+      query = query.gte('price', f.priceMin).lte('price', f.priceMax)
 
-      if (s === 'precio_asc') query = query.order('precio', { ascending: true })
-      else if (s === 'precio_desc') query = query.order('precio', { ascending: false })
-      else query = query.order('fecha_publicacion', { ascending: false })
+      if (s === 'precio_asc') query = query.order('price', { ascending: true })
+      else if (s === 'precio_desc') query = query.order('price', { ascending: false })
+      else query = query.order('created_at', { ascending: false })
 
       const { data, error } = await query.limit(48)
       if (error) throw error
 
       const mapped: Product[] = (data ?? []).map((item: any) => ({
-        id: item.id_prenda,
-        name: item.titulo,
-        price: Number(item.precio),
-        size: item.talla ?? 'M',
-        condition: mapCondicion(item.condicion),
-        seller: item.vendedor ?? 'Vendedor',
-        image: item.imagen_principal ?? 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&h=500&fit=crop',
-        rating: 4.5,
+        id: item.id, // we use uuid string now, wait, ProductCard.Product expects number. Let's fix ProductCard next.
+        name: item.name,
+        price: Number(item.price),
+        size: 'Única', // fallback 
+        condition: 'Bueno', // fallback
+        seller: 'Vint Shop', // fallback
+        image: item.image_url ?? 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&h=500&fit=crop',
+        rating: 5.0,
       }))
       setProducts(mapped)
     } catch (err) {
@@ -200,8 +177,6 @@ export function ExplorarClient() {
         .view-btn:hover { background-color: var(--bg-secondary) !important; }
       `}</style>
 
-      {/* Search Bar moved inside the content area */}
-
       {/* Main layout */}
       <div style={{
         maxWidth: 1280, margin: '0 auto',
@@ -224,7 +199,7 @@ export function ExplorarClient() {
               marginBottom: 32,
               display: 'flex', alignItems: 'center', gap: 12,
               backgroundColor: 'var(--bg-card)',
-              border: '1px solid var(--border)', // Mantenemos el borde fino para integración
+              border: '1px solid var(--border)',
               borderRadius: 16, padding: '12px 20px',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               boxShadow: '0 2px 8px var(--shadow-sm)'

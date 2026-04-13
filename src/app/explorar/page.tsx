@@ -1,4 +1,6 @@
 import { Suspense } from 'react'
+import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 import { ExplorarClient } from '@/components/explorar/ExplorarClient'
 
 export const metadata = {
@@ -44,13 +46,35 @@ function ExplorarSkeleton() {
 export default function ExplorarPage() {
   return (
     <main style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
+      <style>{`
+        .volver-link { color: var(--text-muted); }
+        .volver-link:hover { color: var(--accent) !important; }
+      `}</style>
+      
       {/* Page header */}
       <div style={{
         backgroundColor: 'var(--bg-secondary)',
         borderBottom: '1px solid var(--border)',
-        padding: '28px 2rem 0',
+        padding: '24px 2rem 0',
       }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+          <Link 
+            href="/" 
+            className="volver-link"
+            style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: 8, 
+              textDecoration: 'none',
+              fontSize: 14,
+              fontWeight: 500,
+              marginBottom: 16,
+              transition: 'color 0.2s'
+            }}
+          >
+            <ArrowLeft size={16} />
+            Volver
+          </Link>
           <h1 style={{
             fontFamily: "'Playfair Display', serif",
             fontSize: 'clamp(22px, 3vw, 32px)',

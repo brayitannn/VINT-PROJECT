@@ -1,11 +1,10 @@
 'use client'
 
 import { useTheme } from 'next-themes'
-import { Sun, Moon, Bell, ShoppingCart, ChevronDown, LogOut, Settings, Package, Heart, LayoutDashboard } from 'lucide-react'
+import { Sun, Moon, Bell, ShoppingCart, ChevronDown, ChevronRight, LogOut, Settings, Package, Heart, LayoutDashboard, User } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { FavoritesModal } from '../products/FavoritesModal'
 import { NotificationsPanel } from './NotificationsPanel'
 import { useNotificationsContext } from './NotificationsContext'
 import { usePathname, useRouter } from 'next/navigation'
@@ -17,7 +16,6 @@ export function Navbar() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [favoritesOpen, setFavoritesOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const notifRef = useRef<HTMLDivElement>(null)
@@ -47,7 +45,6 @@ export function Navbar() {
     router.push('/login');
   }
 
-  // Ocultar Navbar en páginas de autenticación
   const hiddenRoutes = ['/', '/login', '/register', '/forgot-password'];
   if (hiddenRoutes.includes(pathname || '')) {
     return null;
@@ -58,177 +55,244 @@ export function Navbar() {
   const initials = userName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-[var(--border)] bg-[var(--bg-primary)] transition-colors duration-300">
-      <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-8">
-        {/* LOGO */}
-        <Link href="/" className="flex items-center gap-2">
-          <Image src="/logo1.png" alt="Vint" width={32} height={32} />
-          <span className="font-display text-xl font-bold text-[var(--text-primary)]">Vint</span>
-        </Link>
+    <>
+      <style>{`
+        .fb-dropdown {
+          animation: dropdownScale 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          transform-origin: top right;
+          box-shadow: 0 12px 28px 0 rgba(0, 0, 0, 0.2), 0 2px 4px 0 rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+          background: var(--bg-card);
+          border-radius: 12px;
+          border: 1px solid var(--border);
+          padding: 16px;
+        }
+        @keyframes dropdownScale {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        .fb-menu-item {
+          display: flex;
+          align-items: center;
+          padding: 8px;
+          border-radius: 8px;
+          transition: background-color 0.2s ease;
+          width: 100%;
+          cursor: pointer;
+        }
+        .fb-menu-item:hover {
+          background-color: var(--bg-secondary);
+        }
+        .fb-icon-circle {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          background-color: var(--bg-secondary);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          color: var(--text-primary);
+          margin-right: 12px;
+        }
+      `}</style>
 
-        {/* ACCIONES */}
-        <div className="flex items-center gap-4 pr-10">
-          {/* TEMA */}
-          {mounted && (
-            <button
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-primary)] transition-all hover:border-[var(--accent)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)]"
-            >
-              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-          )}
+      <header className="sticky top-0 z-50 w-full border-b border-[var(--border)] bg-[var(--bg-primary)]/80 backdrop-blur-lg transition-colors duration-300">
+        <nav className="w-full flex h-16 items-center justify-between px-8 md:px-10">
+          {/* LOGO */}
+          <Link href="/" className="flex items-center gap-2 group">
+            <Image src="/logo1.png" alt="Vint" width={32} height={32} className="transition-transform group-hover:rotate-12 duration-300" />
+            <span className="font-display text-2xl font-bold text-[var(--accent)]">Vint</span>
+          </Link>
 
-          {!loading && user ? (
-            <div className="flex items-center gap-4">
-              {/* NOTIFICACIONES */}
-              <div ref={notifRef} className="relative">
-                <button
-                  onClick={() => setNotifOpen(!notifOpen)}
-                  className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-primary)] transition-all hover:border-[var(--accent)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)]"
-                >
-                  <Bell size={18} />
-                  {unreadCount > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm">
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                  )}
-                </button>
-                <NotificationsPanel
-                  isOpen={notifOpen}
-                  onClose={() => setNotifOpen(false)}
-                  notifications={notifications}
-                  unreadCount={unreadCount}
-                  markAllRead={markAllRead}
-                  dismiss={dismiss}
-                  loading={notifLoading}
-                />
-              </div>
+          {/* ACCIONES */}
+          <div className="flex items-center gap-3">
+            {mounted && (
+              <button
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-primary)] transition-all hover:scale-105 hover:border-[var(--accent)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)]"
+              >
+                {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+              </button>
+            )}
 
-              {/* CARRITO */}
-              <div className="relative">
-                <button
-                  onClick={openCart}
-                  className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-primary)] transition-all hover:border-[var(--accent)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)]"
-                >
-                  <ShoppingCart size={18} />
-                  {totalItems > 0 && (
-                    <span className="absolute -right-1 -top-1 flex min-w-[16px] h-4 items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[10px] font-bold text-white shadow-sm">
-                      {totalItems > 99 ? '99+' : totalItems}
-                    </span>
-                  )}
-                </button>
-              </div>
+            {!loading && user ? (
+              <div className="flex items-center gap-3">
+                {/* NOTIFICACIONES */}
+                <div ref={notifRef} className="relative">
+                  <button
+                    onClick={() => setNotifOpen(!notifOpen)}
+                    className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-primary)] transition-all hover:scale-105 hover:border-[var(--accent)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)]"
+                  >
+                    <Bell size={18} />
+                    {unreadCount > 0 && (
+                      <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#ef4444] text-[10px] font-bold text-white shadow-sm ring-2 ring-[var(--bg-primary)]">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </button>
+                  <NotificationsPanel
+                    isOpen={notifOpen}
+                    onClose={() => setNotifOpen(false)}
+                    notifications={notifications}
+                    unreadCount={unreadCount}
+                    markAllRead={markAllRead}
+                    dismiss={dismiss}
+                    loading={notifLoading}
+                  />
+                </div>
 
-              {/* MENU USUARIO */}
-              <div ref={menuRef} className="relative">
-                <button
-                  onClick={() => setMenuOpen(!menuOpen)}
-                  className="flex items-center gap-3 rounded-full border border-[var(--border)] bg-[var(--bg-card)] p-1.5 pr-5 transition-all duration-300 hover:border-[var(--accent)] hover:bg-[var(--bg-secondary)] hover:shadow-sm active:scale-[0.98]"
-                >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-hover)] text-[11px] font-extrabold text-white uppercase shadow-sm border border-white/20">
-                    {initials}
-                  </div>
-                  <span className="text-[14px] font-bold text-[var(--text-primary)] hidden sm:inline-block tracking-tight">
-                    {userName.split(' ')[0]}
-                  </span>
-                  <ChevronDown size={14} className={`ml-1 text-[var(--text-muted)] transition-transform duration-300 ${menuOpen ? 'rotate-180' : ''}`} />
-                </button>
+                {/* CARRITO */}
+                <div className="relative">
+                  <button
+                    onClick={openCart}
+                    className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-primary)] transition-all hover:scale-105 hover:border-[var(--accent)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)]"
+                  >
+                    <ShoppingCart size={18} />
+                    {totalItems > 0 && (
+                      <span className="absolute -right-1 -top-1 flex min-w-[16px] h-4 items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[10px] font-bold text-white shadow-sm ring-2 ring-[var(--bg-primary)]">
+                        {totalItems > 99 ? '99+' : totalItems}
+                      </span>
+                    )}
+                  </button>
+                </div>
 
-                {menuOpen && (
-                  <div className="absolute right-0 top-full mt-3 w-60 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] z-50 animate-in fade-in slide-in-from-top-2">
-                    {/* HEADER */}
-                    <div className="flex items-center gap-3 px-4 py-4 border-b border-[var(--border)] bg-[var(--bg-secondary)]/50">
-                      <div className="w-10 h-10 rounded-full bg-[var(--accent)] flex-shrink-0 flex items-center justify-center text-[12px] font-bold text-white uppercase shadow-sm">
-                        {initials}
-                      </div>
-                      <div className="flex flex-col items-start truncate leading-tight">
-                        <span className="text-[13px] font-bold text-[var(--text-primary)] truncate">
-                          {userName}
-                        </span>
-                        <span className="text-[11px] text-[var(--text-muted)] truncate mt-0.5 font-medium">
-                          {user.email}
-                        </span>
-                        <span className="inline-flex items-center mt-2 bg-[var(--accent)]/10 text-[var(--accent)] text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider border border-[var(--accent)]/10">
-                          {role === 'vendedor' ? 'Vendedor' : 'Comprador'}
-                        </span>
-                      </div>
+                {/* MENÚ DESPLEGABLE (ESTILO REDES SOCIALES / COMPACTO) */}
+                <div ref={menuRef} className="relative">
+                  <button
+                    onClick={() => setMenuOpen(!menuOpen)}
+                    className="flex items-center gap-2.5 rounded-full border border-[var(--border)] bg-[var(--bg-card)] p-1.5 pr-4 transition-all duration-300 hover:border-[var(--accent)] active:scale-95"
+                  >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-[11px] font-bold text-white uppercase">
+                      {initials}
                     </div>
+                    <span className="text-[14px] font-bold text-[var(--text-primary)] hidden sm:inline-block tracking-tight capitalize">
+                      {userName.split(' ')[0]}
+                    </span>
+                    <ChevronDown size={14} className={`text-[var(--text-muted)] transition-transform duration-300 ${menuOpen ? 'rotate-180' : ''}`} />
+                  </button>
 
-                    {/* ITEMS DEL MENÚ */}
-                    <div className="p-2.5 bg-[var(--bg-card)]">
-                      <div className="space-y-1.5">
+                  {menuOpen && (
+                    <div className="fb-dropdown absolute right-0 top-[110%] w-[340px] z-50">
+                      
+                      {/* CARTA DE PERFIL SUPERIOR (ESTILO RED SOCIAL) */}
+                      <div className="mb-3 flex flex-col" style={{ 
+                        padding: '12px', 
+                        borderRadius: '12px', 
+                        background: 'var(--bg-card)', 
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.05)', 
+                        border: '1px solid var(--border)' 
+                      }}>
+                        <Link 
+                          href="/perfil"
+                          onClick={() => setMenuOpen(false)}
+                          className="flex items-center transition-colors hover:opacity-80"
+                          style={{ gap: '12px' }}
+                        >
+                          <div className="w-10 h-10 rounded-full bg-[var(--accent)] shadow-sm flex-shrink-0 flex items-center justify-center text-[15px] font-bold text-white uppercase">
+                            {initials}
+                          </div>
+                          <span className="text-[17px] font-bold text-[var(--text-primary)] leading-tight truncate capitalize">
+                            {userName}
+                          </span>
+                        </Link>
+                      </div>
+
+                      {/* LISTA DE OPCIONES TIPO FACEBOOK */}
+                      <div className="flex flex-col gap-1">
                         <Link 
                           href="/dashboard" 
                           onClick={() => setMenuOpen(false)}
-                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)] transition-all duration-150 group"
+                          className="fb-menu-item group"
                         >
-                          <LayoutDashboard size={16} className="text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors" />
-                          <span>Dashboard</span>
+                          <div className="fb-icon-circle group-hover:bg-[var(--bg-primary)]">
+                            <LayoutDashboard size={18} fill="currentColor" className="opacity-80" />
+                          </div>
+                          <div className="flex-1 flex flex-col">
+                            <span className="text-[15px] font-semibold text-[var(--text-primary)] tracking-tight">Panel de Control</span>
+                          </div>
+                          <ChevronRight size={18} className="text-[var(--text-muted)]" />
                         </Link>
                         
                         {role === 'vendedor' ? (
                           <Link 
                             href="/products" 
                             onClick={() => setMenuOpen(false)}
-                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)] transition-all duration-150 group"
+                            className="fb-menu-item group"
                           >
-                            <Package size={16} className="text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors" />
-                            <span>Inventario</span>
+                            <div className="fb-icon-circle group-hover:bg-[var(--bg-primary)]">
+                              <Package size={18} fill="currentColor" className="opacity-80" />
+                            </div>
+                            <div className="flex-1 flex flex-col">
+                              <span className="text-[15px] font-semibold text-[var(--text-primary)] tracking-tight">Mi Inventario</span>
+                            </div>
+                            <ChevronRight size={18} className="text-[var(--text-muted)]" />
                           </Link>
                         ) : (
-                          <button 
-                            onClick={() => { setFavoritesOpen(true); setMenuOpen(false); }} 
-                            className="flex w-full items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)] transition-all duration-150 group"
+                          <Link 
+                            href="/favoritos"
+                            onClick={() => setMenuOpen(false)} 
+                            className="fb-menu-item group"
                           >
-                            <Heart size={16} className="text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors" />
-                            <span>Favoritos</span>
-                          </button>
+                            <div className="fb-icon-circle group-hover:bg-[var(--bg-primary)]">
+                              <Heart size={18} fill="currentColor" className="opacity-80" />
+                            </div>
+                            <div className="flex-1 flex flex-col">
+                              <span className="text-[15px] font-semibold text-[var(--text-primary)] tracking-tight">Favoritos</span>
+                            </div>
+                            <ChevronRight size={18} className="text-[var(--text-muted)]" />
+                          </Link>
                         )}
                         
                         <Link 
                           href="/perfil" 
                           onClick={() => setMenuOpen(false)}
-                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)] transition-all duration-200 group"
+                          className="fb-menu-item group"
                         >
-                          <Settings size={16} className="text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors" />
-                          <span>Configuración</span>
+                          <div className="fb-icon-circle group-hover:bg-[var(--bg-primary)]">
+                            <Settings size={18} fill="currentColor" className="opacity-80" />
+                          </div>
+                          <div className="flex-1 flex flex-col">
+                            <span className="text-[15px] font-semibold text-[var(--text-primary)] tracking-tight">Configuración y privacidad</span>
+                          </div>
+                          <ChevronRight size={18} className="text-[var(--text-muted)]" />
                         </Link>
+                        
+                        <button 
+                          onClick={handleLogout} 
+                          className="fb-menu-item group"
+                        >
+                          <div className="fb-icon-circle group-hover:bg-[var(--bg-primary)]">
+                            <LogOut size={18} fill="currentColor" className="opacity-80" />
+                          </div>
+                          <div className="flex flex-col flex-1 text-left">
+                            <span className="text-[15px] font-semibold text-[var(--text-primary)] tracking-tight">Cerrar sesión</span>
+                          </div>
+                          <ChevronRight size={18} className="text-[var(--text-muted)] opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </button>
                       </div>
 
-                      {/* SEPARADOR */}
-                      <div className="my-3 h-px bg-[var(--border)] opacity-60 mx-1" />
-
-                      {/* BOTÓN CERRAR SESIÓN */}
-                      <button 
-                        onClick={handleLogout} 
-                        className="flex w-full items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all duration-150"
-                      >
-                        <LogOut size={16} />
-                        <span>Cerrar Sesión</span>
-                      </button>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
-          ) : (
-            /* VISTA INVITADO */
-            <div className="flex items-center gap-6">
-              <Link href="/login" className="text-sm font-bold text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors">
-                Ingresar
-              </Link>
-              <Link 
-                href="/register" 
-                className="rounded-full bg-[var(--text-primary)] px-6 py-2.5 text-sm font-bold text-[var(--bg-primary)] transition-all hover:opacity-90 active:scale-95 shadow-sm"
-              >
-                Registrarse
-              </Link>
-            </div>
-          )}
-        </div>
-      </nav>
-      <FavoritesModal isOpen={favoritesOpen} onClose={() => setFavoritesOpen(false)} />
-      <CartDrawer />
-    </header>
+            ) : (
+              /* VISTA INVITADO */
+              <div className="flex items-center gap-6 pr-2">
+                <Link href="/login" className="text-[14px] font-bold text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors">
+                  Ingresar
+                </Link>
+                <Link 
+                  href="/register" 
+                  className="rounded-full bg-[var(--text-primary)] px-5 py-2 text-[14px] font-bold text-[var(--bg-primary)] transition-all hover:scale-105 active:scale-95 shadow-sm"
+                >
+                  Regístrate
+                </Link>
+              </div>
+            )}
+          </div>
+        </nav>
+        <CartDrawer />
+      </header>
+    </>
   )
 }

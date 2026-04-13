@@ -6,7 +6,6 @@ import {
   deleteProduct,
   deleteProducts,
   getCategories,
-  getMarcas,
 } from '@/lib/products'
 import type {
   Product,
@@ -18,8 +17,7 @@ import type {
 
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([])
-  const [categories, setCategories] = useState<{id: number, nombre: string}[]>([])
-  const [marcas, setMarcas] = useState<{id_marca: number, nombre: string}[]>([])
+  const [categories, setCategories] = useState<{id: string, nombre: string}[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -28,7 +26,7 @@ export function useProducts() {
     search: '',
     status: 'all',
     category: 'all',
-    sortBy: 'fecha_publicacion',
+    sortBy: 'created_at',
     sortOrder: 'desc',
   })
 
@@ -61,7 +59,6 @@ export function useProducts() {
 
   useEffect(() => {
     getCategories().then(setCategories)
-    getMarcas().then(setMarcas)
   }, [])
 
   // ── Filters ────────────────────────────────────────────────────────────────
@@ -134,7 +131,7 @@ export function useProducts() {
 
   const toggleSelectAll = useCallback(() => {
     setSelected((s) =>
-      s.size === products.length ? new Set() : new Set(products.map((p) => p.id_prenda))
+      s.size === products.length ? new Set() : new Set(products.map((p) => p.id))
     )
   }, [products])
 
@@ -148,7 +145,6 @@ export function useProducts() {
   return {
     products,
     categories,
-    marcas,
     loading,
     error,
     filters,

@@ -3,6 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useProducts } from '@/hooks/useProducts'
+import { useAuth } from '@/context/AuthContext'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 import { ProductTable } from '@/components/products/ProductTable'
 import { ProductModal } from '@/components/products/ProductModal'
 import { ProductDeleteDialog } from '@/components/products/ProductDeleteDialog'
@@ -13,7 +17,6 @@ export default function ProductsPage() {
   const {
     products,
     categories,
-    marcas,
     loading,
     error,
     filters,
@@ -29,6 +32,13 @@ export default function ProductsPage() {
     toggleSelectAll,
     goToPage,
   } = useProducts()
+
+  const { user, loading: authLoading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!authLoading && !user) router.push('/login')
+  }, [user, authLoading, router])
 
   const searchParams = useSearchParams()
 
@@ -74,14 +84,14 @@ export default function ProductsPage() {
 
   const handleModalSubmit = async (data: ProductInsert | ProductUpdate) => {
     if (editingProduct) {
-      return update(editingProduct.id_prenda, data as ProductUpdate)
+      return update(editingProduct.id, data as ProductUpdate)
     }
     return create(data as ProductInsert)
   }
 
   const handleDeleteConfirm = async () => {
     if (deletingBulk) return removeSelected()
-    if (deletingProduct) return remove(deletingProduct.id_prenda)
+    if (deletingProduct) return remove(deletingProduct.id)
     return { error: null }
   }
 
@@ -96,8 +106,27 @@ export default function ProductsPage() {
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1)
 
   // ── Render ──────────────────────────────────────────────────────────────────
+  if (authLoading) return null
+
   return (
-    <div className="page">
+    <div className="page" style={{ position: 'relative' }}>
+      {/* Barra de navegación interna de retorno al dashboard */}
+      <div style={{ marginBottom: 24, display: 'flex' }}>
+        <Link 
+          href="/dashboard" 
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            padding: '8px 16px', borderRadius: '999px',
+            backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)',
+            fontSize: 14, fontWeight: 600, textDecoration: 'none',
+            border: '1px solid var(--border)', transition: 'all 0.2s',
+          }}
+          className="hover:scale-105"
+        >
+          <ArrowLeft size={16} /> Volver al Dashboard
+        </Link>
+      </div>
+
       {/* ── Header ── */}
       <div className="page-header">
         <div>
@@ -145,9 +174,9 @@ export default function ProductsPage() {
             onChange={(e) => updateFilters({ status: e.target.value as ProductStatus | 'all' })}
           >
             <option value="all">Todos los estados</option>
-            <option value="DISPONIBLE">Disponible</option>
-            <option value="OCULTO">Oculto</option>
-            <option value="VENDIDO">Vendido</option>
+            <option value="published">Publicado</option>
+            <option value="draft">Borrador</option>
+            <option value="archived">Oculto</option>
           </select>
 
           {/* Category filter */}
@@ -155,11 +184,11 @@ export default function ProductsPage() {
             <select
               className="filter-select"
               value={filters.category ?? 'all'}
-              onChange={(e) => updateFilters({ category: e.target.value === 'all' ? 'all' : parseInt(e.target.value) })}
+              onChange={(e) => updateFilters({ category: e.target.value === 'all' ? 'all' : e.target.value })}
             >
               <option value="all">Todas las categorías</option>
               {categories.map((c) => (
-                <option key={c.id} value={c.id}>{c.nombre}</option>
+               <option key={c.id} value={c.id}>{c.nombre}</option>
               ))}
             </select>
           )}
@@ -209,13 +238,13 @@ export default function ProductsPage() {
           </p>
           <div className="pagination-controls">
             <button
-              className="page-btn"
-              disabled={pagination.page === 1}
-              onClick={() => goToPage(pagination.page - 1)}
+               className="page-btn"
+               disabled={pagination.page === 1}
+               onClick={() => goToPage(pagination.page - 1)}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="15 18 9 12 15 6" />
-              </svg>
+               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                 <polyline points="15 18 9 12 15 6" />
+               </svg>
             </button>
             {pageNumbers.map((n) => (
               <button
@@ -227,13 +256,13 @@ export default function ProductsPage() {
               </button>
             ))}
             <button
-              className="page-btn"
-              disabled={pagination.page === totalPages}
-              onClick={() => goToPage(pagination.page + 1)}
+               className="page-btn"
+               disabled={pagination.page === totalPages}
+               onClick={() => goToPage(pagination.page + 1)}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
+               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                 <polyline points="9 18 15 12 9 6" />
+               </svg>
             </button>
           </div>
         </div>
@@ -243,14 +272,14 @@ export default function ProductsPage() {
       <ProductModal
         open={modalOpen}
         product={editingProduct}
-        marcas={marcas}
+        categories={categories}
         onClose={() => setModalOpen(false)}
         onSubmit={handleModalSubmit}
       />
 
       <ProductDeleteDialog
         open={deleteOpen}
-        productName={deletingProduct?.titulo}
+        productName={deletingProduct?.name}
         count={deletingBulk ? selected.size : undefined}
         onClose={() => setDeleteOpen(false)}
         onConfirm={handleDeleteConfirm}
