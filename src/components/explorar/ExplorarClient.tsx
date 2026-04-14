@@ -6,6 +6,7 @@ import { Search, X, LayoutGrid, List, ArrowUpDown } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { ProductCard, type Product } from '@/components/products/ProductCard'
 import { FilterSidebar, type Filters } from '@/components/explorar/FilterSidebar'
+import { ProductDetailModal } from '@/components/products/ProductDetailModal'
 
 type SortOption = 'reciente' | 'precio_asc' | 'precio_desc'
 
@@ -79,6 +80,7 @@ export function ExplorarClient() {
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [searchInput, setSearchInput] = useState(filters.search)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
 
   // Sync URL with filters
   const syncURL = useCallback((f: Filters, s: SortOption) => {
@@ -198,45 +200,7 @@ export function ExplorarClient() {
         .view-btn:hover { background-color: var(--bg-secondary) !important; }
       `}</style>
 
-      {/* Search bar top */}
-      <div style={{
-        backgroundColor: 'var(--bg-secondary)',
-        borderBottom: '1px solid var(--border)',
-        padding: '20px 2rem',
-      }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          <div
-            className="search-bar"
-            style={{
-              display: 'flex', alignItems: 'center', gap: 12,
-              backgroundColor: 'var(--bg-card)',
-              border: '2px solid var(--border)',
-              borderRadius: 14, padding: '10px 16px',
-              transition: 'border-color 0.2s, box-shadow 0.2s',
-            }}
-          >
-            <Search size={17} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-            <input
-              value={searchInput}
-              onChange={e => handleSearchInput(e.target.value)}
-              placeholder="Buscar por título, marca, categoría..."
-              style={{
-                flex: 1, border: 'none', outline: 'none', background: 'transparent',
-                fontSize: 15, color: 'var(--text-primary)',
-                fontFamily: "'DM Sans', sans-serif",
-              }}
-            />
-            {searchInput && (
-              <button
-                onClick={() => { setSearchInput(''); setFilters(f => ({ ...f, search: '' })) }}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}
-              >
-                <X size={15} />
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Search Bar moved inside the content area */}
 
       {/* Main layout */}
       <div style={{
@@ -252,6 +216,40 @@ export function ExplorarClient() {
 
         {/* Content */}
         <div style={{ flex: 1, minWidth: 0 }}>
+          
+          {/* Aesthetic Integrated Search Bar */}
+          <div
+            className="search-bar"
+            style={{
+              marginBottom: 32,
+              display: 'flex', alignItems: 'center', gap: 12,
+              backgroundColor: 'var(--bg-card)',
+              border: '1px solid var(--border)', // Mantenemos el borde fino para integración
+              borderRadius: 16, padding: '12px 20px',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              boxShadow: '0 2px 8px var(--shadow-sm)'
+            }}
+          >
+            <Search size={18} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+            <input
+              value={searchInput}
+              onChange={e => handleSearchInput(e.target.value)}
+              placeholder="Buscar por título, marca, categoría..."
+              style={{
+                flex: 1, border: 'none', outline: 'none', background: 'transparent',
+                fontSize: 15, color: 'var(--text-primary)',
+                fontFamily: "'DM Sans', sans-serif",
+              }}
+            />
+            {searchInput && (
+              <button
+                onClick={() => { setSearchInput(''); setFilters(f => ({ ...f, search: '' })) }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
 
           {/* Toolbar */}
           <div style={{
@@ -380,13 +378,19 @@ export function ExplorarClient() {
               ? <EmptyState query={filters.search} />
               : products.map((p, i) => (
                   <li key={p.id} className="product-item" style={{ opacity: 0, animationDelay: `${i * 0.04}s` }}>
-                    <ProductCard product={p} />
+                    <ProductCard product={p} onOpen={setSelectedProduct} />
                   </li>
                 ))
             }
           </ul>
         </div>
       </div>
+
+      {/* Product detail modal */}
+      <ProductDetailModal
+        product={selectedProduct}
+        onClose={() => setSelectedProduct(null)}
+      />
     </>
   )
 }

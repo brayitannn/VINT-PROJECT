@@ -30,7 +30,7 @@ export function ProductDetailModal({ product, onClose }: Props) {
 
   const isOpen = product !== null
   const inCart = product ? isInCart(product.id) : false
-  const isLiked = product ? isFavorito(product.id) : false
+  const isLiked = product ? isFavorito(product.id.toString()) : false
 
   // Bloquear scroll cuando está abierto
   useEffect(() => {
@@ -56,11 +56,11 @@ export function ProductDetailModal({ product, onClose }: Props) {
     onClose()
   }
 
-  const handleToggleFav = () => toggleFavorito(product.id)
-  
-  // Rating simulado basado en el id del producto (usando longitud para evitar errores con UUID)
-  const ratingValue = (4 + (product.id.length % 10) / 10).toFixed(1)
-  const salesValue = 10 + (product.id.length * 2)
+  const handleToggleFav = () => toggleFavorito(product.id.toString())
+
+  // Rating simulado basado en el id del producto
+  const rating = (4 + (product.id % 10) / 10).toFixed(1)
+  const sales = 10 + (product.id % 90)
 
   return (
     <>
@@ -268,7 +268,7 @@ export function ProductDetailModal({ product, onClose }: Props) {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
                     <Star size={12} fill="#F59E0B" color="#F59E0B" />
                     <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                      {ratingValue} · {salesValue} ventas
+                      {rating} · {sales} ventas
                     </span>
                   </div>
                 </div>

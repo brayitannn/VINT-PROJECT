@@ -1,5 +1,7 @@
 'use client'
 
+import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import { X, Trash2, Plus, Minus, ShoppingBag, ShoppingCart } from 'lucide-react'
 import { useCart, SHIPPING_COST } from './CartContext'
@@ -12,19 +14,30 @@ function formatPrice(price: number): string {
 export function CartDrawer() {
   const { isOpen, closeCart, items, totalItems, totalPrice, totalWithShipping, removeItem, updateQuantity, clearCart } = useCart()
   const router = useRouter()
+  
+  // Estado para asegurarnos de que el Portal solo se renderice en el cliente (evita errores en Next.js)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleCheckout = () => {
     closeCart()
     router.push('/checkout')
   }
 
-  return (
+  // Si no se ha montado el componente en el navegador, no renderizamos nada aún
+  if (!mounted) return null
+
+  // createPortal teletransporta el HTML al final del <body>
+  return createPortal(
     <>
       {/* Overlay */}
       <div
         onClick={closeCart}
         style={{
-          position: 'fixed', inset: 0, zIndex: 998,
+          position: 'fixed', inset: 0, zIndex: 99998, // Z-index súper alto
           backgroundColor: 'rgba(0,0,0,0.45)',
           backdropFilter: 'blur(4px)',
           opacity: isOpen ? 1 : 0,
@@ -36,8 +49,9 @@ export function CartDrawer() {
       {/* Drawer */}
       <div
         style={{
-          position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 999,
+          position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 99999, // Z-index superior al overlay
           width: 420,
+          height: '100vh', // Forzamos que ocupe el 100% del alto
           maxWidth: '100vw',
           backgroundColor: 'var(--bg-card)',
           borderLeft: '1px solid var(--border)',
@@ -336,6 +350,7 @@ export function CartDrawer() {
           }
         `}</style>
       </div>
-    </>
+    </>,
+    document.body // <- Aquí está la magia que lo manda fuera del Navbar
   )
 }

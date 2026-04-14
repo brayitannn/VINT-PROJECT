@@ -13,15 +13,16 @@ interface Props {
 }
 
 const EMPTY: ProductInsert = {
-  name: '',
-  description: '',
+  name: "",
+  description: "",
   price: 0,
-  stock: 1,
-  sku: '',
-  category: 'Ninguna',
-  status: 'draft',
-  image_url: '',
-}
+  stock: 0,
+  sku: "",
+  category: "",
+  category_id: 0,
+  status: "draft",
+  image_url: ""
+};
 
 const STATUS_OPTIONS: { value: ProductStatus; label: string }[] = [
   { value: 'published', label: 'Publicado' },
