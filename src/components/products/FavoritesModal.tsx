@@ -238,21 +238,14 @@ export function FavoritesModal({ isOpen, onClose }: Props) {
                         width={400} height={200}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-                      <button
-                        onClick={(e) => { e.stopPropagation(); toggleFavorito(product.id) }}
-                        title="Quitar de favoritos"
-                        style={{
-                          position: 'absolute', top: 10, right: 10,
-                          width: 34, height: 34, borderRadius: '50%',
-                          backgroundColor: 'rgba(255,255,255,0.9)', border: 'none',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          cursor: 'pointer', zIndex: 10,
-                          backdropFilter: 'blur(4px)',
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                          transition: 'all 0.2s', color: '#EC4899'
-                        }}
-                        className="hover:scale-110"
-                      >
+<button
+  onClick={(e) => { e.stopPropagation(); toggleFavorito(String(product.id)) }}
+  title="Quitar de favoritos"
+  style={{
+    position: 'absolute', top: 10, right: 10,
+    // ...resto igual
+  }}
+>
                         <Heart size={16} fill="#EC4899" />
                       </button>
                     </div>
