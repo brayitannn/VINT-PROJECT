@@ -85,7 +85,10 @@ export function useProducts() {
       setLoading(true)
       const { error } = await updateProduct(id, payload)
       setLoading(false)
-      if (!error) await fetchProducts()
+      if (!error){ 
+        await new Promise(resolve => setTimeout(resolve, 500))
+        await fetchProducts()
+      }
       return { error }
     },
     [fetchProducts]

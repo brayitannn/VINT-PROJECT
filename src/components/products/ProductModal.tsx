@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useAuth } from '@/context/AuthContext'
 import type { Product, ProductInsert, ProductUpdate, ProductStatus } from '@/types/product'
 
 interface Props {
@@ -29,6 +30,7 @@ const STATUS_OPTIONS: { value: ProductStatus; label: string }[] = [
 ]
 
 export function ProductModal({ open, product, onClose, onSubmit, categories = [] }: Props) {
+  const { user } = useAuth()
   const [form, setForm] = useState<any>(EMPTY)
   const [submitting, setSubmitting] = useState(false)
   const [fieldError, setFieldError] = useState<string | null>(null)
@@ -36,7 +38,11 @@ export function ProductModal({ open, product, onClose, onSubmit, categories = []
 
   useEffect(() => {
     if (product) {
-      setForm({ ...product })
+      setForm({ 
+        ...product,
+        // Ensure the dropdown uses the ID for matching
+        category: product.category_id?.toString() || product.category || ''
+      })
     } else {
       setForm(EMPTY)
     }
@@ -55,8 +61,9 @@ export function ProductModal({ open, product, onClose, onSubmit, categories = []
     setSubmitting(true)
     setFieldError(null)
 
-    const payload = { ...form }
-    const { error } = await onSubmit(payload)
+    // Si estuviéramos insertando, agregaríamos el usuario id
+    // Pero el submit lo maneja el padre
+    const { error } = await onSubmit(form)
     
     setSubmitting(false)
     if (error) setFieldError(error)
@@ -71,7 +78,6 @@ export function ProductModal({ open, product, onClose, onSubmit, categories = []
     setFieldError(null)
 
     try {
-      // Simulate file upload or use a data URL temporarily
       const reader = new FileReader()
       reader.onloadend = () => {
         set('image_url', reader.result as string)
@@ -228,7 +234,7 @@ export function ProductModal({ open, product, onClose, onSubmit, categories = []
                   </p>
                   <input
                     className="field-input"
-                    value={form.image_url as string || ''}
+                    value={(form.image_url as string) || ''}
                     onChange={(e) => set('image_url', e.target.value)}
                     placeholder="https://misitio.com/imagen.jpg"
                   />

@@ -2,15 +2,15 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useTheme } from 'next-themes'
+import { useAuth } from '@/context/AuthContext'
 import { useRole } from '@/components/layout/RoleContext'
 import { useSearchParams } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 import {
   User, Lock, Bell, Shield, Palette, HelpCircle,
   AlertTriangle, ChevronRight, Camera, Save, Check,
   Sun, Moon, Eye, EyeOff, MessageCircle, FileText, Trash2, Loader2
 } from 'lucide-react'
-import { useAuth } from '@/context/AuthContext'
-import { createClient } from '@/lib/supabase/client'
 import { VintSelect } from '@/components/ui/VintSelect'
 
 const calcularEdad = (fechaNacimiento: string) => {
@@ -105,21 +105,23 @@ function FieldRow({ label, children }: { label: string; children: React.ReactNod
   )
 }
 
-function Input({ value, onChange, placeholder, type = 'text', max }: { value: string; onChange: (v: string) => void; placeholder?: string; type?: string; max?: string }) {
+function Input({ value, onChange, placeholder, type = 'text', max, disabled }: { value: string; onChange: (v: string) => void; placeholder?: string; type?: string; max?: string; disabled?: boolean }) {
   return (
     <input
       type={type}
       value={value}
       max={max}
+      disabled={disabled}
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
       style={{
         width: '100%', padding: '12px 16px', borderRadius: 12, fontSize: 14,
-        border: '1px solid var(--border)', backgroundColor: 'var(--bg-primary)',
+        border: '1px solid var(--border)', backgroundColor: disabled ? 'var(--bg-secondary)' : 'var(--bg-primary)',
         color: value ? 'var(--text-primary)' : 'var(--text-muted)', outline: 'none',
         fontFamily: "'DM Sans', sans-serif",
         boxSizing: 'border-box',
-        transition: 'all 0.2s'
+        transition: 'all 0.2s',
+        opacity: disabled ? 0.7 : 1
       }}
     />
   )
@@ -146,7 +148,7 @@ function PerfilSection() {
 
   const realName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuario'
   const realEmail = user?.email || ''
-  const realUsername = realEmail.split('@')[0]
+  const realUsername = user?.user_metadata?.username || realEmail.split('@')[0]
   const avatarUrl: string | null = user?.user_metadata?.avatar_url || null
   const realLocation = user?.user_metadata?.location || 'Colombia'
   const realBirthday = user?.user_metadata?.fecha_nacimiento || ''
@@ -159,8 +161,10 @@ function PerfilSection() {
   const [birthday, setBirthday] = useState(realBirthday)
   const [gender, setGender] = useState(realGender)
   const [saved, setSaved] = useState(false)
+  const [updating, setUpdating] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(avatarUrl)
   const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const edad = calcularEdad(birthday)
   const hoyStr = new Date().toISOString().split('T')[0]
@@ -169,34 +173,48 @@ function PerfilSection() {
 
   const handleSave = async () => {
     if (!user) return
-    await supabase.auth.updateUser({
-      data: { name, location, fecha_nacimiento: birthday, genero: gender }
-    })
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
+    setUpdating(true)
+    setError(null)
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: { name, username, location, fecha_nacimiento: birthday, genero: gender }
+      })
+      if (error) throw error
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
+    } catch (err: any) {
+      setError(err.message || 'Error al actualizar el perfil')
+    } finally {
+      setUpdating(false)
+    }
   }
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !user) return
     setUploading(true)
-    const ext = file.name.split('.').pop()
-    const path = `avatars/${user.id}.${ext}`
-    const { data, error } = await supabase.storage
-      .from('avatars')
-      .upload(path, file, { upsert: true, contentType: file.type })
-    if (!error && data) {
+    setError(null)
+    try {
+      const ext = file.name.split('.').pop()
+      const path = `avatars/${user.id}.${ext}`
+      const { data, error } = await supabase.storage
+        .from('avatars')
+        .upload(path, file, { upsert: true, contentType: file.type })
+      if (error) throw error
+      
       const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path)
       const publicUrl = urlData.publicUrl
       await supabase.auth.updateUser({ data: { avatar_url: publicUrl } })
       setAvatarPreview(publicUrl)
+    } catch (err: any) {
+      setError('Error al subir avatar: ' + err.message)
+    } finally {
+      setUploading(false)
     }
-    setUploading(false)
   }
 
   return (
     <>
-      {/* Avatar */}
       <SectionCard title="Foto de Perfil" description="Imagen que verán otros usuarios en el catálogo">
         <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
           <div style={{ position: 'relative' }}>
@@ -223,10 +241,6 @@ function PerfilSection() {
             >
               <Camera size={13} />
             </button>
-          </div>
-          <div>
-            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 4px' }}>{name}</p>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 12px' }}>@{username}</p>
             <input
               ref={fileInputRef}
               type="file"
@@ -234,6 +248,10 @@ function PerfilSection() {
               style={{ display: 'none' }}
               onChange={handleAvatarChange}
             />
+          </div>
+          <div>
+            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 4px' }}>{name}</p>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 12px' }}>@{username || 'usuario'}</p>
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
@@ -249,12 +267,11 @@ function PerfilSection() {
         </div>
       </SectionCard>
 
-      {/* Info personal */}
       <SectionCard title="Información Personal" description="Datos visibles en tu perfil público">
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px' }}>
           <FieldRow label="Nombre completo"><Input value={name} onChange={setName} /></FieldRow>
           <FieldRow label="Nombre de usuario"><Input value={username} onChange={setUsername} placeholder="@username" /></FieldRow>
-          <FieldRow label="Email"><Input value={email} onChange={() => {}} type="email" /></FieldRow>
+          <FieldRow label="Email"><Input value={email} onChange={() => {}} type="email" disabled /></FieldRow>
           <FieldRow label="Ciudad"><Input value={location} onChange={setLocation} placeholder="Bogotá, Colombia" /></FieldRow>
 
           <FieldRow label={`Fecha de Nacimiento ${edad !== null ? `(${edad} años)` : ''}`}>
@@ -279,15 +296,33 @@ function PerfilSection() {
             />
           </FieldRow>
         </div>
+        
+        {error && (
+          <p style={{ fontSize: 13, color: '#EF4444', marginTop: 16, marginBottom: 0 }}>{error}</p>
+        )}
+
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
-          <SaveButton onClick={handleSave} saved={saved} />
+          <button
+            onClick={handleSave}
+            disabled={updating}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '12px 24px', borderRadius: 12, border: 'none',
+              backgroundColor: saved ? '#10B981' : 'var(--accent)',
+              color: 'white', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+              transition: 'all 0.3s',
+              opacity: updating ? 0.7 : 1,
+            }}
+          >
+            {updating ? <div style={{ width: 16, height: 16, border: '2px solid white', borderTop: '2px solid transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /> : saved ? <Check size={16} /> : <Save size={16} />}
+            {updating ? 'Actualizando...' : saved ? 'Guardado' : 'Guardar cambios'}
+          </button>
         </div>
       </SectionCard>
     </>
   )
 }
 
-// ── CORRECCIÓN 1: estados propios para los inputs de contraseña ──────────────
 function CuentaSection() {
   const [showCurrent, setShowCurrent] = useState(false)
   const [showNew, setShowNew] = useState(false)
@@ -339,7 +374,7 @@ function NotificacionesSection() {
     }
   })
   const [saved, setSaved] = useState(false)
-  const set = (key: keyof typeof notifs) => (v: boolean) => setNotifs((n: typeof notifs) => ({ ...n, [key]: v }))
+  const set = (key: keyof typeof notifs) => (v: boolean) => setNotifs((n: any) => ({ ...n, [key]: v }))
   const handleSave = () => {
     localStorage.setItem('vint_notif_prefs', JSON.stringify(notifs))
     setSaved(true)
@@ -374,7 +409,7 @@ function PrivacidadSection() {
     return { perfilPublico: true, mostrarUbicacion: true, mostrarCompras: false }
   })
   const [saved, setSaved] = useState(false)
-  const set = (key: keyof typeof priv) => (v: boolean) => setPriv((p: typeof priv) => ({ ...p, [key]: v }))
+  const set = (key: keyof typeof priv) => (v: boolean) => setPriv((p: any) => ({ ...p, [key]: v }))
   const handleSave = () => {
     localStorage.setItem('vint_privacy_prefs', JSON.stringify(priv))
     setSaved(true)
@@ -395,7 +430,6 @@ function PrivacidadSection() {
 
 function AparienciaSection() {
   const { theme, setTheme } = useTheme()
-  const { role, setRole } = useRole()
   const [saved, setSaved] = useState(false)
 
   const handleSave = () => {
@@ -518,14 +552,13 @@ function PeligroSection() {
               <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '4px 0 0' }}>{action.desc}</p>
             </div>
             <button style={{
-              padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer', flexShrink: 0,
+              padding: '10px 20px', borderRadius: 10, cursor: 'pointer', flexShrink: 0,
               backgroundColor: action.level === 'danger' ? '#EF4444' : 'transparent',
               color: action.level === 'danger' ? 'white' : '#EF4444',
-              borderColor: action.level === 'warn' ? '#EF4444' : 'transparent',
-              borderWidth: action.level === 'warn' ? 1 : 0,
-              borderStyle: 'solid',
+              border: action.level === 'warn' ? '1px solid #EF4444' : 'none',
               fontSize: 13, fontWeight: 700,
               display: 'flex', alignItems: 'center', gap: 6,
+              transition: 'all 0.2s',
             }}>
               <Trash2 size={14} /> {action.btn}
             </button>
@@ -537,26 +570,6 @@ function PeligroSection() {
 }
 
 // ── Main ─────────────────────────────────────────────────────────────────────
-
-function UserPill() {
-  const { user } = useAuth()
-  const name = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuario'
-  const email = user?.email || ''
-  const username = email.split('@')[0]
-  const avatarUrl: string | null = user?.user_metadata?.avatar_url || null
-  const initials = name.trim().split(' ').filter(Boolean).map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
-  return (
-    <>
-      <div style={{ width: 40, height: 40, borderRadius: '50%', backgroundColor: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: 'white', overflow: 'hidden', flexShrink: 0 }}>
-        {avatarUrl ? <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
-      </div>
-      <div>
-        <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{name.split(' ')[0]}</p>
-        <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>@{username}</p>
-      </div>
-    </>
-  )
-}
 
 export function PerfilClient() {
   const { user, loading } = useAuth()
@@ -601,11 +614,14 @@ export function PerfilClient() {
   }
 
   const activeItem = SIDEBAR_ITEMS.find(i => i.id === active)!
+  const initials = (user?.user_metadata?.name || user?.email || 'US').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+  const avatarUrl = user?.user_metadata?.avatar_url || null
 
   return (
     <>
       <style>{`
         .perfil-sidebar-item:hover { background-color: var(--bg-secondary) !important; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
       `}</style>
       <main style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
         {/* Page header */}
@@ -627,11 +643,17 @@ export function PerfilClient() {
           <nav style={{ width: 240, flexShrink: 0, position: 'sticky', top: 88 }}>
             <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 20, overflow: 'hidden', padding: 8 }}>
               {/* User pill */}
-              <div style={{ padding: '16px 12px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid var(--border)', marginBottom: 8 }}>
-                <UserPill />
+              <div style={{ padding: '16px 12px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid var(--border)', marginBottom: 8, paddingBottom: 16 }}>
+                <div style={{ width: 40, height: 40, borderRadius: '50%', backgroundColor: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: 'white', overflow: 'hidden', flexShrink: 0 }}>
+                  {avatarUrl ? <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
+                </div>
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{(user?.user_metadata?.name || user?.email || 'Usuario').split(' ')[0]}</p>
+                  <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>@{user?.user_metadata?.username || user?.email?.split('@')[0] || 'usuario'}</p>
+                </div>
               </div>
 
-              {/* CORRECCIÓN 2: borderRadius y marginBottom únicos por item */}
+              {/* Sidebar Items */}
               {SIDEBAR_ITEMS.map(item => {
                 const Icon = item.icon
                 const isActive = active === item.id

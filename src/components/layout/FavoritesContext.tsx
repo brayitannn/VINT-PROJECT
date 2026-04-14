@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { getFavoritos, addFavorito, removeFavorito } from '@/lib/favoritos'
 import { createClient } from '@/lib/supabase/client'
 import { useNotificationsContext } from '@/components/layout/NotificationsContext'
+import { useAuth } from '@/context/AuthContext'
 
 interface FavoritesContextType {
   favoriteIds: Set<string>
@@ -20,19 +21,27 @@ const FavoritesContext = createContext<FavoritesContextType>({
 })
 
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth()
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const { addLocalNotification } = useNotificationsContext()
 
   // Carga inicial desde Supabase
   useEffect(() => {
-    getFavoritos().then((ids) => {
-      setFavoriteIds(new Set(ids))
+    if (user) {
+      getFavoritos(user.id).then((ids) => {
+        setFavoriteIds(new Set(ids))
+        setLoading(false)
+      })
+    } else {
+      setFavoriteIds(new Set())
       setLoading(false)
-    })
-  }, [])
+    }
+  }, [user])
 
   const toggleFavorito = useCallback(async (id_prenda: string) => {
+    if (!user) return
+
     const isCurrentlyFav = favoriteIds.has(id_prenda)
 
     // Optimistic update — cambia la UI antes de esperar la respuesta
@@ -58,8 +67,8 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 
     // Sync con Supabase
     const ok = isCurrentlyFav
-      ? await removeFavorito(id_prenda)
-      : await addFavorito(id_prenda)
+      ? await removeFavorito(user.id, id_prenda)
+      : await addFavorito(user.id, id_prenda)
 
     // Si falla, revertimos el estado optimista
     if (!ok) {
@@ -79,10 +88,10 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     if (!isCurrentlyFav && ok) {
       try {
         const supabase = createClient()
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) {
+        const { data: { user: currentUser } } = await supabase.auth.getUser()
+        if (currentUser) {
           await supabase.from('notificaciones').insert({
-            usuario_id: user.id,
+            usuario_id: currentUser.id,
             tipo: 'favorito',
             titulo: '❤️ Prenda añadida a favoritos',
             cuerpo: 'La prenda fue guardada en tu lista de favoritos. Puedes verla en Mis Favoritos.',
@@ -94,7 +103,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
         console.warn('[FavoritesContext] No se pudo persistir la notificación:', err)
       }
     }
-  }, [favoriteIds, addLocalNotification])
+  }, [favoriteIds, user, addLocalNotification])
 
   const isFavorito = useCallback(
     (id_prenda: string) => favoriteIds.has(id_prenda),

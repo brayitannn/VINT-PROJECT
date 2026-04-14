@@ -17,9 +17,9 @@ async function getUserId(): Promise<string | null> {
   return user?.id ?? null
 }
 
-export async function getFavoritos(): Promise<string[]> {
+export async function getFavoritos(providedUserId?: string): Promise<string[]> {
   const supabase = createClient()
-  const userId = await getUserId()
+  const userId = providedUserId || await getUserId()
   if (!userId) return []
 
   const { data, error } = await supabase
@@ -31,12 +31,13 @@ export async function getFavoritos(): Promise<string[]> {
     console.error('[favoritos] Error al obtener:', error.message)
     return []
   }
-  return (data || []).map((row: { id_prenda: string }) => row.id_prenda)
+  return (data || []).map((row: { id_prenda: any }) => String(row.id_prenda))
 }
 
-export async function addFavorito(id_prenda: string): Promise<boolean> {
+export async function addFavorito(providedUserId: string, id_prenda: string): Promise<boolean> {
   const supabase = createClient()
-  const userId = await getUserId()
+  // Priorizamos providedUserId si viene, si no buscamos el actual
+  const userId = providedUserId || await getUserId()
   if (!userId) {
     console.warn('[favoritos] No hay usuario autenticado')
     return false
@@ -53,9 +54,9 @@ export async function addFavorito(id_prenda: string): Promise<boolean> {
   return true
 }
 
-export async function removeFavorito(id_prenda: string): Promise<boolean> {
+export async function removeFavorito(providedUserId: string, id_prenda: string): Promise<boolean> {
   const supabase = createClient()
-  const userId = await getUserId()
+  const userId = providedUserId || await getUserId()
   if (!userId) return false
 
   const { error } = await supabase

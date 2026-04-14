@@ -6,20 +6,10 @@ import { useEffect, useState } from 'react'
 import { useFavorites } from '@/components/layout/FavoritesContext'
 import { useCart } from '@/components/layout/CartContext'
 import { createClient } from '@/lib/supabase/client'
+import { type Product } from '@/components/products/ProductCard'
 
-interface ProductoFavorito {
-  id_prenda: string
-  titulo: string
-  precio: number
-  imagen_url: string
-  talla?: string
-  condicion: 'Excelente' | 'Muy Bueno' | 'Bueno'
-  vendedor: string
-}
-
-type Condicion = 'Excelente' | 'Muy Bueno' | 'Bueno'
-
-function mapCondicion(condicion: string): Condicion {
+// Usamos la misma lógica de mapeo que en ExplorarClient para garantizar consistencia
+function mapCondicion(condicion: string): Product['condition'] {
   switch (condicion?.toUpperCase()) {
     case 'NUEVO':
     case 'COMO_NUEVO': return 'Excelente'
@@ -29,11 +19,12 @@ function mapCondicion(condicion: string): Condicion {
   }
 }
 
-function getConditionStyle(condition: Condicion): React.CSSProperties {
+function getConditionStyle(condition: string): React.CSSProperties {
   switch (condition) {
     case 'Excelente': return { backgroundColor: '#D1FAE5', color: '#065F46' }
     case 'Muy Bueno': return { backgroundColor: '#FEF3C7', color: '#92400E' }
     case 'Bueno': return { backgroundColor: '#E0E7FF', color: '#3730A3' }
+    default: return { backgroundColor: '#F3F4F6', color: '#374151' }
   }
 }
 
@@ -44,51 +35,10 @@ interface Props {
 
 export function FavoritesModal({ isOpen, onClose }: Props) {
   const [mounted, setMounted] = useState(false)
-  const [favoritos, setFavoritos] = useState<ProductoFavorito[]>([])
+  const [favoritos, setFavoritos] = useState<Product[]>([])
   const [fetchingProducts, setFetchingProducts] = useState(false)
-  const { favoriteIds, toggleFavorito, loading } = useFavorites()
+  const { favoriteIds, toggleFavorito, loading: favsLoading } = useFavorites()
   const { addItem, isInCart } = useCart()
-
-  // Carga los datos reales de los productos favoritos desde Supabase
-  useEffect(() => {
-    if (!isOpen || loading) return
-
-    if (favoriteIds.size === 0) {
-      setFavoritos([])
-      return
-    }
-
-    const ids = Array.from(favoriteIds)
-    setFetchingProducts(true)
-
-    const fetchData = async () => {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from('v_catalogo_publico')
-        .select('id_prenda, titulo, precio, imagen_principal, talla, condicion, vendedor')
-        .in('id_prenda', ids)
-
-      if (error) {
-        console.error('[FavoritesModal] Error al cargar productos:', error.message)
-        setFavoritos([])
-      } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const mapped: ProductoFavorito[] = (data ?? []).map((item: any) => ({
-          id_prenda: String(item.id_prenda),
-          titulo: item.titulo ?? 'Sin título',
-          precio: Number(item.precio),
-          imagen_url: item.imagen_principal ?? 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&h=500&fit=crop',
-          talla: item.talla,
-          condicion: mapCondicion(item.condicion),
-          vendedor: item.vendedor ?? 'Vendedor',
-        }))
-        setFavoritos(mapped)
-      }
-      setFetchingProducts(false)
-    }
-
-    fetchData()
-  }, [isOpen, favoriteIds, loading])
 
   useEffect(() => {
     setMounted(true)
@@ -100,9 +50,60 @@ export function FavoritesModal({ isOpen, onClose }: Props) {
     return () => { document.body.style.overflow = 'unset' }
   }, [isOpen])
 
+  // Carga los datos reales de los productos favoritos desde Supabase (Vista v_catalogo_publico)
+  useEffect(() => {
+    if (!isOpen || favsLoading) return
+
+    if (favoriteIds.size === 0) {
+      setFavoritos([])
+      return
+    }
+
+    const ids = Array.from(favoriteIds).filter(id => !isNaN(Number(id)))
+
+    if (ids.length === 0) {
+      setFavoritos([])
+      setFetchingProducts(false)
+      return
+    }
+
+    setFetchingProducts(true)
+
+    const fetchData = async () => {
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from('v_catalogo_publico')
+          .select('id_prenda, titulo, precio, imagen_principal, talla, condicion, vendedor')
+          .in('id_prenda', ids)
+
+        if (error) throw error
+
+        const mapped: Product[] = (data ?? []).map((item: any) => ({
+          id: String(item.id_prenda),
+          name: item.titulo ?? 'Sin título',
+          price: Number(item.precio),
+          image: item.imagen_principal ?? 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&h=500&fit=crop',
+          size: item.talla ?? 'M',
+          condition: mapCondicion(item.condicion),
+          seller: item.vendedor ?? 'Vendedor',
+          rating: 4.5
+        }))
+        setFavoritos(mapped)
+      } catch (err: any) {
+        console.error('[FavoritesModal] Error al cargar productos:', err.message)
+        setFavoritos([])
+      } finally {
+        setFetchingProducts(false)
+      }
+    }
+
+    fetchData()
+  }, [isOpen, favoriteIds, favsLoading])
+
   if (!mounted || !isOpen) return null
 
-  const isLoadingAll = loading || fetchingProducts
+  const isLoadingAll = favsLoading || fetchingProducts
 
   return (
     <div
@@ -210,10 +211,10 @@ export function FavoritesModal({ isOpen, onClose }: Props) {
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '24px' }}>
               {favoritos.map((product) => {
-                const inCart = isInCart(Number(product.id_prenda))
+                const inCart = isInCart(product.id)
                 return (
                   <article
-                    key={product.id_prenda}
+                    key={product.id}
                     style={{
                       backgroundColor: 'var(--bg-card, #FAF4EC)',
                       border: '1px solid var(--border, #D4C5B0)',
@@ -221,7 +222,8 @@ export function FavoritesModal({ isOpen, onClose }: Props) {
                       borderRadius: 20, overflow: 'hidden',
                       display: 'flex', flexDirection: 'column',
                       transition: 'box-shadow 0.3s ease, transform 0.3s ease',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      position: 'relative'
                     }}
                     className="group hover:-translate-y-1 hover:shadow-lg"
                   >
@@ -231,14 +233,13 @@ export function FavoritesModal({ isOpen, onClose }: Props) {
                       height: 200, backgroundColor: 'var(--bg-secondary, #EAD9C3)'
                     }}>
                       <Image
-                        src={product.imagen_url}
-                        alt={product.titulo}
+                        src={product.image}
+                        alt={product.name}
                         width={400} height={200}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-                      {/* Heart — removes from favorites */}
                       <button
-                        onClick={(e) => { e.stopPropagation(); toggleFavorito(product.id_prenda) }}
+                        onClick={(e) => { e.stopPropagation(); toggleFavorito(product.id) }}
                         title="Quitar de favoritos"
                         style={{
                           position: 'absolute', top: 10, right: 10,
@@ -261,25 +262,23 @@ export function FavoritesModal({ isOpen, onClose }: Props) {
                       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
                         <h3 style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary, #2C1F14)', lineHeight: 1.3, margin: 0 }}
                           className="line-clamp-2">
-                          {product.titulo}
+                          {product.name}
                         </h3>
                         <span style={{
-                          ...getConditionStyle(product.condicion),
+                          ...getConditionStyle(product.condition),
                           fontSize: 10, fontWeight: 700, padding: '3px 8px',
                           borderRadius: 999, whiteSpace: 'nowrap', flexShrink: 0
                         }}>
-                          {product.condicion}
+                          {product.condition}
                         </span>
                       </div>
 
-                      {product.talla && (
-                        <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 4px' }}>
-                          Talla: <strong>{product.talla}</strong>
-                        </p>
-                      )}
+                      <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 4px' }}>
+                        Talla: <strong>{product.size}</strong>
+                      </p>
 
                       <p style={{ fontWeight: 800, fontSize: 18, color: 'var(--accent, #8B5E3C)', margin: '0 0 14px' }}>
-                        ${product.precio.toLocaleString('es-CO')} COP
+                        ${product.price.toLocaleString('es-CO')} COP
                       </p>
 
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
@@ -291,26 +290,23 @@ export function FavoritesModal({ isOpen, onClose }: Props) {
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontSize: 11, fontWeight: 700, flexShrink: 0
                           }}>
-                            {product.vendedor.charAt(0)}
+                            {product.seller.charAt(0)}
                           </div>
-                          <p style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)', margin: 0 }}>
-                            {product.vendedor}
-                          </p>
+                          <div>
+                            <p style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)', margin: 0 }}>
+                              {product.seller}
+                            </p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                              <Star size={10} fill="#F59E0B" color="#F59E0B" />
+                              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)' }}>{product.rating}</span>
+                            </div>
+                          </div>
                         </div>
 
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            addItem({
-                              id: Number(product.id_prenda),
-                              name: product.titulo,
-                              price: product.precio,
-                              size: product.talla ?? 'U',
-                              condition: product.condicion,
-                              seller: product.vendedor,
-                              image: product.imagen_url,
-                              rating: 4.5,
-                            })
+                            addItem(product)
                           }}
                           style={{
                             backgroundColor: inCart ? '#10B981' : 'var(--accent, #8B5E3C)',

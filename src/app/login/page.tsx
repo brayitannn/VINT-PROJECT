@@ -13,6 +13,7 @@ function LoginForm() {
   const router = useRouter();
   const { signIn } = useAuth();
   const supabase = getSupabaseClient();
+  
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

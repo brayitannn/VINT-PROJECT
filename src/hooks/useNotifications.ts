@@ -55,14 +55,14 @@ export function useNotifications(prefs: NotificationPrefs) {
         .on(
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'notificaciones', filter: `usuario_id=eq.${userId}` },
-          (payload) => {
+          (payload: any) => {
             setNotifications(prev => [payload.new as RealtimeNotification, ...prev])
           }
         )
         .on(
           'postgres_changes',
           { event: 'UPDATE', schema: 'public', table: 'notificaciones', filter: `usuario_id=eq.${userId}` },
-          (payload) => {
+          (payload: any) => {
             setNotifications(prev =>
               prev.map(n => n.id === (payload.new as RealtimeNotification).id ? payload.new as RealtimeNotification : n)
             )

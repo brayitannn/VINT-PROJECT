@@ -1,33 +1,59 @@
-import { createClient } from '@/lib/supabase/client'
+'use client'
+
+import { getSupabaseClient } from './supabase/client'
 import type { Product, ProductInsert, ProductUpdate, ProductFilters } from '@/types/product'
 
-const TABLE = 'products'
+const VIEW = 'v_catalogo_publico'
 
+// ── Mapper ─────────────────────────────────────────────────────────────────
+function mapFromDB(item: any): Product {
+  return {
+    id: String(item.id_prenda),
+    name: item.titulo || 'Sin título',
+    description: item.descripcion || '',
+    price: Number(item.precio) || 0,
+    stock: item.stock || 1,
+    sku: item.sku || '',
+    category: item.categoria || 'General',
+    category_id: item.id_categoria || null,
+    status: (item.estado_publicacion?.toUpperCase() === 'DISPONIBLE' ? 'published' : 'draft') as any,
+    image_url: item.imagen_principal || null,
+    created_at: item.fecha_publicacion || new Date().toISOString(),
+    updated_at: item.fecha_publicacion || new Date().toISOString(),
+  }
+}
+
+// ── READ: Uses public view (no schema issue) ────────────────────────────────
 export async function getProducts(
   filters: ProductFilters = {},
   page = 1,
   pageSize = 10
 ): Promise<{ data: Product[]; count: number; error: string | null }> {
   try {
-    const supabase = createClient()
+    const supabase = getSupabaseClient()
     const from = (page - 1) * pageSize
     const to = from + pageSize - 1
 
-    let query = supabase.from(TABLE).select('*', { count: 'exact' }).range(from, to)
+    let query = supabase
+      .from(VIEW)
+      .select('*', { count: 'exact' })
+      .range(from, to)
 
     if (filters.search) {
-      query = query.or(`name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`)
-    }
-
-    if (filters.status && filters.status !== 'all') {
-      query = query.eq('status', filters.status)
+      query = query.or(`titulo.ilike.%${filters.search}%,descripcion.ilike.%${filters.search}%`)
     }
 
     if (filters.category && filters.category !== 'all') {
-      query = query.eq('category', filters.category)
+      query = query.eq('categoria', filters.category)
     }
 
-    const sortBy = filters.sortBy ?? 'created_at'
+    const sortByMap: Record<string, string> = {
+      name: 'titulo',
+      price: 'precio',
+      created_at: 'fecha_publicacion',
+      updated_at: 'fecha_publicacion',
+    }
+    const sortBy = sortByMap[filters.sortBy ?? ''] ?? 'fecha_publicacion'
     const ascending = filters.sortOrder === 'asc'
     query = query.order(sortBy as string, { ascending })
 
@@ -38,7 +64,7 @@ export async function getProducts(
     }
 
     return {
-      data: data as Product[],
+      data: (data || []).map(mapFromDB),
       count: count ?? 0,
       error: null,
     }
@@ -50,81 +76,113 @@ export async function getProducts(
 export async function getProductById(
   id: string
 ): Promise<{ data: Product | null; error: string | null }> {
-  const supabase = createClient()
+  const supabase = getSupabaseClient()
   const { data, error } = await supabase
-    .from(TABLE)
+    .from(VIEW)
     .select('*')
-    .eq('id', id)
+    .eq('id_prenda', id)
     .single()
 
   if (error || !data) return { data: null, error: error?.message ?? null }
-  return { data: data as Product, error: null }
+  return { data: mapFromDB(data), error: null }
 }
 
+// ── WRITE: Use secure API Route ────────────────────────────────────────────
 export async function createProduct(
   payload: ProductInsert
 ): Promise<{ data: Product | null; error: string | null }> {
-  const supabase = createClient()
-  
-  const { data, error } = await supabase
-    .from(TABLE)
-    .insert([payload])
-    .select()
-    .single()
+  try {
+    const res = await fetch('/api/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: payload.name,
+        description: payload.description,
+        price: payload.price,
+        category: payload.category,
+        image_url: payload.image_url,
+      }),
+    })
 
-  if (error) return { data: null, error: error.message }
-  return { data: data as Product, error: null }
+    const json = await res.json()
+    if (!res.ok) return { data: null, error: json.error ?? 'Error al crear el producto' }
+
+    return { data: json.data ? mapFromDB(json.data) : null, error: null }
+  } catch (err: any) {
+    return { data: null, error: err.message }
+  }
 }
 
 export async function updateProduct(
   id: string,
   payload: ProductUpdate
 ): Promise<{ data: Product | null; error: string | null }> {
-  const supabase = createClient()
+  try {
+    const res = await fetch('/api/products', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, ...payload }),
+    })
 
-  const { data, error } = await supabase
-    .from(TABLE)
-    .update(payload)
-    .eq('id', id)
-    .select()
-    .single()
-
-  if (error) return { data: null, error: error.message }
-  return { data: data as Product, error: null }
+    const json = await res.json()
+    if (!res.ok) return { data: null, error: json.error ?? 'Error al actualizar' }
+    return { data: json.data ? mapFromDB(json.data) : null, error: null }
+  } catch (err: any) {
+    return { data: null, error: err.message }
+  }
 }
 
 export async function deleteProduct(
   id: string
 ): Promise<{ error: string | null }> {
-  const supabase = createClient()
-  const { error } = await supabase.from(TABLE).delete().eq('id', id)
-  return { error: error?.message ?? null }
+  try {
+    const res = await fetch('/api/products', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: [id] }),
+    })
+    const json = await res.json()
+    if (!res.ok) return { error: json.error ?? 'Error al eliminar' }
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message }
+  }
 }
 
 export async function deleteProducts(
   ids: string[]
 ): Promise<{ error: string | null }> {
-  const supabase = createClient()
-  const { error } = await supabase.from(TABLE).delete().in('id', ids)
-  return { error: error?.message ?? null }
+  try {
+    const res = await fetch('/api/products', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids }),
+    })
+    const json = await res.json()
+    if (!res.ok) return { error: json.error ?? 'Error al eliminar' }
+    return { error: null }
+  } catch (err: any) {
+    return { error: err.message }
+  }
 }
 
-// These are basically stubs now or can be extracted dynamically from existing products if needed
-export async function getCategories(): Promise<{id: string, nombre: string}[]> {
+// ── Mock data for categories (hasta que se sincronice con BD) ─────────────
+export async function getCategories(): Promise<{ id: string; nombre: string }[]> {
   return [
-    { id: 'Hombre', nombre: 'Hombre' },
-    { id: 'Mujer', nombre: 'Mujer' },
-    { id: 'Unisex', nombre: 'Unisex' },
-    { id: 'Accesorios', nombre: 'Accesorios' },
-    { id: 'Calzado', nombre: 'Calzado' },
+    { id: '1', nombre: 'HOMBRE' },
+    { id: '2', nombre: 'MUJER' },
+    { id: '3', nombre: 'UNISEX' },
+    { id: '4', nombre: 'ACCESORIOS' },
+    { id: '5', nombre: 'CALZADO' },
   ]
 }
 
-export async function getMarcas(): Promise<{id_marca: string, nombre: string}[]> {
-  // Mock as strings because table 'products' doesn't use brand, but maybe it can be added to description
+export async function getMarcas(): Promise<{ id_marca: string; nombre: string }[]> {
   return [
     { id_marca: 'Nike', nombre: 'Nike' },
     { id_marca: 'Adidas', nombre: 'Adidas' },
     { id_marca: 'Zara', nombre: 'Zara' },
+    { id_marca: 'H&M', nombre: 'H&M' },
+    { id_marca: 'Otro', nombre: 'Otro' },
   ]
 }

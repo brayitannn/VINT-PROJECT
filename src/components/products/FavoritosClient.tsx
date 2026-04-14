@@ -6,19 +6,22 @@ import { Heart, ShoppingCart } from 'lucide-react'
 import { useFavorites } from '@/components/layout/FavoritesContext'
 import { useCart } from '@/components/layout/CartContext'
 import { createClient } from '@/lib/supabase/client'
+import type { Product } from '@/components/products/ProductCard'
 
-interface ProductoFavorito {
-  id: string
-  name: string
-  price: number
-  image_url: string
-  category?: string
-  stock: number
+// Usamos la misma lógica de mapeo que en ExplorarClient para garantizar consistencia
+function mapCondicion(condicion: string): Product['condition'] {
+  switch (condicion?.toUpperCase()) {
+    case 'NUEVO':
+    case 'COMO_NUEVO': return 'Excelente'
+    case 'USADO': return 'Muy Bueno'
+    case 'DESGASTADO': return 'Bueno'
+    default: return 'Bueno'
+  }
 }
 
 export function FavoritosClient() {
   const [mounted, setMounted] = useState(false)
-  const [favoritos, setFavoritos] = useState<ProductoFavorito[]>([])
+  const [favoritos, setFavoritos] = useState<Product[]>([])
   const [fetchingProducts, setFetchingProducts] = useState(false)
   const { favoriteIds, toggleFavorito, loading } = useFavorites()
   const { addItem, isInCart } = useCart()
@@ -35,26 +38,35 @@ export function FavoritosClient() {
       return
     }
 
-    const ids = Array.from(favoriteIds)
+    const ids = Array.from(favoriteIds).filter(id => !isNaN(Number(id)))
+
+    if (ids.length === 0) {
+      setFavoritos([])
+      return
+    }
+
     setFetchingProducts(true)
 
     const fetchData = async () => {
       try {
         const supabase = createClient()
+        // IMPORTANTE: Usamos v_catalogo_publico igual que en el explorador funcional
         const { data, error } = await supabase
-          .from('products')
-          .select('id, name, price, image_url, category, stock')
-          .in('id', ids)
+          .from('v_catalogo_publico')
+          .select('id_prenda, titulo, precio, imagen_principal, talla, condicion, vendedor')
+          .in('id_prenda', ids)
 
         if (error) throw error
 
-        const mapped: ProductoFavorito[] = (data ?? []).map((item: any) => ({
-          id: item.id,
-          name: item.name ?? 'Sin título',
-          price: Number(item.price),
-          image_url: item.image_url ?? 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&h=500&fit=crop',
-          category: item.category,
-          stock: item.stock,
+        const mapped: Product[] = (data ?? []).map((item: any) => ({
+          id: String(item.id_prenda),
+          name: item.titulo ?? 'Sin título',
+          price: Number(item.precio),
+          size: item.talla ?? 'M',
+          condition: mapCondicion(item.condicion),
+          seller: item.vendedor ?? 'Vendedor',
+          image: item.imagen_principal ?? 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&h=500&fit=crop',
+          rating: 4.5
         }))
         setFavoritos(mapped)
       } catch (error: any) {
@@ -106,7 +118,7 @@ export function FavoritosClient() {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '24px' }}>
           {favoritos.map((product) => {
-            const inCart = isInCart(product.id as unknown as number)
+            const inCart = isInCart(product.id)
             return (
               <article
                 key={product.id}
@@ -117,6 +129,7 @@ export function FavoritosClient() {
                   borderRadius: 20, overflow: 'hidden',
                   display: 'flex', flexDirection: 'column',
                   transition: 'box-shadow 0.3s ease, transform 0.3s ease',
+                  position: 'relative'
                 }}
                 className="group hover:-translate-y-1 hover:shadow-lg"
               >
@@ -125,13 +138,13 @@ export function FavoritosClient() {
                   height: 230, backgroundColor: 'var(--bg-secondary, #EAD9C3)'
                 }}>
                   <Image
-                    src={product.image_url}
+                    src={product.image}
                     alt={product.name}
                     width={400} height={230}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <button
-                    onClick={(e) => { e.preventDefault(); toggleFavorito(product.id.toString()) }}
+                    onClick={(e) => { e.preventDefault(); toggleFavorito(product.id) }}
                     title="Quitar de favoritos"
                     style={{
                       position: 'absolute', top: 12, right: 12,
@@ -155,11 +168,9 @@ export function FavoritosClient() {
                     </h3>
                   </div>
 
-                  {product.category && (
-                    <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 10px' }}>
-                      Cat: <strong>{product.category}</strong>
-                    </p>
-                  )}
+                  <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 10px' }}>
+                    Talla: <strong>{product.size}</strong> · {product.condition}
+                  </p>
 
                   <p style={{ fontWeight: 800, fontSize: 20, color: 'var(--accent, #8B5E3C)', margin: '0 0 16px' }}>
                     ${product.price.toLocaleString('es-CO')} COP
@@ -167,24 +178,15 @@ export function FavoritosClient() {
 
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <p style={{ fontSize: 12, fontWeight: product.stock === 0 ? 700 : 500, color: product.stock === 0 ? '#ef4444' : 'var(--text-secondary)', margin: 0 }}>
-                        Stock: {product.stock}
+                      <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0 }}>
+                        {product.seller}
                       </p>
                     </div>
 
                     <button
                       onClick={(e) => {
                         e.preventDefault()
-                        addItem({
-                          id: product.id as unknown as number,
-                          name: product.name,
-                          price: product.price,
-                          size: 'Única',
-                          condition: 'Bueno',
-                          seller: 'Vint',
-                          image: product.image_url,
-                          rating: 5,
-                        })
+                        addItem(product)
                       }}
                       style={{
                         backgroundColor: inCart ? '#10B981' : 'var(--accent, #8B5E3C)',
@@ -204,6 +206,12 @@ export function FavoritosClient() {
           })}
         </div>
       )}
+
+      <style>{`
+        @keyframes pulse {
+          0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; }
+        }
+      `}</style>
     </div>
   )
 }

@@ -40,48 +40,55 @@ function RegisterForm() {
       setFormData(prev => ({ ...prev, userType: "vendedor" }));
     }
   }, [searchParams]);
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+  if (formData.password !== formData.confirmPassword) {
+    setError("Las contraseñas no coinciden.");
+    return;
+  }
+  if (formData.password.length < 6) {
+    setError("La contraseña debe tener mínimo 6 caracteres.");
+    return;
+  }
 
-    if (formData.password !== formData.confirmPassword) {
-      setError("Las contraseñas no coinciden.");
-      return;
-    }
-    if (formData.password.length < 6) {
-      setError("La contraseña debe tener mínimo 6 caracteres.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const { error: signUpError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            name: formData.name,
-            role: formData.userType,
-            fecha_nacimiento: formData.fechaNacimiento,
-            genero: formData.genero,
-          },
+  setLoading(true);
+  try {
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email: formData.email,
+      password: formData.password,
+      options: {
+        data: {
+          name: formData.name,
+          role: formData.userType,
+          fecha_nacimiento: formData.fechaNacimiento,
+          genero: formData.genero,
         },
-      });
+      },
+    });
 
-      if (signUpError) throw signUpError;
-      await signIn(formData.email, formData.password);
-      
-      router.push(`/dashboard/${formData.userType}`);
-    } catch (err: any) {
-      if (err.message?.includes("User already registered")) {
-        setError("Este correo ya está registrado.");
-      } else {
-        setError("Ocurrió un error al crear la cuenta.");
-      }
-      setLoading(false);
+    if (signUpError) throw signUpError;
+
+    // Si Supabase requiere verificación de correo
+    if (data.user && !data.session) {
+      router.push('/login?message=Revisa tu correo para verificar tu cuenta')
+      return
     }
-  };
+
+    // Si no requiere verificación, entrar directo
+    await signIn(formData.email, formData.password);
+    router.push(`/dashboard/${formData.userType}`);
+
+  } catch (err: any) {
+    if (err.message?.includes("User already registered")) {
+      setError("Este correo ya está registrado.");
+    } else {
+      setError("Ocurrió un error al crear la cuenta.");
+    }
+    setLoading(false);
+  }
+};
 
   return (
     <div className="w-full max-w-[480px] relative z-10 flex flex-col pt-24">

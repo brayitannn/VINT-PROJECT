@@ -6,7 +6,7 @@ import { useFavorites } from '@/components/layout/FavoritesContext'
 import { useCart } from '@/components/layout/CartContext'
 
 export interface Product {
-  id: number
+  id: string
   name: string
   price: number
   size: string

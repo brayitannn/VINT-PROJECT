@@ -8,6 +8,7 @@ export interface Product {
   stock: number
   sku: string
   category: string | null
+  category_id: number | null
   status: ProductStatus
   image_url: string | null
   created_at: string

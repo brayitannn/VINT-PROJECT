@@ -6,9 +6,18 @@ import { Search, X, LayoutGrid, List, ArrowUpDown } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { ProductCard, type Product } from '@/components/products/ProductCard'
 import { FilterSidebar, type Filters } from '@/components/explorar/FilterSidebar'
-import { ProductDetailModal } from '@/components/products/ProductDetailModal'
 
 type SortOption = 'reciente' | 'precio_asc' | 'precio_desc'
+
+function mapCondicion(condicion: string): Product['condition'] {
+  switch (condicion?.toUpperCase()) {
+    case 'NUEVO':
+    case 'COMO_NUEVO': return 'Excelente'
+    case 'USADO': return 'Muy Bueno'
+    case 'DESGASTADO': return 'Bueno'
+    default: return 'Bueno'
+  }
+}
 
 function ProductSkeleton() {
   return (
@@ -70,7 +79,6 @@ export function ExplorarClient() {
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [searchInput, setSearchInput] = useState(filters.search)
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
 
   // Sync URL with filters
   const syncURL = useCallback((f: Filters, s: SortOption) => {
@@ -85,34 +93,47 @@ export function ExplorarClient() {
   const fetchProducts = useCallback(async (f: Filters, s: SortOption) => {
     setLoading(true)
     try {
-      let query = supabase.from('products').select('*')
+      let query = supabase.from('v_catalogo_publico').select('*')
 
       if (f.search) {
-        query = query.ilike('name', `%${f.search}%`)
+        query = query.ilike('titulo', `%${f.search}%`)
       }
       if (f.categorias.length > 0) {
-        query = query.in('category', f.categorias)
+        query = query.in('categoria', f.categorias)
       }
-      // Assuming 'talla', 'condicion', 'genero' aren't strictly mapped in the new schema or we search them in description
-      // But we will respect the price and default sorting
-      query = query.gte('price', f.priceMin).lte('price', f.priceMax)
+      if (f.tallas.length > 0) {
+        query = query.in('talla', f.tallas)
+      }
+      if (f.condiciones.length > 0) {
+        const dbCondiciones = f.condiciones.flatMap(c => {
+          if (c === 'Excelente') return ['NUEVO', 'COMO_NUEVO']
+          if (c === 'Muy Bueno') return ['USADO']
+          if (c === 'Bueno') return ['DESGASTADO']
+          return []
+        })
+        query = query.in('condicion', dbCondiciones)
+      }
+      if (f.genero !== 'Todos') {
+        query = query.ilike('genero', f.genero)
+      }
+      query = query.gte('precio', f.priceMin).lte('precio', f.priceMax)
 
-      if (s === 'precio_asc') query = query.order('price', { ascending: true })
-      else if (s === 'precio_desc') query = query.order('price', { ascending: false })
-      else query = query.order('created_at', { ascending: false })
+      if (s === 'precio_asc') query = query.order('precio', { ascending: true })
+      else if (s === 'precio_desc') query = query.order('precio', { ascending: false })
+      else query = query.order('fecha_publicacion', { ascending: false })
 
       const { data, error } = await query.limit(48)
       if (error) throw error
 
       const mapped: Product[] = (data ?? []).map((item: any) => ({
-        id: item.id, // we use uuid string now, wait, ProductCard.Product expects number. Let's fix ProductCard next.
-        name: item.name,
-        price: Number(item.price),
-        size: 'Única', // fallback 
-        condition: 'Bueno', // fallback
-        seller: 'Vint Shop', // fallback
-        image: item.image_url ?? 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&h=500&fit=crop',
-        rating: 5.0,
+        id: item.id_prenda,
+        name: item.titulo,
+        price: Number(item.precio),
+        size: item.talla ?? 'M',
+        condition: mapCondicion(item.condicion),
+        seller: item.vendedor ?? 'Vendedor',
+        image: item.imagen_principal ?? 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&h=500&fit=crop',
+        rating: 4.5,
       }))
       setProducts(mapped)
     } catch (err) {
@@ -177,35 +198,24 @@ export function ExplorarClient() {
         .view-btn:hover { background-color: var(--bg-secondary) !important; }
       `}</style>
 
-      {/* Main layout */}
+      {/* Search bar top */}
       <div style={{
-        maxWidth: 1280, margin: '0 auto',
-        padding: '32px 2rem', display: 'flex', gap: 28, alignItems: 'flex-start',
+        backgroundColor: 'var(--bg-secondary)',
+        borderBottom: '1px solid var(--border)',
+        padding: '20px 2rem',
       }}>
-        {/* Sidebar */}
-        <FilterSidebar
-          filters={filters}
-          onChange={setFilters}
-          totalResults={products.length}
-        />
-
-        {/* Content */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          
-          {/* Aesthetic Integrated Search Bar */}
+        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
           <div
             className="search-bar"
             style={{
-              marginBottom: 32,
               display: 'flex', alignItems: 'center', gap: 12,
               backgroundColor: 'var(--bg-card)',
-              border: '1px solid var(--border)',
-              borderRadius: 16, padding: '12px 20px',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              boxShadow: '0 2px 8px var(--shadow-sm)'
+              border: '2px solid var(--border)',
+              borderRadius: 14, padding: '10px 16px',
+              transition: 'border-color 0.2s, box-shadow 0.2s',
             }}
           >
-            <Search size={18} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+            <Search size={17} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
             <input
               value={searchInput}
               onChange={e => handleSearchInput(e.target.value)}
@@ -221,10 +231,27 @@ export function ExplorarClient() {
                 onClick={() => { setSearchInput(''); setFilters(f => ({ ...f, search: '' })) }}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}
               >
-                <X size={16} />
+                <X size={15} />
               </button>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Main layout */}
+      <div style={{
+        maxWidth: 1280, margin: '0 auto',
+        padding: '32px 2rem', display: 'flex', gap: 28, alignItems: 'flex-start',
+      }}>
+        {/* Sidebar */}
+        <FilterSidebar
+          filters={filters}
+          onChange={setFilters}
+          totalResults={products.length}
+        />
+
+        {/* Content */}
+        <div style={{ flex: 1, minWidth: 0 }}>
 
           {/* Toolbar */}
           <div style={{
@@ -353,19 +380,13 @@ export function ExplorarClient() {
               ? <EmptyState query={filters.search} />
               : products.map((p, i) => (
                   <li key={p.id} className="product-item" style={{ opacity: 0, animationDelay: `${i * 0.04}s` }}>
-                    <ProductCard product={p} onOpen={setSelectedProduct} />
+                    <ProductCard product={p} />
                   </li>
                 ))
             }
           </ul>
         </div>
       </div>
-
-      {/* Product detail modal */}
-      <ProductDetailModal
-        product={selectedProduct}
-        onClose={() => setSelectedProduct(null)}
-      />
     </>
   )
 }
