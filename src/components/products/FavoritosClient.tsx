@@ -144,8 +144,7 @@ export function FavoritosClient() {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <button
-                    onClick={(e) => { e.preventDefault(); toggleFavorito(product.id) }}
-                    title="Quitar de favoritos"
+                    onClick={(e) => { e.preventDefault(); toggleFavorito(String(product.id)) }}
                     style={{
                       position: 'absolute', top: 12, right: 12,
                       width: 36, height: 36, borderRadius: '50%',
