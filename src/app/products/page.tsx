@@ -1,12 +1,9 @@
 'use client'
 
-export const dynamic = 'force-dynamic'
-
-import { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { useProducts } from '@/hooks/useProducts'
 import { useAuth } from '@/context/AuthContext'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { ProductTable } from '@/components/products/ProductTable'
@@ -15,7 +12,8 @@ import { ProductDeleteDialog } from '@/components/products/ProductDeleteDialog'
 import type { Product, ProductInsert, ProductUpdate, ProductStatus } from '@/types/product'
 import './products.css'
 
-export default function ProductsPage() {
+// 1. Creamos un componente interno con toda tu lógica actual
+function ProductsContent() {
   const {
     products,
     categories,
@@ -37,12 +35,12 @@ export default function ProductsPage() {
 
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
 
+  // Redirección de autenticación
   useEffect(() => {
     if (!authLoading && !user) router.push('/login')
   }, [user, authLoading, router])
-
-  const searchParams = useSearchParams()
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false)
@@ -61,7 +59,7 @@ export default function ProductsPage() {
     }
   }, [searchParams])
 
-  // ── Handlers ────────────────────────────────────────────────────────────────
+  // Handlers
   const openCreate = () => {
     setEditingProduct(null)
     setModalOpen(true)
@@ -107,15 +105,14 @@ export default function ProductsPage() {
 
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1)
 
-  // ── Render ──────────────────────────────────────────────────────────────────
   if (authLoading) return null
 
   return (
     <div className="page" style={{ position: 'relative' }}>
-      {/* Barra de navegación interna de retorno al dashboard */}
       <div style={{ marginBottom: 24, display: 'flex' }}>
         <Link 
           href="/dashboard" 
+          className="hover:scale-105"
           style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
             padding: '8px 16px', borderRadius: '999px',
@@ -123,13 +120,11 @@ export default function ProductsPage() {
             fontSize: 14, fontWeight: 600, textDecoration: 'none',
             border: '1px solid var(--border)', transition: 'all 0.2s',
           }}
-          className="hover:scale-105"
         >
           <ArrowLeft size={16} /> Volver al Dashboard
         </Link>
       </div>
 
-      {/* ── Header ── */}
       <div className="page-header">
         <div>
           <h1 className="page-title">Inventario</h1>
@@ -139,16 +134,13 @@ export default function ProductsPage() {
         </div>
         <button className="btn btn-primary" onClick={openCreate}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
+            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
           </svg>
           Nuevo producto
         </button>
       </div>
 
-      {/* ── Toolbar ── */}
       <div className="toolbar">
-        {/* Search */}
         <div className="search-wrapper">
           <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
@@ -169,7 +161,6 @@ export default function ProductsPage() {
         </div>
 
         <div className="toolbar-right">
-          {/* Status filter */}
           <select
             className="filter-select"
             value={filters.status ?? 'all'}
@@ -181,7 +172,6 @@ export default function ProductsPage() {
             <option value="archived">Oculto</option>
           </select>
 
-          {/* Category filter */}
           {categories.length > 0 && (
             <select
               className="filter-select"
@@ -190,17 +180,15 @@ export default function ProductsPage() {
             >
               <option value="all">Todas las categorías</option>
               {categories.map((c) => (
-               <option key={c.id} value={c.id}>{c.nombre}</option>
+                <option key={c.id} value={c.id}>{c.nombre}</option>
               ))}
             </select>
           )}
 
-          {/* Bulk delete */}
           {selected.size > 0 && (
             <button className="btn btn-danger-outline" onClick={openBulkDelete}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="3 6 5 6 21 6" />
-                <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+                <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
               </svg>
               Eliminar {selected.size}
             </button>
@@ -208,7 +196,6 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      {/* ── Error ── */}
       {error && (
         <div className="alert alert-error">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -218,7 +205,6 @@ export default function ProductsPage() {
         </div>
       )}
 
-      {/* ── Table ── */}
       <ProductTable
         products={products}
         loading={loading}
@@ -231,7 +217,6 @@ export default function ProductsPage() {
         onSort={handleSort}
       />
 
-      {/* ── Pagination ── */}
       {totalPages > 1 && (
         <div className="pagination">
           <p className="pagination-info">
@@ -239,14 +224,10 @@ export default function ProductsPage() {
             {Math.min(pagination.page * pagination.pageSize, pagination.total)} de {pagination.total}
           </p>
           <div className="pagination-controls">
-            <button
-               className="page-btn"
-               disabled={pagination.page === 1}
-               onClick={() => goToPage(pagination.page - 1)}
-            >
-               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                 <polyline points="15 18 9 12 15 6" />
-               </svg>
+            <button className="page-btn" disabled={pagination.page === 1} onClick={() => goToPage(pagination.page - 1)}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
             </button>
             {pageNumbers.map((n) => (
               <button
@@ -257,20 +238,15 @@ export default function ProductsPage() {
                 {n}
               </button>
             ))}
-            <button
-               className="page-btn"
-               disabled={pagination.page === totalPages}
-               onClick={() => goToPage(pagination.page + 1)}
-            >
-               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                 <polyline points="9 18 15 12 9 6" />
-               </svg>
+            <button className="page-btn" disabled={pagination.page === totalPages} onClick={() => goToPage(pagination.page + 1)}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
             </button>
           </div>
         </div>
       )}
 
-      {/* ── Modals ── */}
       <ProductModal
         open={modalOpen}
         product={editingProduct}
@@ -287,5 +263,14 @@ export default function ProductsPage() {
         onConfirm={handleDeleteConfirm}
       />
     </div>
+  )
+}
+
+// 2. Export predeterminado envuelto en Suspense para evitar el error de Build
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={<div className="page">Cargando inventario...</div>}>
+      <ProductsContent />
+    </Suspense>
   )
 }
