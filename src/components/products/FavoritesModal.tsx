@@ -38,7 +38,7 @@ export function FavoritesModal({ isOpen, onClose }: Props) {
   const [favoritos, setFavoritos] = useState<Product[]>([])
   const [fetchingProducts, setFetchingProducts] = useState(false)
   const { favoriteIds, toggleFavorito, loading: favsLoading } = useFavorites()
-  const { addItem, isInCart } = useCart()
+  const { addItem, isInCart, openCart } = useCart()
 
   useEffect(() => {
     setMounted(true)
@@ -80,7 +80,7 @@ export function FavoritesModal({ isOpen, onClose }: Props) {
         if (error) throw error
 
         const mapped: Product[] = (data ?? []).map((item: any) => ({
-          id: String(item.id_prenda),
+          id: Number(item.id_prenda),
           name: item.titulo ?? 'Sin título',
           price: Number(item.precio),
           image: item.imagen_principal ?? 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&h=500&fit=crop',
@@ -238,15 +238,23 @@ export function FavoritesModal({ isOpen, onClose }: Props) {
                         width={400} height={200}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-<button
-  onClick={(e) => { e.stopPropagation(); toggleFavorito(String(product.id)) }}
-  title="Quitar de favoritos"
-  style={{
-    position: 'absolute', top: 10, right: 10,
-    // ...resto igual
-  }}
->
-                        <Heart size={16} fill="#EC4899" />
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleFavorito(String(product.id)) }}
+                        title="Quitar de favoritos"
+                        style={{
+                          position: 'absolute', top: 12, right: 12,
+                          width: 36, height: 36, borderRadius: '50%',
+                          backgroundColor: 'rgba(255, 255, 255, 0.85)',
+                          border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          cursor: 'pointer', zIndex: 10,
+                          backdropFilter: 'blur(4px)',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                          transition: 'all 0.2s',
+                          color: '#EC4899', 
+                        }}
+                        className="hover:scale-110 hover:bg-white"
+                      >
+                        <Heart size={18} color="currentColor" fill="currentColor" />
                       </button>
                     </div>
 
@@ -334,12 +342,18 @@ export function FavoritesModal({ isOpen, onClose }: Props) {
           }}>
             Seguir explorando
           </button>
-          <button style={{
-            padding: '12px 28px', borderRadius: 14, border: 'none',
-            backgroundColor: 'var(--accent, #8B5E3C)', color: 'white',
-            fontSize: 14, fontWeight: 700, cursor: 'pointer',
-            boxShadow: '0 8px 16px -4px rgba(139,94,60,0.4)'
-          }}>
+          <button 
+            onClick={() => {
+              onClose()
+              openCart()
+            }}
+            style={{
+              padding: '12px 28px', borderRadius: 14, border: 'none',
+              backgroundColor: 'var(--accent, #8B5E3C)', color: 'white',
+              fontSize: 14, fontWeight: 700, cursor: 'pointer',
+              boxShadow: '0 8px 16px -4px rgba(139,94,60,0.4)'
+            }}
+          >
             Ver Carrito
           </button>
         </div>

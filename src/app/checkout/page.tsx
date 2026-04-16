@@ -1,156 +1,222 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useCart, SHIPPING_COST } from '../../components/layout/CartContext'
-import { CreditCard, Truck, Loader2 } from 'lucide-react'
-import Link from 'next/link'
-import Image from 'next/image'
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCart, SHIPPING_COST } from "../../components/layout/CartContext";
+import { Loader2, ArrowLeft, User, Phone, MapPin, CreditCard, Calendar, Lock } from "lucide-react";
+import Image from "next/image";
 
-function formatPrice(price: number): string {
-  return `$${price.toLocaleString('es-CO')} COP`
-}
+// --- Utilidades de Formateo ---
+const formatPrice = (price: number) => `$${price.toLocaleString('es-CO')} COP`;
+
+const formatCardNumber = (value: string) => {
+  return value.replace(/\D/g, '').replace(/(\d{4})(?=\d)/g, '$1 ').trim().slice(0, 19);
+};
+
+const formatExpiry = (value: string) => {
+  return value.replace(/\D/g, '').replace(/(\d{2})(?=\d)/g, '$1/').slice(0, 5);
+};
+
+// --- Input idéntico al de Login ---
+const CheckoutInput = ({ icon: Icon, ...props }: any) => (
+  <div className="relative group w-full">
+    <Icon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)] transition-colors group-focus-within:text-[var(--accent)] z-20 pointer-events-none" />
+    <input
+      {...props}
+      className="w-full h-[60px] text-[16px] transition-all duration-300 outline-none vint-input bg-[var(--bg-secondary)]"
+      style={{
+         borderRadius: "18px",
+         border: "1.5px solid color-mix(in srgb, var(--border) 60%, transparent)",
+         color: "var(--text-primary)",
+         paddingLeft: "52px",
+         paddingRight: "20px"
+      }}
+    />
+  </div>
+);
 
 export default function CheckoutPage() {
-  const { items, totalItems, totalPrice, totalWithShipping, clearCart } = useCart()
-  const router = useRouter()
-  const [isProcessing, setIsProcessing] = useState(false)
+  const { items, totalItems, totalPrice, totalWithShipping, clearCart } = useCart();
+  const router = useRouter();
+  
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [formData, setFormData] = useState({ card: '', expiry: '', cvc: '' });
 
-  const handlePayment = (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsProcessing(true)
-
-    setTimeout(() => {
-      clearCart()
-      router.push('/checkout/exito')
-    }, 2000)
-  }
-
-  if (items.length === 0 && !isProcessing) {
-    return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 text-center">
-        <h1 className="text-2xl font-bold mb-4 text-[#4A3B32]">Tu carrito está vacío</h1>
-        <Link href="/" className="px-6 py-3 bg-[var(--accent)] text-white rounded-xl font-bold hover:opacity-90 transition-opacity">
-          Volver a la tienda
-        </Link>
-      </div>
-    )
-  }
+  const handlePayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsProcessing(true);
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    clearCart();
+    router.push('/checkout/exito');
+  };
 
   return (
-    <div className="min-h-screen pb-20 pt-10">
-      <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-10">
-        
-        {/* Formulario de Pago y Envío */}
-        <div className="lg:col-span-7 space-y-8">
-          <form id="checkout-form" onSubmit={handlePayment} className="space-y-8">
-            
-            {/* Sección de Envío */}
-            <section className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl border border-gray-200 shadow-sm">
-              <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <Truck size={20} className="text-[var(--accent)]" />
-                Datos de Envío
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-500">Nombre completo</label>
-                  <input required type="text" className="w-full p-3 rounded-xl border border-gray-300 bg-gray-50 text-gray-900 outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-all" placeholder="Ej. Bryan Calderón" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-500">Teléfono</label>
-                  <input required type="tel" className="w-full p-3 rounded-xl border border-gray-300 bg-gray-50 text-gray-900 outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-all" placeholder="Ej. 300 123 4567" />
-                </div>
-                <div className="space-y-1 sm:col-span-2">
-                  <label className="text-xs font-semibold text-gray-500">Dirección de entrega</label>
-                  <input required type="text" className="w-full p-3 rounded-xl border border-gray-300 bg-gray-50 text-gray-900 outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-all" placeholder="Ej. Calle 123 #45-67, Bogotá" />
-                </div>
-              </div>
-            </section>
+    <div className="min-h-screen pb-32 flex flex-col items-center relative w-full overflow-hidden">
+      
+      {/* estilos globales */}
+      <style jsx global>{`
+        .vint-input::placeholder {
+          color: var(--text-muted) !important;
+          opacity: 0.7;
+          font-weight: 500;
+        }
+        .vint-input:focus {
+          box-shadow: 0 0 0 2px var(--accent) !important;
+          border-color: transparent !important;
+          background-color: transparent !important;
+        }
+        .animate-fade-in-up {
+          animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes fadeInUp {
+          0% { opacity: 0; transform: translateY(30px) scale(0.98); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+      `}</style>
+      
+      {/* Fondo Absoluto de Imagen (Toda la Pantalla) */}
+      <div className="fixed inset-0 z-0 pointer-events-none bg-[var(--bg-primary)]"> 
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-1000 ease-out sm:scale-105 opacity-60"
+          style={{ backgroundImage: "url('/img/checkout.png')" }}
+        />
+        <div className="absolute inset-0 bg-black/20 mix-blend-multiply" />
+        <div className="absolute inset-0 bg-[var(--bg-primary)]/60" />
+      </div>
 
-            {/* Sección de Tarjeta */}
-            <section className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl border border-gray-200 shadow-sm">
-              <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <CreditCard size={20} className="text-[var(--accent)]" />
-                Método de Pago
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1 sm:col-span-2">
-                  <label className="text-xs font-semibold text-gray-500">Número de Tarjeta</label>
-                  <input required type="text" maxLength={19} className="w-full p-3 rounded-xl border border-gray-300 bg-gray-50 text-gray-900 outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-all font-mono tracking-widest" placeholder="0000 0000 0000 0000" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-500">Fecha de Expiración</label>
-                  <input required type="text" maxLength={5} className="w-full p-3 rounded-xl border border-gray-300 bg-gray-50 text-gray-900 outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-all font-mono" placeholder="MM/YY" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-500">CVC</label>
-                  <input required type="text" maxLength={4} className="w-full p-3 rounded-xl border border-gray-300 bg-gray-50 text-gray-900 outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-all font-mono" placeholder="123" />
-                </div>
-              </div>
-            </section>
+      <br /><div className="w-full max-w-2xl mx-auto px-4 flex flex-col items-center gap-12 pt-8 md:pt-16 relative z-10">
 
-          </form>
-        </div>
-
-        {/* Resumen de la Orden */}
-        <div className="lg:col-span-5">
-          <div className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl border border-gray-200 shadow-sm sticky top-24">
-            <h2 className="text-lg font-bold text-gray-900 mb-6">Resumen de la orden</h2>
-            
-            <div className="space-y-4 mb-6 max-h-[40vh] overflow-y-auto pr-2">
-              {items.map(item => (
-                <div key={item.id} className="flex gap-4 items-center">
-                  <div className="w-16 h-16 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0 relative">
-                    <Image src={item.image} alt={item.name} fill className="object-cover" />
-                    <span className="absolute -top-2 -right-2 bg-gray-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold shadow-md">
-                      {item.quantity}
-                    </span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-gray-900 truncate">{item.name}</p>
-                    <p className="text-xs text-gray-500">Talla {item.size}</p>
-                  </div>
-                  <p className="text-sm font-bold text-gray-900">
+         {/* 1. RESUMEN DE COMPRA (Arriba) */}
+         <div className="w-full bg-[var(--bg-primary)]/90 backdrop-blur-xl rounded-[32px] p-6 sm:p-10 flex flex-col shadow-[0_20px_60px_rgba(0,0,0,0.4)] border border-white/20 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+          
+          <h2 className="text-[24px] font-bold mb-6 tracking-tight px-2" style={{ color: "var(--text-primary)" }}>
+            Tu Orden
+          </h2>
+          
+          {/* Productos */}
+          <div className="space-y-4 mb-6 max-h-[400px] overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-[var(--border)] [&::-webkit-scrollbar-thumb]:rounded-full">
+            {items.map(item => (
+              <div key={item.id} className="bg-[var(--bg-secondary)]/80 rounded-[24px] p-5 flex gap-5 shadow-sm border border-white/30 group">
+                {/* Imagen del Producto */}
+                <div className="w-[85px] h-[105px] rounded-[16px] bg-[var(--bg-primary)] overflow-hidden relative flex-shrink-0 transition-transform group-hover:scale-105 shadow-sm">
+                  <Image src={item.image} alt={item.name} fill className="object-cover" />
+                </div>
+                
+                {/* Información del Producto */}
+                <div className="flex flex-col justify-center flex-1 min-w-0">
+                  <h3 className="text-[17px] font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
+                    {item.name}
+                  </h3>
+                  <p className="text-[14px] mt-1 font-medium" style={{ color: "var(--text-secondary)" }}>
+                    Talla {item.size} • Cant. {item.quantity}
+                  </p>
+                  
+                  <p className="text-[18px] font-black mt-3" style={{ color: "var(--accent)" }}>
                     {formatPrice(item.price * item.quantity)}
                   </p>
                 </div>
-              ))}
-            </div>
-
-            <div className="border-t border-gray-200 pt-4 space-y-3 mb-6">
-              <div className="flex justify-between text-sm text-gray-600">
-                <span>Subtotal ({totalItems} prendas)</span>
-                <span>{formatPrice(totalPrice)}</span>
               </div>
-              <div className="flex justify-between text-sm text-gray-600">
-                <span>Envío</span>
-                <span>{formatPrice(SHIPPING_COST)}</span>
-              </div>
-              <div className="flex justify-between text-lg font-extrabold text-gray-900 pt-2 border-t border-gray-200">
-                <span>Total a pagar</span>
-                <span className="text-[var(--accent)]">{formatPrice(totalWithShipping)}</span>
-              </div>
-            </div>
-
-            <button
-              form="checkout-form"
-              type="submit"
-              disabled={isProcessing}
-              className="w-full py-4 rounded-xl bg-[var(--accent)] text-white font-bold text-lg hover:opacity-90 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
-            >
-              {isProcessing ? (
-                <>
-                  <Loader2 size={20} className="animate-spin" />
-                  Procesando...
-                </>
-              ) : (
-                `Pagar ${formatPrice(totalWithShipping)}`
-              )}
-            </button>
+            ))}
           </div>
-        </div>
 
-      </div>
+          {/* Totales */}
+          <div className="bg-[var(--bg-primary)]/40 border border-[var(--border)]/30 backdrop-blur-md rounded-[24px] p-6 space-y-4 shadow-sm">
+            <div className="flex justify-between text-[15px] font-bold" style={{ color: "var(--text-secondary)" }}>
+              <span>Subtotal</span>
+              <span style={{ color: "var(--text-primary)" }}>{formatPrice(totalPrice)}</span>
+            </div>
+            <div className="flex justify-between text-[15px] font-bold" style={{ color: "var(--text-secondary)" }}>
+              <span>Carga de envío</span>
+              <span style={{ color: "var(--text-primary)" }}>{formatPrice(SHIPPING_COST)}</span>
+            </div>
+            
+            <div className="flex justify-between items-end pt-5 mt-3 border-t-2 border-dashed border-[var(--border)]">
+              <span className="text-[14px] font-extrabold uppercase tracking-widest" style={{ color: "var(--text-secondary)" }}>
+                Total Final
+              </span>
+              <span className="text-[30px] font-black leading-none tracking-tighter" style={{ color: "var(--text-primary)" }}>
+                {formatPrice(totalWithShipping)}
+              </span>
+            </div>
+          </div>
+          
+        </div>
+         
+         {/* 2. FORMULARIO DE PAGO Y ENVÍO (Abajo) */}
+         <div className="w-full bg-[var(--bg-card)] rounded-[32px] p-6 sm:p-10 shadow-xl border border-[var(--border)] animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
+            
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-10">
+              <div className="flex flex-col gap-2">
+                <h2 className="text-[32px] font-bold tracking-tight leading-tight" style={{ color: "var(--text-primary)" }}>
+                  Finalizar Compra
+                </h2>
+                <p className="text-[15px] font-medium" style={{ color: "var(--text-muted)" }}>
+                  Ingresa tus datos para recibir tu nuevo estilo.
+                </p>
+              </div>
+              <Link 
+                href="/carrito" 
+                className="inline-flex items-center gap-2 text-sm font-bold transition-all hover:-translate-x-1" 
+                style={{ color: "var(--accent)" }}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Volver al carrito
+              </Link>
+            </div>
+
+            <form onSubmit={handlePayment} className="flex flex-col gap-8">
+              
+              {/* Sección de Envío */}
+              <div className="flex flex-col gap-4">
+                <h3 className="text-[13px] font-bold uppercase tracking-widest ml-1" style={{ color: "var(--text-primary)" }}>Envío</h3>
+                <CheckoutInput icon={User} required type="text" placeholder="Nombre completo" />
+                <CheckoutInput icon={Phone} required type="tel" placeholder="Teléfono" />
+                <CheckoutInput icon={MapPin} required type="text" placeholder="Dirección de entrega (Ej. Bogotá)" />
+              </div>
+
+              {/* Sección de Pago */}
+              <div className="flex flex-col gap-4 pt-2">
+                <h3 className="text-[13px] font-bold uppercase tracking-widest ml-1" style={{ color: "var(--text-primary)" }}>Pago</h3>
+                <CheckoutInput 
+                  icon={CreditCard} 
+                  required 
+                  value={formData.card}
+                  onChange={(e: any) => setFormData({...formData, card: formatCardNumber(e.target.value)})}
+                  placeholder="Número de Tarjeta" 
+                />
+                <div className="flex gap-4">
+                  <CheckoutInput 
+                    icon={Calendar} 
+                    required 
+                    value={formData.expiry}
+                    onChange={(e: any) => setFormData({...formData, expiry: formatExpiry(e.target.value)})}
+                    placeholder="MM/YY" 
+                  />
+                  <CheckoutInput 
+                    icon={Lock} 
+                    required 
+                    maxLength={4}
+                    value={formData.cvc}
+                    onChange={(e: any) => setFormData({...formData, cvc: e.target.value.replace(/\D/g, '')})}
+                    placeholder="CVC" 
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isProcessing}
+                className="w-full h-[60px] text-[17px] font-bold text-white rounded-[100px] flex items-center justify-center gap-2 relative overflow-hidden mt-6 vint-btn-primary transition-all hover:scale-[1.02] disabled:opacity-70 disabled:hover:scale-100 shadow-xl"
+                style={{ backgroundColor: "var(--accent)" }}
+              >
+                {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : `Pagar ${formatPrice(totalWithShipping)}`}
+              </button>
+            </form>
+
+         </div>
+
+      </div><br />
     </div>
-  )
+  );
 }

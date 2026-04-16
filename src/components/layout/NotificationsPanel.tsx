@@ -3,7 +3,9 @@
 import { useEffect, useRef } from 'react'
 import { Bell, X, ShoppingBag, Heart, MessageCircle, Star, Package, Settings, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import type { RealtimeNotification } from '@/hooks/useNotifications'
+import { useFavorites } from '@/components/layout/FavoritesContext'
 
 export interface NotificationPrefs {
   emailOfertas: boolean
@@ -49,6 +51,8 @@ interface Props {
 
 export function NotificationsPanel({ isOpen, onClose, notifications, unreadCount, loading, markAllRead, dismiss }: Props) {
   const panelRef = useRef<HTMLDivElement>(null)
+  const router = useRouter()
+  const { openFavoritesModal } = useFavorites()
 
   useEffect(() => {
     function handleOutside(e: MouseEvent) {
@@ -144,6 +148,12 @@ export function NotificationsPanel({ isOpen, onClose, notifications, unreadCount
               <div
                 key={notif.id}
                 className="notif-item"
+                onClick={() => {
+                  if (notif.tipo === 'favorito') {
+                    openFavoritesModal()
+                    onClose()
+                  }
+                }}
                 style={{
                   display: 'flex',
                   alignItems: 'flex-start',

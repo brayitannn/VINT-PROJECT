@@ -35,11 +35,11 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     <ThemeProvider>
       <AuthProvider>
         <NotificationsProvider prefs={prefs}>
-          <FavoritesProvider>
-            <CartProvider>
+          <CartProvider>
+            <FavoritesProvider>
               {children}
-            </CartProvider>
-          </FavoritesProvider>
+            </FavoritesProvider>
+          </CartProvider>
         </NotificationsProvider>
       </AuthProvider>
     </ThemeProvider>

@@ -27,7 +27,7 @@ export default async function HomePage() {
   const { data, error } = await supabase
     .from('v_catalogo_publico')
     .select('*')
-    .limit(6)
+    .limit(10)
 
 
   if (error) console.error('Error cargando prendas:', error.message)
@@ -59,7 +59,7 @@ export default async function HomePage() {
         {/* Background Image with Blur */}
         <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
           <Image
-            src="/hero-bg.jpg"
+            src="/img/hero-bg.jpg"
             alt="Hero Background"
             fill
             style={{ objectFit: 'cover', filter: 'blur(4px)', scale: '1.05' }}
@@ -184,7 +184,7 @@ export default async function HomePage() {
       <footer style={{ backgroundColor: 'var(--bg-secondary)', borderTop: '1px solid var(--border)', padding: '48px 2rem' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, position: 'absolute', left: 0 }}>
-            <Image src="/logo1.png" alt="Vint" width={32} height={32} />
+            <Image src="/img/logo1.png" alt="Vint" width={32} height={32} />
             <span style={{ fontWeight: 700, fontSize: 18, color: 'var(--text-primary)', fontFamily: "'Playfair Display', serif" }}>Vint</span>
           </div>
           <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>© 2025 Vint · Moda de segunda mano a nivel de todos · Made in Colombia</p>

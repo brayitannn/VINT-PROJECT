@@ -11,6 +11,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { useCart } from './CartContext'
 import { CartDrawer } from './CartDrawer'
+import { useFavorites } from '@/components/layout/FavoritesContext'
 
 export function Navbar() {
   const { theme, setTheme } = useTheme()
@@ -25,6 +26,7 @@ export function Navbar() {
   const router = useRouter()
   const { user, signOut, loading } = useAuth()
   const { totalItems, openCart } = useCart()
+  const { openFavoritesModal } = useFavorites()
 
   useEffect(() => {
     setMounted(true)
@@ -100,7 +102,7 @@ export function Navbar() {
         <nav className="w-full flex h-16 items-center justify-between px-8 md:px-10">
           {/* LOGO */}
           <Link href="/" className="flex items-center gap-2 group">
-            <Image src="/logo1.png" alt="Vint" width={32} height={32} className="transition-transform group-hover:rotate-12 duration-300" />
+            <Image src="/img/logo1.png" alt="Vint" width={32} height={32} className="transition-transform group-hover:rotate-12 duration-300" />
             <span className="font-display text-2xl font-bold text-[var(--accent)]">Vint</span>
           </Link>
 
@@ -228,19 +230,21 @@ export function Navbar() {
                             <ChevronRight size={18} className="text-[var(--text-muted)]" />
                           </Link>
                         ) : (
-                          <Link 
-                            href="/favoritos"
-                            onClick={() => setMenuOpen(false)} 
+                          <button 
+                            onClick={() => {
+                              setMenuOpen(false)
+                              openFavoritesModal()
+                            }}
                             className="fb-menu-item group"
                           >
                             <div className="fb-icon-circle group-hover:bg-[var(--bg-primary)]">
                               <Heart size={18} fill="currentColor" className="opacity-80" />
                             </div>
-                            <div className="flex-1 flex flex-col">
+                            <div className="flex-1 flex flex-col items-start">
                               <span className="text-[15px] font-semibold text-[var(--text-primary)] tracking-tight">Favoritos</span>
                             </div>
                             <ChevronRight size={18} className="text-[var(--text-muted)]" />
-                          </Link>
+                          </button>
                         )}
                         
                         <Link 

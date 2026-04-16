@@ -3,6 +3,7 @@
 import { Search, Heart, ShoppingBag } from 'lucide-react'
 import { type MockUser } from '@/lib/supabase/mock-user'
 import { useRecomendaciones } from '@/hooks/useRecomendaciones'
+import { useFavorites } from '@/components/layout/FavoritesContext'
 import { DashboardNavbar, AccesoRapido } from './DashboardNavbar'
 import { RecomendacionesGrid } from './RecomendacionesGrid'
 
@@ -12,13 +13,14 @@ interface CompradorDashboardProps {
 
 export function CompradorDashboard({ user }: CompradorDashboardProps) {
   const { recomendaciones, loading, error } = useRecomendaciones(user)
+  const { openFavoritesModal } = useFavorites()
 
   const hora = new Date().getHours()
   const saludo = hora < 12 ? 'Buenos días' : hora < 18 ? 'Buenas tardes' : 'Buenas noches'
 
   const ACCESOS_RAPIDOS: AccesoRapido[] = [
     { id: 'explorar', icon: Search, label: 'Explorar', href: '/explorar', accent: '#8B5E3C' },
-    { id: 'favoritos', icon: Heart, label: 'Favoritos', href: '/favoritos', accent: '#8B5E3C' },
+    { id: 'favoritos', icon: Heart, label: 'Favoritos', onClick: openFavoritesModal, accent: '#8B5E3C' },
     { id: 'compras', icon: ShoppingBag, label: 'Mis Compras', href: '/compras', accent: '#8B5E3C' },
   ]
 

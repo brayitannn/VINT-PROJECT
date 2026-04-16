@@ -36,7 +36,7 @@ export default function RegisterPage() {
       <div className="hidden md:flex md:w-1/2 relative overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-1000 ease-out sm:scale-105"
-          style={{ backgroundImage: "url('/bg-register.jpg')" }}
+          style={{ backgroundImage: "url('/img/bg-register.jpg')" }}
         />
         <div className="absolute inset-0 bg-black/30 mix-blend-multiply" />
         <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent" />
