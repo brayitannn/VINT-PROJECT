@@ -70,3 +70,54 @@ input, button, select, textarea {
 .delay-300 { animation-delay: 0.3s; opacity: 0; }
 .delay-400 { animation-delay: 0.4s; opacity: 0; }
 .delay-500 { animation-delay: 0.5s; opacity: 0; }
+
+/* Global Button Styles */
+.vint-btn-primary {
+  background-color: var(--accent);
+  color: white;
+  text-decoration: none;
+  box-shadow: 0 10px 25px -5px color-mix(in srgb, var(--accent) 40%, transparent);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.vint-btn-primary:not(:disabled):hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 20px 35px -5px color-mix(in srgb, var(--accent) 60%, transparent);
+  filter: brightness(1.1);
+}
+.vint-btn-primary:not(:disabled):active {
+  transform: translateY(0) scale(0.98);
+}
+.vint-btn-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.vint-btn-secondary {
+  background-color: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.vint-btn-secondary:not(:disabled):hover {
+  transform: translateY(-4px) scale(1.02);
+  background-color: rgba(255, 255, 255, 0.9);
+  border-color: var(--text-primary);
+  box-shadow: 0 15px 30px -10px rgba(0,0,0,0.1);
+}
+.vint-btn-secondary:not(:disabled):active {
+  transform: translateY(0) scale(0.98);
+}
+.vint-btn-secondary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}

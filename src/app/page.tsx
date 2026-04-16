@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { supabase } from '@/lib/supabase/supabase'
 import { PublicNavbar } from '@/components/layout/PublicNavbar'
 import { AutoCarousel } from '@/components/products/AutoCarousel'
+import { FeatureCard } from '@/components/infoApp/FeatureCard'
 
 const VALUES = [
   { icon: ShieldCheck, title: 'Compra Segura', description: 'Todos los vendedores son verificados. Tu pago está protegido hasta que recibas tu prenda.' },
@@ -24,9 +25,9 @@ function mapCondicion(condicion: string): Product['condition'] {
 
 export default async function HomePage() {
   const { data, error } = await supabase
-  .from('v_catalogo_publico')
-  .select('*')
-  .limit(6)
+    .from('v_catalogo_publico')
+    .select('*')
+    .limit(6)
 
 
   if (error) console.error('Error cargando prendas:', error.message)
@@ -46,9 +47,9 @@ export default async function HomePage() {
     <main style={{ minHeight: '100vh' }}>
       <PublicNavbar />
       {/* HERO */}
-      <section style={{ 
-        padding: '120px 2rem 140px', 
-        position: 'relative', 
+      <section style={{
+        padding: '120px 2rem 140px',
+        position: 'relative',
         overflow: 'hidden',
         display: 'flex',
         alignItems: 'center',
@@ -57,60 +58,60 @@ export default async function HomePage() {
       }}>
         {/* Background Image with Blur */}
         <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-          <Image 
-            src="/hero-bg.jpg" 
+          <Image
+            src="/hero-bg.jpg"
             alt="Hero Background"
             fill
             style={{ objectFit: 'cover', filter: 'blur(4px)', scale: '1.05' }}
             priority
           />
           {/* Overlay to ensure text readability */}
-          <div style={{ 
-            position: 'absolute', 
-            inset: 0, 
-            backgroundColor: 'var(--bg-primary)', 
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundColor: 'var(--bg-primary)',
             opacity: 0.75,
             backgroundImage: 'radial-gradient(circle at center, transparent 0%, var(--bg-primary) 100%)'
           }} />
         </div>
 
         <div style={{ maxWidth: 800, margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
-          <div style={{ 
-            display: 'inline-flex', 
-            alignItems: 'center', 
-            gap: 8, 
-            padding: '8px 20px', 
-            borderRadius: 999, 
-            backgroundColor: 'rgba(var(--accent-rgb), 0.1)', 
-            color: 'var(--accent)', 
-            border: '1px solid var(--accent)', 
-            fontSize: 14, 
-            fontWeight: 600, 
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '8px 20px',
+            borderRadius: 999,
+            backgroundColor: 'rgba(var(--accent-rgb), 0.1)',
+            color: 'var(--accent)',
+            border: '1px solid var(--accent)',
+            fontSize: 14,
+            fontWeight: 600,
             marginBottom: 32,
             backdropFilter: 'blur(4px)'
           }}>
             <span>✦</span> Todo el estilo que quieres a un click de distancia
           </div>
-          <h1 style={{ 
-            fontFamily: "'Playfair Display', serif", 
-            fontSize: 'clamp(44px, 7vw, 84px)', 
-            fontWeight: 900, 
-            lineHeight: 1.05, 
-            letterSpacing: '-0.03em', 
-            color: 'var(--text-primary)', 
-            marginBottom: 28 
+          <h1 style={{
+            fontFamily: "'Playfair Display', serif",
+            fontSize: 'clamp(44px, 7vw, 84px)',
+            fontWeight: 900,
+            lineHeight: 1.05,
+            letterSpacing: '-0.03em',
+            color: 'var(--text-primary)',
+            marginBottom: 28
           }}>
             Ropa con estilo<br />
-            <span style={{ 
-              color: 'var(--accent)', 
-              textShadow: '0 0 30px rgba(var(--accent-rgb), 0.2)' 
+            <span style={{
+              color: 'var(--accent)',
+              textShadow: '0 0 30px rgba(var(--accent-rgb), 0.2)'
             }}>De primer Nivel</span>
           </h1>
-          <p style={{ 
-            fontSize: 19, 
-            color: 'var(--text-secondary)', 
-            maxWidth: 620, 
-            margin: '0 auto 48px', 
+          <p style={{
+            fontSize: 19,
+            color: 'var(--text-secondary)',
+            maxWidth: 620,
+            margin: '0 auto 48px',
             lineHeight: 1.8,
             fontWeight: 450
           }}>
@@ -118,29 +119,12 @@ export default async function HomePage() {
           </p>
 
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/register?role=vendedor" style={{ 
-              backgroundColor: 'var(--accent)', 
-              color: 'white', 
-              padding: '16px 36px', 
-              borderRadius: 14, 
-              fontSize: 16, 
-              fontWeight: 700, 
-              textDecoration: 'none',
-              boxShadow: '0 10px 25px -5px rgba(var(--accent-rgb), 0.4)',
-              transition: 'all 0.3s ease'
-            }}>Comenzar a Vender →</Link>
-            <Link href="/login" style={{ 
-              backgroundColor: 'rgba(255, 255, 255, 0.5)', 
-              backdropFilter: 'blur(10px)',
-              color: 'var(--text-primary)', 
-              border: '1px solid var(--border)', 
-              padding: '16px 36px', 
-              borderRadius: 14, 
-              fontSize: 16, 
-              fontWeight: 700, 
-              textDecoration: 'none',
-              transition: 'all 0.3s ease'
-            }}>Explorar Productos</Link>
+            <Link href="/register?role=vendedor" className="vint-btn-primary" style={{ padding: '16px 36px', borderRadius: 14, fontSize: 16, fontWeight: 700 }}>
+              Comenzar a Vender →
+            </Link>
+            <Link href="/login" className="vint-btn-secondary" style={{ padding: '16px 36px', borderRadius: 14, fontSize: 16, fontWeight: 700 }}>
+              Explorar Productos
+            </Link>
           </div>
         </div>
       </section>
@@ -152,13 +136,13 @@ export default async function HomePage() {
             {VALUES.map((value) => {
               const Icon = value.icon
               return (
-                <div key={value.title} style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 20, padding: '40px 32px', textAlign: 'center' }}>
-                  <div style={{ width: 64, height: 64, borderRadius: '50%', backgroundColor: 'var(--accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
-                    <Icon size={26} style={{ color: 'var(--accent)' }} />
-                  </div>
-                  <h3 style={{ fontWeight: 700, fontSize: 18, color: 'var(--text-primary)', marginBottom: 12 }}>{value.title}</h3>
-                  <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{value.description}</p>
-                </div>
+                <FeatureCard
+                  key={value.title}
+                  icon={<Icon size={26} style={{ color: 'var(--accent)' }} />}  // 👈 JSX directo
+                  title={value.title}
+                  description={value.description}
+                  ctaLabel="Saber más"
+                />
               )
             })}
           </div>
@@ -178,10 +162,10 @@ export default async function HomePage() {
 
           <AutoCarousel>
             {products.map((product) => (
-              <li key={product.id} style={{ 
-                flex: '0 0 calc(33.333% - 16px)', 
-                minWidth: 280, 
-                scrollSnapAlign: 'start' 
+              <li key={product.id} style={{
+                flex: '0 0 calc(33.333% - 16px)',
+                minWidth: 280,
+                scrollSnapAlign: 'start'
               }}>
                 <ProductCard product={product} />
               </li>
@@ -189,7 +173,7 @@ export default async function HomePage() {
           </AutoCarousel>
 
           <div style={{ textAlign: 'center', marginTop: 48 }}>
-            <Link href="/login" style={{ backgroundColor: 'var(--accent)', color: 'white', padding: '14px 36px', borderRadius: 12, fontSize: 15, fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+            <Link href="/login" className="vint-btn-primary" style={{ padding: '14px 36px', borderRadius: 12, fontSize: 15, fontWeight: 600 }}>
               Ver Todos los Productos →
             </Link>
           </div>

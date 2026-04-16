@@ -288,7 +288,7 @@ export function ProductDetailModal({ product, onClose }: Props) {
                   transition: 'all 0.2s',
                   boxShadow: '0 4px 14px rgba(0,0,0,0.15)',
                 }}
-                className="detail-cart-btn"
+                className="detail-cart-btn vint-btn-primary"
               >
                 <ShoppingCart size={17} />
                 {inCart ? 'Agregar otro' : 'Agregar al Carrito'}
@@ -304,7 +304,7 @@ export function ProductDetailModal({ product, onClose }: Props) {
                   cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 7,
                   transition: 'all 0.2s',
                 }}
-                className="detail-contact-btn"
+                className="detail-contact-btn vint-btn-secondary"
               >
                 <MessageCircle size={16} />
                 Contactar

@@ -2,30 +2,36 @@
 
 import { useState, Suspense } from "react";
 import Link from "next/link";
-import { ArrowLeft, Mail, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowLeft, Mail, Loader2, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
+import { Toast } from "@/components/forgot-password/Toast";
 
 function ForgotPasswordForm() {
   const supabase = createClient();
 
   const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showToast, setShowToast] = useState(false);
+  const [lastSubmittedEmail, setLastSubmittedEmail] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
-      if (error) throw error;
-      setSubmitted(true);
+      if (resetError) throw resetError;
+      
+      setLastSubmittedEmail(email);
+      setShowToast(true);
+      setEmail("");
     } catch (err: any) {
-      setError("No pudimos enviar el enlace. Verifica el correo e intenta de nuevo.");
+      console.error("Supabase Reset Error:", err);
+      setError(err?.message || "No pudimos enviar el enlace. Verifica el correo e intenta de nuevo.");
     } finally {
       setLoading(false);
     }
@@ -33,6 +39,8 @@ function ForgotPasswordForm() {
 
   return (
     <div className="w-full max-w-[440px] relative z-10 flex flex-col pt-12">
+      <Toast show={showToast} email={lastSubmittedEmail} onClose={() => setShowToast(false)} />
+
       <div className="flex flex-col gap-6 mb-10">
         <Link
           href="/login"
@@ -51,97 +59,55 @@ function ForgotPasswordForm() {
           </h2>
           <p className="text-[15px] font-medium" style={{ color: "var(--text-muted)" }}>
             Te enviaremos un enlace para restablecer tu contraseña.
-          </p>
+          </p><br />
         </div>
       </div>
 
-      {!submitted ? (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          {error && (
-            <div className="text-[14px] text-center p-4 rounded-2xl mb-2 font-medium bg-red-50 text-red-600 border border-red-100">
-              {error}
-            </div>
-          )}
-
-          <div className="relative group">
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)] transition-colors group-focus-within:text-[var(--accent)] z-20 pointer-events-none" />
-            <Input
-              type="email"
-              placeholder="Correo electrónico"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full h-[60px] text-[16px] transition-all duration-300 outline-none vint-input bg-[var(--bg-secondary)]"
-              style={{
-                borderRadius: "18px",
-                border: "1.5px solid color-mix(in srgb, var(--border) 60%, transparent)",
-                color: "var(--text-primary)",
-                paddingLeft: "52px",
-                paddingRight: "20px",
-              }}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full h-[60px] text-[17px] font-bold text-white rounded-[100px] shadow-soft flex items-center justify-center gap-2 relative overflow-hidden mt-2"
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        {error && (
+          <div 
+            className="flex items-start gap-3 p-4 rounded-2xl mb-2 animate-fade-in-up"
             style={{
-              background: "linear-gradient(135deg, var(--accent), var(--accent-hover))",
-              opacity: loading ? 0.7 : 1,
-              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+              backgroundColor: "rgba(239, 68, 68, 0.08)",
+              border: "1px solid rgba(239, 68, 68, 0.25)",
+              color: "#EF4444"
             }}
           >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Enviar enlace de recuperación"}
-          </button>
-        </form>
-      ) : (
-        <div className="flex flex-col gap-5">
-          <div
-            className="p-5 rounded-2xl flex items-start gap-4"
-            style={{
-              backgroundColor: "rgba(34,197,94,0.08)",
-              border: "1.5px solid rgba(34,197,94,0.25)",
-            }}
-          >
-            <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-            <div className="flex flex-col gap-1">
-              <p className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>
-                ¡Enlace enviado!
-              </p>
-              <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
-                Hemos enviado el enlace de recuperación a{" "}
-                <strong style={{ color: "var(--text-primary)" }}>{email}</strong>.
-                Revisa tu bandeja de entrada y la carpeta de spam.
-              </p>
+            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <div className="flex flex-col">
+              <span className="text-[14px] font-semibold">No se pudo enviar</span>
+              <span className="text-[13px] opacity-90 leading-relaxed mt-0.5">{error}</span>
             </div>
           </div>
+        )}
 
-          <button
-            onClick={() => { setSubmitted(false); setEmail(""); }}
-            className="w-full h-[60px] text-[17px] font-bold rounded-[100px] flex items-center justify-center gap-2 mt-2"
+        <div className="relative group">
+          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)] transition-colors group-focus-within:text-[var(--accent)] z-20 pointer-events-none" />
+          <Input
+            type="email"
+            placeholder="Correo electrónico"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="w-full h-[60px] text-[16px] transition-all duration-300 outline-none vint-input bg-[var(--bg-secondary)]"
             style={{
-              border: "1.5px solid var(--accent)",
-              color: "var(--accent)",
-              background: "transparent",
-              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+              borderRadius: "18px",
+              border: "1.5px solid color-mix(in srgb, var(--border) 60%, transparent)",
+              color: "var(--text-primary)",
+              paddingLeft: "52px",
+              paddingRight: "20px",
             }}
-          >
-            Enviar de nuevo
-          </button>
-
-          <div className="mt-2 text-center">
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-2 text-sm font-semibold hover:opacity-70 transition-opacity"
-              style={{ color: "var(--accent)" }}
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Volver al inicio de sesión
-            </Link>
-          </div>
+          />
         </div>
-      )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full h-[60px] text-[17px] font-bold text-white rounded-[100px] flex items-center justify-center gap-2 relative overflow-hidden mt-2 vint-btn-primary"
+        >
+          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Enviar enlace de recuperación"}
+        </button>
+      </form>
     </div>
   );
 }

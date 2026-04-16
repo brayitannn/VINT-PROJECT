@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Loader2, Check, ShoppingBag, Store, ArrowLeft, User, Mail, Lock, Eye, EyeOff, Phone, Calendar } from "lucide-react";
+import { Loader2, Check, ShoppingBag, Store, ArrowLeft, User, Mail, Lock, Eye, EyeOff, Phone, Calendar, AlertCircle } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -42,8 +42,19 @@ export function RegisterForm() {
       
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         {error && (
-          <div className="text-[14px] text-center p-4 rounded-2xl mb-2 font-medium bg-red-50 text-red-600 border border-red-100">
-            {error}
+          <div 
+            className="flex items-start gap-3 p-4 rounded-2xl mb-2 animate-fade-in-up"
+            style={{
+              backgroundColor: "rgba(239, 68, 68, 0.08)",
+              border: "1px solid rgba(239, 68, 68, 0.25)",
+              color: "#EF4444"
+            }}
+          >
+            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <div className="flex flex-col">
+              <span className="text-[14px] font-semibold">Problema con el registro</span>
+              <span className="text-[13px] opacity-90 leading-relaxed mt-0.5">{error}</span>
+            </div>
           </div>
         )}
 
@@ -380,12 +391,7 @@ export function RegisterForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full h-[64px] text-[17px] font-bold text-white rounded-[100px] shadow-soft flex items-center justify-center gap-2 relative overflow-hidden mt-2"
-          style={{
-            background: "linear-gradient(135deg, var(--accent), var(--accent-hover))",
-            opacity: loading ? 0.7 : 1,
-            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-          }}
+          className="w-full h-[64px] text-[17px] font-bold text-white rounded-[100px] flex items-center justify-center gap-2 relative overflow-hidden mt-2 vint-btn-primary"
         >
           {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Crear mi cuenta"}
         </button>

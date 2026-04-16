@@ -132,11 +132,11 @@ export function CartDrawer() {
                 onClick={closeCart}
                 style={{
                   marginTop: 8, padding: '12px 28px', borderRadius: 12,
-                  backgroundColor: 'var(--accent)', color: 'white',
+                  color: 'white',
                   border: 'none', fontWeight: 700, fontSize: 14, cursor: 'pointer',
                   transition: 'opacity 0.2s',
                 }}
-                className="cart-cta-btn"
+                className="cart-cta-btn vint-btn-primary"
               >
                 Explorar prendas
               </button>
@@ -299,14 +299,14 @@ export function CartDrawer() {
               onClick={handleCheckout}
               style={{
                 width: '100%', padding: '15px 24px',
-                backgroundColor: 'var(--accent)', color: 'white',
+                color: 'white',
                 border: 'none', borderRadius: 14,
                 fontWeight: 800, fontSize: 15, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 transition: 'all 0.2s',
                 boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
               }}
-              className="checkout-btn"
+              className="checkout-btn vint-btn-primary"
             >
               <ShoppingBag size={18} />
               Ir a pagar

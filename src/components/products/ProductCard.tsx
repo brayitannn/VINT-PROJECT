@@ -151,7 +151,7 @@ export function ProductCard({ product, onOpen }: ProductCardProps) {
               transform: 'scale(1)',
             }}
             title={inCart ? 'Ya en el carrito — agregar otro' : 'Añadir al carrito'}
-            className="hover:scale-105 shadow-sm hover:shadow-md"
+            className="vint-btn-primary"
           >
             <ShoppingCart size={18} />
           </button>
