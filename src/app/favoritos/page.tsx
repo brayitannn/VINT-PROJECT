@@ -15,17 +15,17 @@ export default function FavoritosPage() {
         .volver-link { color: var(--text-muted); }
         .volver-link:hover { color: var(--accent) !important; }
       `}</style>
-      
+
       <div style={{
         backgroundColor: 'var(--bg-secondary)',
         borderBottom: '1px solid var(--border)',
         padding: '24px 2rem 0',
       }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          <Link 
-            href="/" 
+          <Link
+            href="/dashboard"
             className="volver-link"
-            style={{ 
+            style={{
               display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none',
               fontSize: 14, fontWeight: 500, marginBottom: 16, transition: 'color 0.2s'
             }}

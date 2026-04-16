@@ -50,23 +50,27 @@ export function useRegister() {
 
     setLoading(true);
     try {
+      // AQUÍ EMPIEZA EL CAMBIO
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
           data: {
-            name: `${formData.primerNombre} ${formData.primerApellido}`.trim(),
             primer_nombre: formData.primerNombre,
             segundo_nombre: formData.segundoNombre,
             primer_apellido: formData.primerApellido,
             segundo_apellido: formData.segundoApellido,
-            role: formData.userType,
-            fecha_nacimiento: formData.fechaNacimiento,
-            genero: formData.genero,
             telefono: formData.phone,
+            genero: formData.genero,
+            fecha_nacimiento: formData.fechaNacimiento,
+            // Esto le manda el número que el chino necesita (1 para comprador, 2 para vendedor)
+            id_rol: formData.userType === "vendedor" ? 2 : 1,
           },
         },
       });
+      // AQUÍ TERMINA EL CAMBIO
+
+
 
       if (signUpError) throw signUpError;
 

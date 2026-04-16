@@ -50,7 +50,7 @@ export default function ExplorarPage() {
         .volver-link { color: var(--text-muted); }
         .volver-link:hover { color: var(--accent) !important; }
       `}</style>
-      
+
       {/* Page header */}
       <div style={{
         backgroundColor: 'var(--bg-secondary)',
@@ -58,13 +58,13 @@ export default function ExplorarPage() {
         padding: '24px 2rem 0',
       }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          <Link 
-            href="/" 
+          <Link
+            href="/dashboard"
             className="volver-link"
-            style={{ 
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              gap: 8, 
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
               textDecoration: 'none',
               fontSize: 14,
               fontWeight: 500,
