@@ -44,6 +44,7 @@ export async function addFavorito(providedUserId: string, id_prenda: string): Pr
   }
 
   const { error } = await supabase
+    .schema('public')
     .from(TABLE)
     .insert({ id_usuario: userId, id_prenda })
 
@@ -60,6 +61,7 @@ export async function removeFavorito(providedUserId: string, id_prenda: string):
   if (!userId) return false
 
   const { error } = await supabase
+    .schema('public')
     .from(TABLE)
     .delete()
     .eq('id_usuario', userId)

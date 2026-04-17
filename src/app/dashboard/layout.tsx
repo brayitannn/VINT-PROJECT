@@ -50,5 +50,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
+  // Aquí el children ya renderiza el page.tsx de comprador o vendedor
   return <>{children}</>;
 }

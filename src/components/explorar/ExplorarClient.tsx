@@ -95,7 +95,7 @@ export function ExplorarClient() {
   const fetchProducts = useCallback(async (f: Filters, s: SortOption) => {
     setLoading(true)
     try {
-      let query = supabase.from('v_catalogo_publico').select('*')
+    let query = supabase.from('v_catalogo_publico').select('*')
 
       if (f.search) {
         query = query.ilike('titulo', `%${f.search}%`)

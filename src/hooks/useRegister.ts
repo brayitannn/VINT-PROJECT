@@ -56,15 +56,11 @@ export function useRegister() {
         password: formData.password,
         options: {
           data: {
-            primer_nombre: formData.primerNombre,
-            segundo_nombre: formData.segundoNombre,
-            primer_apellido: formData.primerApellido,
-            segundo_apellido: formData.segundoApellido,
-            telefono: formData.phone,
-            genero: formData.genero,
+            name: `${formData.primerNombre} ${formData.primerApellido}`.trim(),
+            role: formData.userType,
             fecha_nacimiento: formData.fechaNacimiento,
-            // Esto le manda el número que el chino necesita (1 para comprador, 2 para vendedor)
-            id_rol: formData.userType === "vendedor" ? 2 : 1,
+            genero: formData.genero,
+            telefono: formData.phone,
           },
         },
       });
