@@ -6,10 +6,11 @@ import { useAuth } from '@/context/AuthContext'
 import { useRole } from '@/components/layout/RoleContext'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import Link from 'next/link'
 import {
   User, Lock, Bell, Shield, Palette, HelpCircle,
   AlertTriangle, ChevronRight, Camera, Save, Check,
-  Sun, Moon, Eye, EyeOff, MessageCircle, FileText, Trash2, Loader2
+  Sun, Moon, Eye, EyeOff, MessageCircle, FileText, Trash2, Loader2, ArrowLeft
 } from 'lucide-react'
 import { VintSelect } from '@/components/ui/VintSelect'
 
@@ -146,7 +147,6 @@ function PerfilSection() {
   const supabase = createClient()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const realName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuario'
   const realEmail = user?.email || ''
   const realUsername = user?.user_metadata?.username || realEmail.split('@')[0]
   const avatarUrl: string | null = user?.user_metadata?.avatar_url || null
@@ -154,7 +154,31 @@ function PerfilSection() {
   const realBirthday = user?.user_metadata?.fecha_nacimiento || ''
   const realGender = user?.user_metadata?.genero || ''
 
-  const [name, setName] = useState(realName)
+  const [name, setName] = useState('')
+  const [perfilData, setPerfilData] = useState<any>(null)
+
+  useEffect(() => {
+    if (user) {
+      const fetchPerfil = async () => {
+        let res = await supabase.from('usuarios').select('primer_nombre, segundo_nombre, primer_apellido, segundo_apellido').eq('id_auth_supabase', user.id).maybeSingle()
+        if (res.error) {
+          res = await supabase.schema('seguridad').from('usuarios').select('primer_nombre, segundo_nombre, primer_apellido, segundo_apellido').eq('id_auth_supabase', user.id).maybeSingle()
+        }
+        if (res.data) {
+          setPerfilData(res.data)
+          const nombreCompleto = `${res.data.primer_nombre} ${res.data.segundo_nombre || ''} ${res.data.primer_apellido} ${res.data.segundo_apellido || ''}`.replace(/\s+/g, ' ').trim()
+          setName(nombreCompleto)
+        } else {
+          const fallbackName = user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuario'
+          setName(fallbackName)
+        }
+      }
+      fetchPerfil()
+      
+      window.addEventListener('updatePerfil', fetchPerfil)
+      return () => window.removeEventListener('updatePerfil', fetchPerfil)
+    }
+  }, [user, supabase])
   const [username, setUsername] = useState(realUsername)
   const [email] = useState(realEmail)
   const [location, setLocation] = useState(realLocation)
@@ -169,18 +193,59 @@ function PerfilSection() {
   const edad = calcularEdad(birthday)
   const hoyStr = new Date().toISOString().split('T')[0]
 
-  const initials = name.trim().split(' ').filter(Boolean).map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+  const initials = name ? name.trim().split(' ').filter(Boolean).map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : 'US'
 
   const handleSave = async () => {
     if (!user) return
     setUpdating(true)
     setError(null)
     try {
-      const { error } = await supabase.auth.updateUser({
+      // Separar nombre completo en partes para la base de datos
+      const parts = name.trim().split(/\s+/)
+      let primer_nombre = parts[0] || ''
+      let segundo_nombre = ''
+      let primer_apellido = ''
+      let segundo_apellido = ''
+
+      if (parts.length === 2) {
+        primer_apellido = parts[1]
+      } else if (parts.length === 3) {
+        segundo_nombre = parts[1]
+        primer_apellido = parts[2]
+      } else if (parts.length >= 4) {
+        segundo_nombre = parts[1]
+        primer_apellido = parts[2]
+        segundo_apellido = parts.slice(3).join(' ')
+      }
+
+      const updatePayload = {
+        primer_nombre,
+        segundo_nombre,
+        primer_apellido,
+        segundo_apellido,
+        genero: gender,
+        fecha_nacimiento: birthday
+      }
+
+      // 1. Actualizar Auth Metadata
+      const { error: authError } = await supabase.auth.updateUser({
         data: { name, username, location, fecha_nacimiento: birthday, genero: gender }
       })
-      if (error) throw error
+      if (authError) throw authError
+
+      // 2. Actualizar base de datos
+      let { error: dbError } = await supabase.from('usuarios').update(updatePayload).eq('id_auth_supabase', user.id)
+      if (dbError) console.log("Error en update usuarios (sin esquema):", dbError)
+
+      if (dbError) {
+        const fall = await supabase.schema('seguridad').from('usuarios').update(updatePayload).eq('id_auth_supabase', user.id)
+        if (fall.error) console.log("Error en update usuarios (esquema seguridad):", fall.error)
+        dbError = fall.error
+      }
+      if (dbError) throw dbError
+
       setSaved(true)
+      window.dispatchEvent(new Event('updatePerfil'))
       setTimeout(() => setSaved(false), 2500)
     } catch (err: any) {
       setError(err.message || 'Error al actualizar el perfil')
@@ -580,6 +645,25 @@ export function PerfilClient() {
     tabFromUrl && VALID_TABS.includes(tabFromUrl) ? tabFromUrl : 'perfil'
   )
 
+  const supabase = createClient()
+  const [perfilData, setPerfilData] = useState<any>(null)
+
+  useEffect(() => {
+    if (user) {
+      const fetchSidebarPerfil = async () => {
+        let res = await supabase.from('usuarios').select('primer_nombre, segundo_nombre, primer_apellido, segundo_apellido').eq('id_auth_supabase', user.id).maybeSingle()
+        if (res.error) {
+          res = await supabase.schema('seguridad').from('usuarios').select('primer_nombre, segundo_nombre, primer_apellido, segundo_apellido').eq('id_auth_supabase', user.id).maybeSingle()
+        }
+        if (res.data) setPerfilData(res.data)
+      }
+      fetchSidebarPerfil()
+      
+      window.addEventListener('updatePerfil', fetchSidebarPerfil)
+      return () => window.removeEventListener('updatePerfil', fetchSidebarPerfil)
+    }
+  }, [user, supabase])
+
   useEffect(() => {
     if (tabFromUrl && VALID_TABS.includes(tabFromUrl)) {
       setActive(tabFromUrl)
@@ -614,7 +698,13 @@ export function PerfilClient() {
   }
 
   const activeItem = SIDEBAR_ITEMS.find(i => i.id === active)!
-  const initials = (user?.user_metadata?.name || user?.email || 'US').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+  
+  const fallbackName = user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuario'
+  const nombreCompleto = perfilData 
+    ? `${perfilData.primer_nombre} ${perfilData.segundo_nombre || ''} ${perfilData.primer_apellido} ${perfilData.segundo_apellido || ''}`.replace(/\s+/g, ' ').trim()
+    : fallbackName
+
+  const initials = nombreCompleto.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
   const avatarUrl = user?.user_metadata?.avatar_url || null
 
   return (
@@ -622,11 +712,30 @@ export function PerfilClient() {
       <style>{`
         .perfil-sidebar-item:hover { background-color: var(--bg-secondary) !important; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .volver-link { color: var(--text-muted); }
+        .volver-link:hover { color: var(--accent) !important; }
       `}</style>
       <main style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
         {/* Page header */}
         <div style={{ backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', padding: '28px 2rem' }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+            <Link
+              href="/dashboard"
+              className="volver-link"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                textDecoration: 'none',
+                fontSize: 14,
+                fontWeight: 500,
+                marginBottom: 16,
+                transition: 'color 0.2s'
+              }}
+            >
+              <ArrowLeft size={16} />
+              Volver
+            </Link>
             <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
               Configuración
             </h1>
@@ -648,7 +757,7 @@ export function PerfilClient() {
                   {avatarUrl ? <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
                 </div>
                 <div>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{(user?.user_metadata?.name || user?.email || 'Usuario').split(' ')[0]}</p>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{nombreCompleto.split(' ')[0]}</p>
                   <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>@{user?.user_metadata?.username || user?.email?.split('@')[0] || 'usuario'}</p>
                 </div>
               </div>

@@ -50,21 +50,28 @@ export function useRegister() {
 
     setLoading(true);
     try {
-      // AQUÍ EMPIEZA EL CAMBIO
+      // aqui empieza el cambio q hice
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
           data: {
-            name: `${formData.primerNombre} ${formData.primerApellido}`.trim(),
-            role: formData.userType,
+            // esto para el dashboard de supabase para que aparezca el nombre en auth
+            full_name: `${formData.primerNombre} ${formData.primerApellido}`.trim(),
+
+            // esto para tabla de seguridad usuarios y que se manden
+            primer_nombre: formData.primerNombre,
+            segundo_nombre: formData.segundoNombre || '',
+            primer_apellido: formData.primerApellido,
+            segundo_apellido: formData.segundoApellido || '',
             fecha_nacimiento: formData.fechaNacimiento,
             genero: formData.genero,
             telefono: formData.phone,
+            id_rol: formData.userType === 'vendedor' ? 2 : 1
           },
         },
       });
-      // AQUÍ TERMINA EL CAMBIO
+
 
 
 
