@@ -8,9 +8,21 @@ import { AutoCarousel } from '@/components/products/AutoCarousel'
 import { FeatureCard } from '@/components/infoApp/FeatureCard'
 
 const VALUES = [
-  { icon: ShieldCheck, title: 'Compra Segura', description: 'Todos los vendedores son verificados. Tu pago está protegido hasta que recibas tu prenda.' },
-  { icon: Leaf, title: 'Moda Sostenible', description: 'Cada compra en VINT es una prenda menos en el vertedero. Moda circular, planeta feliz.' },
-  { icon: Tag, title: 'Mejores Precios', description: 'Ropa de calidad hasta un 70% más barata. Tu estilo no tiene que costar una fortuna.' },
+  { 
+    icon: ShieldCheck, 
+    title: 'Compra Segura', 
+    description: 'Tu tranquilidad es nuestra prioridad. Protegemos cada centavo de tu compra mediante verificación rigurosa.',
+  },
+  { 
+    icon: Leaf, 
+    title: 'Moda Sostenible', 
+    description: 'Vístete con propósito. Cada prenda en VINT es una historia que continúa y un respiro para el planeta.',
+  },
+  { 
+    icon: Tag, 
+    title: 'Mejores Precios', 
+    description: 'Estilo de alta gama, precio de comunidad. Accede a marcas exclusivas con hasta un 70% de descuento.',
+  },
 ]
 
 function mapCondicion(condicion: string): Product['condition'] {
@@ -131,14 +143,21 @@ export default async function HomePage() {
 
       {/* VALORES */}
       <section style={{ backgroundColor: 'var(--bg-secondary)', padding: '80px 2rem' }}>
+        <style dangerouslySetInnerHTML={{__html: `
+          /* Magia CSS: Si alguna de las cartas está siendo tocada (hover), desenfoca las que NO lo están */
+          .features-grid:has(.feature-card-wrapper:hover) .feature-card-wrapper:not(:hover) {
+            filter: blur(5px) opacity(0.6);
+            transform: scale(0.95);
+          }
+        `}} />
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+          <div className="features-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
             {VALUES.map((value) => {
               const Icon = value.icon
               return (
                 <FeatureCard
                   key={value.title}
-                  icon={<Icon size={26} style={{ color: 'var(--accent)' }} />}  // 👈 JSX directo
+                  icon={<Icon size={26} style={{ color: 'var(--accent)' }} />}
                   title={value.title}
                   description={value.description}
                   ctaLabel="Saber más"
