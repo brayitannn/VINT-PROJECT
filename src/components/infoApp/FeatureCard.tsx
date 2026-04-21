@@ -22,7 +22,7 @@ export function FeatureCard({
     if (title === 'Moda Sostenible') {
       if (hovered) {
         let current = 0;
-        const target = 2700; 
+        const target = 2700;
         const interval = setInterval(() => {
           current += 100;
           if (current >= target) {
@@ -57,7 +57,7 @@ export function FeatureCard({
           cursor: "pointer",
           transition: "all 0.3s ease",
           // Aquí combinamos el levantamiento (translate) con el agrande (scale) 
-          transform: hovered ? "translateY(-4px) scale(1.5)" : "translateY(0) scale(1)",
+          transform: hovered ? "translateY(-4px) scale(1.05)" : "translateY(0) scale(1)",
           boxShadow: hovered ? "0 25px 50px -12px rgba(0,0,0,0.15)" : "none"
         }}
       >
@@ -110,7 +110,7 @@ export function FeatureCard({
           {/* Dinamismo interactivo (Solo se muestra en Hover) */}
           {title === 'Moda Sostenible' && (
             <div style={{
-              height: hovered ? 24 : 0, 
+              height: hovered ? 24 : 0,
               opacity: hovered ? 1 : 0,
               overflow: 'hidden',
               transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -138,10 +138,10 @@ export function FeatureCard({
               padding: "0 10px", // Margen interno de seguridad
             }}>
               <span style={{ textDecoration: 'line-through', color: 'var(--text-muted)' }}>$160.000</span>
-              <span style={{ 
-                color: 'var(--accent)', 
-                fontWeight: 800, 
-                transform: hovered ? 'scale(1.15)' : 'scale(1)', 
+              <span style={{
+                color: 'var(--accent)',
+                fontWeight: 800,
+                transform: hovered ? 'scale(1.01)' : 'scale(1)',
                 transition: 'transform 0.5s 0.2s',
                 display: 'inline-block', // Ayuda al navegador a redimensionar sin cortar
                 padding: '0 4px' // Espacio extra para que no golpee el límite oculto

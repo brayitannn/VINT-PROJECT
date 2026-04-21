@@ -1,11 +1,13 @@
 'use client'
 
 import { Search, Heart, ShoppingBag } from 'lucide-react'
+import { useState } from 'react'
 import { type MockUser } from '@/lib/supabase/mock-user'
 import { useRecomendaciones } from '@/hooks/useRecomendaciones'
 import { useFavorites } from '@/components/layout/FavoritesContext'
 import { DashboardNavbar, AccesoRapido } from './DashboardNavbar'
 import { RecomendacionesGrid } from './RecomendacionesGrid'
+import { MisTransaccionesModal } from './MisTransaccionesModal'
 
 interface CompradorDashboardProps {
   user: MockUser
@@ -14,6 +16,7 @@ interface CompradorDashboardProps {
 export function CompradorDashboard({ user }: CompradorDashboardProps) {
   const { recomendaciones, loading, error } = useRecomendaciones(user)
   const { openFavoritesModal } = useFavorites()
+  const [modalOpen, setModalOpen] = useState(false)
 
   const hora = new Date().getHours()
   const saludo = hora < 12 ? 'Buenos días' : hora < 18 ? 'Buenas tardes' : 'Buenas noches'
@@ -21,7 +24,7 @@ export function CompradorDashboard({ user }: CompradorDashboardProps) {
   const ACCESOS_RAPIDOS: AccesoRapido[] = [
     { id: 'explorar', icon: Search, label: 'Explorar', href: '/explorar', accent: '#8B5E3C' },
     { id: 'favoritos', icon: Heart, label: 'Favoritos', onClick: openFavoritesModal, accent: '#8B5E3C' },
-    { id: 'compras', icon: ShoppingBag, label: 'Mis Compras', href: '/compras', accent: '#8B5E3C' },
+    { id: 'compras', icon: ShoppingBag, label: 'Mis Compras', onClick: () => setModalOpen(true), accent: '#8B5E3C' },
   ]
 
   return (
@@ -189,6 +192,23 @@ export function CompradorDashboard({ user }: CompradorDashboardProps) {
           50% { opacity: 1; }
           100% { opacity: 0.6; }
         }
+
+        /* ── Responsive ─────────────────────────────────────── */
+        @media (max-width: 1024px) {
+          .dash-container { padding: 40px 1.5rem; }
+          .dash-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+        }
+
+        @media (max-width: 640px) {
+          .dash-container { padding: 28px 1rem; }
+          .dash-greeting { margin-bottom: 28px; padding: 24px 0; }
+          .dash-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
+          .dash-card-image-wrapper { height: 180px; }
+        }
+
+        @media (max-width: 420px) {
+          .dash-grid { grid-template-columns: 1fr; }
+        }
       `}</style>
       
       <div className="dash-container">
@@ -256,6 +276,9 @@ export function CompradorDashboard({ user }: CompradorDashboardProps) {
           error={error} 
           recomendaciones={recomendaciones} 
         />
+        
+        {/* MODAL MIS TRANSACCIONES */}
+        <MisTransaccionesModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
       </div>
     </>
   )

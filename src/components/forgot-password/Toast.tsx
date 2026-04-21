@@ -29,13 +29,13 @@ export function Toast({ show, email, onClose }: ToastProps) {
     <div style={{
       position: "fixed",
       top: 24,
-      right: 24,
+      left: "50%",
       zIndex: 9999,
-      transform: visible ? "translateY(0)" : "translateY(-120%)",
+      transform: visible ? "translate(-50%, 0) scale(1)" : "translate(-50%, -20px) scale(0.95)",
       opacity: visible ? 1 : 0,
       transition: "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease",
       maxWidth: 380,
-      width: "calc(100vw - 48px)",
+      width: "100%",
     }}>
       <div style={{
         backgroundColor: "var(--bg-card)",

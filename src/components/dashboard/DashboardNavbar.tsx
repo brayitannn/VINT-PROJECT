@@ -81,6 +81,14 @@ export function DashboardNavbar({ accesos }: DashboardNavbarProps) {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
         }
+
+        /* ── Responsive ─────────────────────────────────────── */
+        @media (max-width: 767px) {
+          .dash-navbar { flex-direction: column; gap: 8px; padding: 8px; border-radius: 18px; }
+          .dash-nav-item { min-width: 0; padding: 12px 16px; }
+          .dash-nav-icon { width: 40px; height: 40px; border-radius: 12px; }
+          .dash-nav-text { font-size: 14px; }
+        }
       `}</style>
       <div>
         <p style={{ fontSize: 13, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1.5, color: 'var(--text-muted)', marginBottom: 16, paddingLeft: 12 }}>
