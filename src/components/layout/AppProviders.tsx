@@ -6,6 +6,7 @@ import { AuthProvider } from '@/context/AuthContext'
 import { NotificationsProvider } from '@/components/layout/NotificationsContext'
 import { FavoritesProvider } from '@/components/layout/FavoritesContext'
 import { CartProvider } from '@/components/layout/CartContext'
+import { OnboardingModal } from '@/components/onboarding/OnboardingModal'
 import type { NotificationPrefs } from '@/components/layout/NotificationsPanel'
 
 const DEFAULT_PREFS: NotificationPrefs = {
@@ -38,6 +39,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
           <CartProvider>
             <FavoritesProvider>
               {children}
+              <OnboardingModal />
             </FavoritesProvider>
           </CartProvider>
         </NotificationsProvider>

@@ -10,7 +10,7 @@ interface RecomendacionesGridProps {
 }
 
 export function RecomendacionesGrid({ loading, error, recomendaciones }: RecomendacionesGridProps) {
-  const [hoveredProduct, setHoveredProduct] = useState<number | null>(null);
+  const [hoveredProduct, setHoveredProduct] = useState<string | null>(null);
 
   return (
     <div style={{ animation: 'fadeIn 0.8s ease forwards 0.4s', opacity: 0 }}>

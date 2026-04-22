@@ -14,7 +14,7 @@ interface CompradorDashboardProps {
 }
 
 export function CompradorDashboard({ user }: CompradorDashboardProps) {
-  const { recomendaciones, loading, error } = useRecomendaciones(user)
+  const { recomendaciones, loading, error } = useRecomendaciones()
   const { openFavoritesModal } = useFavorites()
   const [modalOpen, setModalOpen] = useState(false)
 

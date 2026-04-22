@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { ProductCard, type Product } from '@/components/products/ProductCard'
 import { FilterSidebar, type Filters } from '@/components/explorar/FilterSidebar'
 import { ProductDetailModal } from '@/components/products/ProductDetailModal'
+import { useTracker } from '@/hooks/useTracker'
 
 type SortOption = 'reciente' | 'precio_asc' | 'precio_desc'
 
@@ -81,6 +82,7 @@ export function ExplorarClient() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [searchInput, setSearchInput] = useState(filters.search)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const { track, trackVistaDebounced, cancelTrackVista } = useTracker()
 
   // Sync URL with filters
   const syncURL = useCallback((f: Filters, s: SortOption) => {
@@ -164,6 +166,10 @@ export function ExplorarClient() {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
       setFilters(f => ({ ...f, search: val }))
+      // Registrar búsqueda si hay texto
+      if (val.trim().length > 2) {
+        track('busqueda', { termino: val.trim() })
+      }
     }, 400)
   }
 
@@ -378,7 +384,12 @@ export function ExplorarClient() {
               ? <EmptyState query={filters.search} />
               : products.map((p, i) => (
                   <li key={p.id} className="product-item" style={{ opacity: 0, animationDelay: `${i * 0.04}s` }}>
-                    <ProductCard product={p} onOpen={setSelectedProduct} />
+                    <div
+                      onMouseEnter={() => trackVistaDebounced(String(p.id), undefined, 2000)}
+                      onMouseLeave={() => cancelTrackVista(String(p.id))}
+                    >
+                      <ProductCard product={p} onOpen={setSelectedProduct} />
+                    </div>
                   </li>
                 ))
             }

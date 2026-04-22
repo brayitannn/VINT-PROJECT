@@ -99,9 +99,9 @@ export function Navbar() {
       `}</style>
 
       <header className="sticky top-0 z-50 w-full border-b border-[var(--border)] bg-[var(--bg-primary)]/80 backdrop-blur-lg transition-colors duration-300">
-        <nav className="w-full flex h-16 items-center justify-between px-8 md:px-10">
+        <nav style={{ maxWidth: 1280, margin: '0 auto', padding: '0 2rem', height: 64, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           {/* LOGO */}
-          <Link href={(!loading && user) ? "/dashboard" : "/"} className="flex items-center gap-2 group">
+          <Link href={(!loading && user) ? "/dashboard" : "/"} className="flex items-center gap-[10px] group">
             <Image src="/img/logo1.png" alt="Vint" width={32} height={32} className="transition-transform group-hover:rotate-12 duration-300" />
             <span className="font-display text-2xl font-bold text-[var(--accent)]">Vint</span>
           </Link>

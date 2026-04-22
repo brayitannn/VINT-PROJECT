@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useNotificationsContext } from '@/components/layout/NotificationsContext'
 import { useAuth } from '@/context/AuthContext'
 import { FavoritesModal } from '@/components/products/FavoritesModal'
+import { useTracker } from '@/hooks/useTracker'
 
 interface FavoritesContextType {
   favoriteIds: Set<string>
@@ -36,6 +37,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 
   const openFavoritesModal = useCallback(() => setIsFavoritesModalOpen(true), [])
   const closeFavoritesModal = useCallback(() => setIsFavoritesModalOpen(false), [])
+  const { track } = useTracker()
 
   // Carga inicial desde Supabase
   useEffect(() => {
@@ -95,8 +97,9 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
-    // Si se agregó exitosamente, también la persistimos en Supabase para el historial
+    // Si se agregó exitosamente, registrar evento de comportamiento + notificación
     if (!isCurrentlyFav && ok) {
+      track('favorito', { id_prenda })
       try {
         const supabase = createClient()
         const { data: { user: currentUser } } = await supabase.auth.getUser()

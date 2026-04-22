@@ -1,5 +1,5 @@
 export interface ProductoRecomendado {
-  id_prenda: number;
+  id_prenda: string;
   titulo: string;
   precio: number;
   talla: string;
