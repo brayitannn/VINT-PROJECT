@@ -5,13 +5,13 @@ import { Sun, Moon, Bell, ShoppingCart, ChevronDown, ChevronRight, LogOut, Setti
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { NotificationsPanel } from './NotificationsPanel'
-import { useNotificationsContext } from './NotificationsContext'
+import { NotificationsPanel } from '@/components/notifications/NotificationsPanel'
+import { useNotificationsContext } from '@/context/NotificationsContext'
 import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
-import { useCart } from './CartContext'
-import { CartDrawer } from './CartDrawer'
-import { useFavorites } from '@/components/layout/FavoritesContext'
+import { useCart } from '@/context/CartContext'
+import { CartDrawer } from '@/components/cart/CartDrawer'
+import { useFavorites } from '@/context/FavoritesContext'
 
 export function Navbar() {
   const { theme, setTheme } = useTheme()

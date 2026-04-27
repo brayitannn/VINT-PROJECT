@@ -3,8 +3,8 @@
 import { X, Heart, ShoppingCart, Star } from 'lucide-react'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
-import { useFavorites } from '@/components/layout/FavoritesContext'
-import { useCart } from '@/components/layout/CartContext'
+import { useFavorites } from '@/context/FavoritesContext'
+import { useCart } from '@/context/CartContext'
 import { createClient } from '@/lib/supabase/client'
 import { type Product } from '@/components/products/ProductCard'
 

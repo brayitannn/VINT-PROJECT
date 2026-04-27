@@ -1,13 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ThemeProvider } from '@/components/layout/ThemeProvider'
+import { ThemeProvider } from '@/context/ThemeProvider'
 import { AuthProvider } from '@/context/AuthContext'
-import { NotificationsProvider } from '@/components/layout/NotificationsContext'
-import { FavoritesProvider } from '@/components/layout/FavoritesContext'
-import { CartProvider } from '@/components/layout/CartContext'
+import { NotificationsProvider } from '@/context/NotificationsContext'
+import { FavoritesProvider } from '@/context/FavoritesContext'
+import { CartProvider } from '@/context/CartContext'
 import { OnboardingModal } from '@/components/onboarding/OnboardingModal'
-import type { NotificationPrefs } from '@/components/layout/NotificationsPanel'
+import type { NotificationPrefs } from '@/components/notifications/NotificationsPanel'
 
 const DEFAULT_PREFS: NotificationPrefs = {
   emailOfertas: true,
@@ -19,6 +19,7 @@ const DEFAULT_PREFS: NotificationPrefs = {
 }
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
+  
   const [prefs, setPrefs] = useState<NotificationPrefs>(DEFAULT_PREFS)
 
   useEffect(() => {

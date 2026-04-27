@@ -2,8 +2,8 @@
 
 import Image from 'next/image'
 import { X, ShoppingCart, MessageCircle, Star, Shield, Truck, HeadphonesIcon, Heart, Tag, Ruler } from 'lucide-react'
-import { useCart } from '@/components/layout/CartContext'
-import { useFavorites } from '@/components/layout/FavoritesContext'
+import { useCart } from '@/context/CartContext'
+import { useFavorites } from '@/context/FavoritesContext'
 import type { Product } from './ProductCard'
 import { useEffect } from 'react'
 

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTheme } from 'next-themes'
 import { useAuth } from '@/context/AuthContext'
-import { useRole } from '@/components/layout/RoleContext'
+import { useRole } from '@/context/RoleContext'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'

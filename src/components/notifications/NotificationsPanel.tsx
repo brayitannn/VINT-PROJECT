@@ -5,7 +5,7 @@ import { Bell, X, ShoppingBag, Heart, MessageCircle, Star, Package, Settings, Lo
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { RealtimeNotification } from '@/hooks/useNotifications'
-import { useFavorites } from '@/components/layout/FavoritesContext'
+import { useFavorites } from '@/context/FavoritesContext'
 
 export interface NotificationPrefs {
   emailOfertas: boolean

@@ -6,7 +6,7 @@ import {
   deleteProduct,
   deleteProducts,
   getCategories,
-} from '@/lib/products'
+} from '@/services/products'
 import type {
   Product,
   ProductInsert,

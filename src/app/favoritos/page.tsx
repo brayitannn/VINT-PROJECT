@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
-import { FavoritosClient } from '@/components/products/FavoritosClient'
+import { FavoritosClient } from '@/components/favoritos/FavoritosClient'
 
 export const metadata = {
   title: 'Mis Favoritos — Vint',

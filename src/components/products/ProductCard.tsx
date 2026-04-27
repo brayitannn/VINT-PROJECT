@@ -2,8 +2,8 @@
 
 import Image from 'next/image'
 import { Heart, ShoppingCart } from 'lucide-react'
-import { useFavorites } from '@/components/layout/FavoritesContext'
-import { useCart } from '@/components/layout/CartContext'
+import { useFavorites } from '@/context/FavoritesContext'
+import { useCart } from '@/context/CartContext'
 
 export interface Product {
   id: number

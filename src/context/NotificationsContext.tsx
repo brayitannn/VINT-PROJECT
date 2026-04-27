@@ -8,7 +8,7 @@ import React, {
   useCallback,
 } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { NotificationPrefs } from '@/components/layout/NotificationsPanel'
+import type { NotificationPrefs } from '@/components/notifications/NotificationsPanel'
 
 export interface RealtimeNotification {
   id: number

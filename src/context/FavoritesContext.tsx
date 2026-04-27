@@ -1,9 +1,9 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import { getFavoritos, addFavorito, removeFavorito } from '@/lib/favoritos'
+import { getFavoritos, addFavorito, removeFavorito } from '@/services/favoritos'
 import { createClient } from '@/lib/supabase/client'
-import { useNotificationsContext } from '@/components/layout/NotificationsContext'
+import { useNotificationsContext } from '@/context/NotificationsContext'
 import { useAuth } from '@/context/AuthContext'
 import { FavoritesModal } from '@/components/products/FavoritesModal'
 import { useTracker } from '@/hooks/useTracker'

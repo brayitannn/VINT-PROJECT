@@ -6,7 +6,7 @@ import { Package, Tag, TrendingUp, DollarSign, ShoppingBag, Clock, ArrowUpRight,
 import { type MockUser } from '@/lib/supabase/mock-user'
 import { DashboardNavbar, AccesoRapido } from './DashboardNavbar'
 import { MisVentasModal } from './MisVentasModal'
-import { fetchEstadisticasVendedor, type EstadisticasVendedor } from '@/lib/estadisticas'
+import { fetchEstadisticasVendedor, type EstadisticasVendedor } from '@/services/estadisticas'
 
 interface VendedorDashboardProps {
   user: MockUser

@@ -12,7 +12,7 @@
 
 import type { Metadata } from 'next'
 import './globals.css'
-import { AppProviders } from '@/components/layout/AppProviders'
+import { AppProviders } from '@/context/AppProviders'
 import { Navbar } from '@/components/layout/Navbar'
 
 /* Next.js usa este objeto para generar automaticamente las etiquetas de <title> y el de <meta description> en el <head> esto es importante para que Google indexe bien el proyecto de VINT */
