@@ -144,19 +144,21 @@ export function Navbar() {
                 </div>
 
                 {/* CARRITO */}
-                <div className="relative">
-                  <button
-                    onClick={openCart}
-                    className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-primary)] transition-all hover:scale-105 hover:border-[var(--accent)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)]"
-                  >
-                    <ShoppingCart size={18} />
-                    {totalItems > 0 && (
-                      <span className="absolute -right-1 -top-1 flex min-w-[16px] h-4 items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[10px] font-bold text-white shadow-sm ring-2 ring-[var(--bg-primary)]">
-                        {totalItems > 99 ? '99+' : totalItems}
-                      </span>
-                    )}
-                  </button>
-                </div>
+                {role !== 'vendedor' && (
+                  <div className="relative">
+                    <button
+                      onClick={openCart}
+                      className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-primary)] transition-all hover:scale-105 hover:border-[var(--accent)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)]"
+                    >
+                      <ShoppingCart size={18} />
+                      {totalItems > 0 && (
+                        <span className="absolute -right-1 -top-1 flex min-w-[16px] h-4 items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[10px] font-bold text-white shadow-sm ring-2 ring-[var(--bg-primary)]">
+                          {totalItems > 99 ? '99+' : totalItems}
+                        </span>
+                      )}
+                    </button>
+                  </div>
+                )}
 
                 {/* MENÚ DESPLEGABLE (ESTILO REDES SOCIALES / COMPACTO) */}
                 <div ref={menuRef} className="relative">

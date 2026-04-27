@@ -9,6 +9,7 @@ import { ArrowLeft } from 'lucide-react'
 import { ProductTable } from '@/components/products/ProductTable'
 import { ProductModal } from '@/components/products/ProductModal'
 import { ProductDeleteDialog } from '@/components/products/ProductDeleteDialog'
+import { ProductToast, type ToastType } from '@/components/products/ProductToast'
 import type { Product, ProductInsert, ProductUpdate, ProductStatus } from '@/types/product'
 import './products.css'
 
@@ -51,6 +52,16 @@ function ProductsContent() {
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null)
   const [deletingBulk, setDeletingBulk] = useState(false)
 
+  // Toast state
+  const [toastConfig, setToastConfig] = useState<{ show: boolean, title: string, message: string, type: ToastType }>({
+    show: false, title: '', message: '', type: 'success'
+  })
+
+  const showToast = (title: string, message: string, type: ToastType = 'success') => {
+    setToastConfig({ show: false, title, message, type }) // Reset to trigger animation
+    setTimeout(() => setToastConfig({ show: true, title, message, type }), 50)
+  }
+
   // Auto-open modal if ?new=true
   useEffect(() => {
     if (searchParams.get('new') === 'true') {
@@ -84,14 +95,26 @@ function ProductsContent() {
 
   const handleModalSubmit = async (data: ProductInsert | ProductUpdate) => {
     if (editingProduct) {
-      return update(editingProduct.id, data as ProductUpdate)
+      const res = await update(editingProduct.id, data as ProductUpdate)
+      if (!res.error) showToast("Prenda actualizada", "Los cambios se guardaron correctamente.")
+      return res
     }
-    return create(data as ProductInsert)
+    const res = await create(data as ProductInsert)
+    if (!res.error) showToast("Prenda publicada", "Tu prenda ya está disponible en el catálogo.")
+    return res
   }
 
   const handleDeleteConfirm = async () => {
-    if (deletingBulk) return removeSelected()
-    if (deletingProduct) return remove(deletingProduct.id)
+    if (deletingBulk) {
+      const res = await removeSelected()
+      if (!res.error) showToast("Prendas eliminadas", "Las prendas seleccionadas fueron borradas.", "delete")
+      return res
+    }
+    if (deletingProduct) {
+      const res = await remove(deletingProduct.id)
+      if (!res.error) showToast("Prenda eliminada", "La prenda fue borrada de tu catálogo.", "delete")
+      return res
+    }
     return { error: null }
   }
 
@@ -109,19 +132,28 @@ function ProductsContent() {
 
   return (
     <div className="page" style={{ position: 'relative' }}>
+      <ProductToast 
+        show={toastConfig.show} 
+        title={toastConfig.title} 
+        message={toastConfig.message} 
+        type={toastConfig.type} 
+        onClose={() => setToastConfig(prev => ({ ...prev, show: false }))} 
+      />
+
       <div style={{ marginBottom: 24, display: 'flex' }}>
         <Link 
           href="/dashboard" 
-          className="hover:scale-105"
           style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
-            padding: '8px 16px', borderRadius: '999px',
+            padding: '10px 20px', borderRadius: '999px',
             backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)',
-            fontSize: 14, fontWeight: 600, textDecoration: 'none',
-            border: '1px solid var(--border)', transition: 'all 0.2s',
+            border: '1px solid var(--border)',
+            fontSize: 14, fontWeight: 700, textDecoration: 'none',
+            transition: 'all 0.2s',
           }}
+          className="hover:scale-105 hover:border-[var(--accent)] hover:text-[var(--accent)]"
         >
-          <ArrowLeft size={16} /> Volver al Dashboard
+          <ArrowLeft size={18} /> Volver al Dashboard
         </Link>
       </div>
 

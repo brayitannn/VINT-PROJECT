@@ -2,10 +2,12 @@
 
 import Image from 'next/image'
 import { X, ShoppingCart, MessageCircle, Star, Shield, Truck, HeadphonesIcon, Heart, Tag, Ruler } from 'lucide-react'
+import Link from 'next/link'
 import { useCart } from '@/context/CartContext'
 import { useFavorites } from '@/context/FavoritesContext'
 import type { Product } from './ProductCard'
 import { useEffect } from 'react'
+import { useAuth } from '@/context/AuthContext'
 
 interface Props {
   product: Product | null
@@ -27,6 +29,8 @@ function getConditionStyle(condition: Product['condition']): React.CSSProperties
 export function ProductDetailModal({ product, onClose }: Props) {
   const { addItem, isInCart } = useCart()
   const { isFavorito, toggleFavorito } = useFavorites()
+  const { user } = useAuth()
+  const role = user?.user_metadata?.role || 'comprador'
 
   const isOpen = product !== null
   const inCart = product ? isInCart(product.id) : false
@@ -243,12 +247,19 @@ export function ProductDetailModal({ product, onClose }: Props) {
             </div>
 
             {/* Vendedor */}
-            <div style={{
-              border: '1px solid var(--border)',
-              borderRadius: 14, padding: '14px 16px',
-              marginBottom: 20,
-              backgroundColor: 'var(--bg-secondary)',
-            }}>
+            <Link
+              href={`/tienda/${encodeURIComponent(product.seller.toLowerCase().replace(/\s+/g, '-'))}`}
+              onClick={onClose}
+              style={{
+                border: '1px solid var(--border)',
+                borderRadius: 14, padding: '14px 16px',
+                marginBottom: 20,
+                backgroundColor: 'var(--bg-secondary)',
+                display: 'block', textDecoration: 'none',
+                transition: 'all 0.2s'
+              }}
+              className="hover:scale-[1.02] hover:border-[var(--accent)] hover:shadow-sm"
+            >
               <p style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)', margin: '0 0 10px' }}>
                 Vendedor
               </p>
@@ -273,26 +284,28 @@ export function ProductDetailModal({ product, onClose }: Props) {
                   </div>
                 </div>
               </div>
-            </div>
+            </Link>
 
             {/* Botones CTA */}
             <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-              <button
-                onClick={handleAddToCart}
-                style={{
-                  flex: 1, padding: '13px 20px',
-                  backgroundColor: inCart ? '#10B981' : 'var(--accent)',
-                  color: 'white', border: 'none', borderRadius: 12,
-                  fontWeight: 700, fontSize: 14, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  transition: 'all 0.2s',
-                  boxShadow: '0 4px 14px rgba(0,0,0,0.15)',
-                }}
-                className="detail-cart-btn vint-btn-primary"
-              >
-                <ShoppingCart size={17} />
-                {inCart ? 'Agregar otro' : 'Agregar al Carrito'}
-              </button>
+              {role !== 'vendedor' && (
+                <button
+                  onClick={handleAddToCart}
+                  style={{
+                    flex: 1, padding: '13px 20px',
+                    backgroundColor: inCart ? '#10B981' : 'var(--accent)',
+                    color: 'white', border: 'none', borderRadius: 12,
+                    fontWeight: 700, fontSize: 14, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    transition: 'all 0.2s',
+                    boxShadow: '0 4px 14px rgba(0,0,0,0.15)',
+                  }}
+                  className="detail-cart-btn vint-btn-primary"
+                >
+                  <ShoppingCart size={17} />
+                  {inCart ? 'Agregar otro' : 'Agregar al Carrito'}
+                </button>
+              )}
 
               <button
                 style={{

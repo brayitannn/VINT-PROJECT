@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import { X, Trash2, Plus, Minus, ShoppingBag, ShoppingCart } from 'lucide-react'
-import { useCart, SHIPPING_COST } from './CartContext'
+import { useCart, SHIPPING_COST } from '@/context/CartContext'
 import { useRouter } from 'next/navigation'
 
 function formatPrice(price: number): string {

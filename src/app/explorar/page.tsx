@@ -60,20 +60,17 @@ export default function ExplorarPage() {
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
           <Link
             href="/dashboard"
-            className="volver-link"
             style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              textDecoration: 'none',
-              fontSize: 14,
-              fontWeight: 500,
-              marginBottom: 16,
-              transition: 'color 0.2s'
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              padding: '10px 20px', borderRadius: '999px',
+              backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)',
+              border: '1px solid var(--border)',
+              fontSize: 14, fontWeight: 700, textDecoration: 'none',
+              marginBottom: 24, transition: 'all 0.2s',
             }}
+            className="hover:scale-105 hover:border-[var(--accent)] hover:text-[var(--accent)]"
           >
-            <ArrowLeft size={16} />
-            Volver
+            <ArrowLeft size={18} /> Volver al Dashboard
           </Link>
           <h1 style={{
             fontFamily: "'Playfair Display', serif",

@@ -7,31 +7,31 @@
 }
 
 :root {
-  --bg-primary: #F2E8D8;        /* Crema */
-  --bg-secondary: #EAD9C3;      /* Crema oscurecida */
-  --bg-card: #FAF4EC;           /* Crema clara para cards */
-  --text-primary: #2C1F14;      /* Café muy oscuro */
-  --text-secondary: #5F6F52;    /* Verde militar */
-  --text-muted: #A8A39D;        /* Gris cálido */
-  --accent: #8B5E3C;            /* Café cuero */
-  --accent-hover: #7A5235;      /* Café cuero oscuro */
-  --accent-light: #F2E8D8;      /* Crema */
-  --border: #D4C5B0;            /* Crema borde */
-  --shadow: rgba(95, 111, 82, 0.12); /* Sombra verde militar suave */
+  --bg-primary: #F4EFE6;        /* Crema muy suave */
+  --bg-secondary: #EBE3D5;      /* Crema oscurecida / Latte */
+  --bg-card: #FCF9F2;           /* Blanco roto cálido para cards */
+  --text-primary: #2C241E;      /* Café expreso casi negro */
+  --text-secondary: #7A7369;    /* Taupe / Gris Pardo (sin verde) */
+  --text-muted: #A8A39D;        /* Gris cálido claro */
+  --accent: #8B5E3C;            /* Café cuero clásico */
+  --accent-hover: #6D482D;      /* Café oscuro tostado */
+  --accent-light: #F4EFE6;      /* Crema suave */
+  --border: #D6CCC0;            /* Taupe claro para bordes */
+  --shadow: rgba(44, 36, 30, 0.08); /* Sombra cálida muy suave */
 }
 
 [data-theme='dark'] {
-  --bg-primary: #1C1F1A;        /* Verde militar muy oscuro */
-  --bg-secondary: #252920;      /* Verde militar oscuro */
-  --bg-card: #2E3229;           /* Verde militar card */
-  --text-primary: #F2E8D8;      /* Crema */
-  --text-secondary: #A8A39D;    /* Gris cálido */
-  --text-muted: #6C7A89;        /* Azul deslavado */
-  --accent: #8B5E3C;            /* Café cuero */
-  --accent-hover: #A8724D;      /* Café cuero claro */
-  --accent-light: #2A1F14;      /* Café oscuro */
-  --border: #3A3F35;            /* Verde militar borde */
-  --shadow: rgba(0, 0, 0, 0.4);
+  --bg-primary: #1A1714;        /* Café carbón muy oscuro */
+  --bg-secondary: #24201C;      /* Café carbón */
+  --bg-card: #2A2520;           /* Café grisáceo para cards */
+  --text-primary: #F4EFE6;      /* Crema suave */
+  --text-secondary: #A8A39D;    /* Gris cálido claro */
+  --text-muted: #7A7369;        /* Taupe oscuro */
+  --accent: #A8724D;            /* Café caramelo (brillante de noche) */
+  --accent-hover: #C58A62;      /* Caramelo iluminado */
+  --accent-light: #2A2520;      /* Fondo de botones secundarios */
+  --border: #3D352F;            /* Borde café oscuro elegante */
+  --shadow: rgba(0, 0, 0, 0.5); /* Sombra profunda */
 }
 
 * {

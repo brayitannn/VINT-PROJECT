@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCart, SHIPPING_COST } from "../../components/layout/CartContext";
+import { useCart, SHIPPING_COST } from "@/context/CartContext";
 import { Loader2, ArrowLeft, User, Phone, MapPin, CreditCard, Calendar, Lock } from "lucide-react";
 import Image from "next/image";
 

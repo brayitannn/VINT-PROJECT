@@ -2,15 +2,33 @@
 
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Package, Tag, TrendingUp, DollarSign, ShoppingBag, Clock, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react'
+import { Package, Tag, TrendingUp, DollarSign, ShoppingBag, Clock, ArrowUpRight, ArrowDownRight, Minus, Store } from 'lucide-react'
 import { type MockUser } from '@/lib/supabase/mock-user'
 import { DashboardNavbar, AccesoRapido } from './DashboardNavbar'
 import { MisVentasModal } from './MisVentasModal'
+import { EstadisticasDetalleModal, type DetalleTipo } from './EstadisticasDetalleModal'
 import { fetchEstadisticasVendedor, type EstadisticasVendedor } from '@/services/estadisticas'
 
 interface VendedorDashboardProps {
   user: MockUser
 }
+
+const ACCESOS_RAPIDOS: AccesoRapido[] = [
+  {
+    id: 'mi-tienda',
+    icon: Store,
+    label: 'Mi Tienda',
+    href: '/dashboard/vendedor/mi-tienda',
+    accent: '#8B5E3C'
+  },
+  {
+    id: 'mis-productos',
+    icon: Package,
+    label: 'Mis Productos',
+    href: '/products',
+    accent: '#8B5E3C'
+  }
+]
 
 // ─── Mini Sparkline SVG ───────────────────────────────────────────────────────
 function Sparkline({ data, color = '#10B981' }: { data: number[]; color?: string }) {
@@ -46,6 +64,7 @@ function StatSkeleton() {
 // ─── Component ────────────────────────────────────────────────────────────────
 export function VendedorDashboard({ user }: VendedorDashboardProps) {
   const [modalVentas, setModalVentas] = useState(false)
+  const [detalleActivo, setDetalleActivo] = useState<DetalleTipo | null>(null)
   const [stats, setStats] = useState<EstadisticasVendedor | null>(null)
   const [loadingStats, setLoadingStats] = useState(true)
 
@@ -53,10 +72,30 @@ export function VendedorDashboard({ user }: VendedorDashboardProps) {
   const saludo = hora < 12 ? 'Buenos días' : hora < 18 ? 'Buenas tardes' : 'Buenas noches'
 
   useEffect(() => {
-    fetchEstadisticasVendedor(user.id)
-      .then(setStats)
-      .catch(() => setStats(null))
-      .finally(() => setLoadingStats(false))
+    // =========================================================================
+    // 🚀 TODO: REEMPLAZAR DATOS SIMULADOS POR DATOS REALES DE LA BASE DE DATOS
+    // =========================================================================
+    // Actualmente la DB puede no tener transacciones, así que forzamos estos datos simulados.
+    // Para volver a usar los datos reales de Supabase, borra el bloque del setTimeout
+    // y descomenta las siguientes 4 líneas de código:
+    //
+    // fetchEstadisticasVendedor(user.id)
+    //   .then(setStats)
+    //   .catch(() => setStats(null))
+    //   .finally(() => setLoadingStats(false))
+    
+    setTimeout(() => {
+      setStats({
+        ingresosTotal: 237000,
+        ingresosMesAnterior: 195000, // Para dar un ~21% de crecimiento
+        trendIngresos: [20, 35, 25, 60, 50, 80, 100],
+        prendasVendidas: 3,
+        prendasVendidasSemana: 1,
+        pedidosEnCurso: 2
+      })
+      setLoadingStats(false)
+    }, 600)
+    // =========================================================================
   }, [user.id])
 
   // Porcentaje de variación vs mes anterior
@@ -210,6 +249,7 @@ export function VendedorDashboard({ user }: VendedorDashboardProps) {
           position: relative;
           overflow: hidden;
           transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+          cursor: pointer;
         }
 
         .stat-card:hover {
@@ -383,12 +423,15 @@ export function VendedorDashboard({ user }: VendedorDashboardProps) {
             </div>
 
             <div className="hub-actions">
-              <button onClick={() => setModalVentas(true)} className="hub-btn hub-btn-secondary" style={{ border: '1px solid var(--border)', cursor: 'pointer' }}>
-                <TrendingUp size={20} /> Mis Ventas
-              </button>
+              <Link href="/dashboard/vendedor/mi-tienda" className="hub-btn hub-btn-secondary" style={{ backgroundColor: 'var(--accent)', color: 'white', border: 'none' }}>
+                <Store size={20} /> Mi Tienda
+              </Link>
               <Link href="/products" className="hub-btn hub-btn-secondary">
                 <Package size={20} /> Mis Prendas
               </Link>
+              <button onClick={() => setModalVentas(true)} className="hub-btn hub-btn-secondary" style={{ border: '1px solid var(--border)', cursor: 'pointer' }}>
+                <TrendingUp size={20} /> Mis Ventas
+              </button>
               <Link href="/explorar" className="hub-btn hub-btn-secondary">
                 <Tag size={20} /> Ver como Comprador
               </Link>
@@ -408,7 +451,7 @@ export function VendedorDashboard({ user }: VendedorDashboardProps) {
           ) : (
             <>
               {/* Ingresos Totales */}
-              <div className="stat-card">
+              <div className="stat-card" onClick={() => setDetalleActivo('ingresos')}>
                 <div className="stat-icon"><DollarSign size={22} /></div>
                 <div className="stat-title">Ingresos Totales</div>
                 <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }}>
@@ -437,7 +480,7 @@ export function VendedorDashboard({ user }: VendedorDashboardProps) {
               </div>
 
               {/* Prendas Vendidas */}
-              <div className="stat-card">
+              <div className="stat-card" onClick={() => setDetalleActivo('prendas')}>
                 <div className="stat-icon"><ShoppingBag size={22} /></div>
                 <div className="stat-title">Prendas Vendidas</div>
                 <div className="stat-value">
@@ -459,7 +502,7 @@ export function VendedorDashboard({ user }: VendedorDashboardProps) {
               </div>
 
               {/* Pedidos en Curso */}
-              <div className="stat-card">
+              <div className="stat-card" onClick={() => setDetalleActivo('pedidos')}>
                 <div className="stat-icon"><Clock size={22} /></div>
                 <div className="stat-title">Pedidos en Curso</div>
                 <div className="stat-value">
@@ -475,6 +518,14 @@ export function VendedorDashboard({ user }: VendedorDashboardProps) {
 
         {/* MODAL MIS VENTAS */}
         <MisVentasModal isOpen={modalVentas} onClose={() => setModalVentas(false)} />
+
+        {/* MODAL DETALLES DE ESTADÍSTICAS */}
+        <EstadisticasDetalleModal 
+          isOpen={detalleActivo !== null} 
+          onClose={() => setDetalleActivo(null)} 
+          tipo={detalleActivo}
+          stats={stats}
+        />
       </div>
     </>
   )

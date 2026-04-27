@@ -2,6 +2,7 @@
 
 import { X, Heart, ShoppingCart, Star } from 'lucide-react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useFavorites } from '@/context/FavoritesContext'
 import { useCart } from '@/context/CartContext'
@@ -158,7 +159,7 @@ export function FavoritesModal({ isOpen, onClose }: Props) {
               <p style={{ fontSize: 14, color: 'var(--text-secondary, #5F6F52)', margin: '2px 0 0' }}>
                 {isLoadingAll
                   ? 'Cargando...'
-                  : `${favoriteIds.size} ${favoriteIds.size === 1 ? 'prenda guardada' : 'prendas guardadas'}`}
+                  : `${favoritos.length} ${favoritos.length === 1 ? 'prenda guardada' : 'prendas guardadas'}`}
               </p>
             </div>
           </div>
@@ -197,16 +198,17 @@ export function FavoritesModal({ isOpen, onClose }: Props) {
               <p style={{ fontSize: 15, color: 'var(--text-secondary)' }}>
                 Explora prendas y guarda tus favoritas aquí
               </p>
-              <button
+              <Link
+                href="/explorar"
                 onClick={onClose}
                 style={{
                   marginTop: 8, padding: '12px 28px', borderRadius: 14, border: 'none',
                   backgroundColor: 'var(--accent, #8B5E3C)', color: 'white',
-                  fontSize: 15, fontWeight: 600, cursor: 'pointer'
+                  fontSize: 15, fontWeight: 600, cursor: 'pointer', textDecoration: 'none'
                 }}
               >
                 Explorar prendas
-              </button>
+              </Link>
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '24px' }}>
@@ -335,13 +337,17 @@ export function FavoritesModal({ isOpen, onClose }: Props) {
           padding: '20px 48px', display: 'flex', justifyContent: 'flex-end', gap: 12,
           borderTop: '1px solid var(--border, #D4C5B0)', flexShrink: 0
         }}>
-          <button onClick={onClose} style={{
-            padding: '12px 24px', borderRadius: 14,
-            border: '1px solid var(--border, #D4C5B0)', backgroundColor: 'white',
-            color: 'var(--text-primary)', fontSize: 14, fontWeight: 600, cursor: 'pointer'
-          }}>
+          <Link 
+            href="/explorar" 
+            onClick={onClose} 
+            style={{
+              padding: '12px 24px', borderRadius: 14, textDecoration: 'none',
+              border: '1px solid var(--border, #D4C5B0)', backgroundColor: 'white',
+              color: 'var(--text-primary)', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+              display: 'inline-flex', alignItems: 'center'
+            }}>
             Seguir explorando
-          </button>
+          </Link>
           <button 
             onClick={() => {
               onClose()

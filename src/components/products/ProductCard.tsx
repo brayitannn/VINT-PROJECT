@@ -2,8 +2,10 @@
 
 import Image from 'next/image'
 import { Heart, ShoppingCart } from 'lucide-react'
+import Link from 'next/link'
 import { useFavorites } from '@/context/FavoritesContext'
 import { useCart } from '@/context/CartContext'
+import { useAuth } from '@/context/AuthContext'
 
 export interface Product {
   id: number
@@ -39,6 +41,8 @@ function getConditionStyle(condition: Product['condition']): React.CSSProperties
 export function ProductCard({ product, onOpen }: ProductCardProps) {
   const { isFavorito, toggleFavorito } = useFavorites()
   const { addItem, isInCart } = useCart()
+  const { user } = useAuth()
+  const role = user?.user_metadata?.role || 'comprador'
   const productId = product.id.toString()
   const isLiked = isFavorito(productId)
   const inCart = isInCart(product.id)
@@ -124,7 +128,13 @@ export function ProductCard({ product, onOpen }: ProductCardProps) {
         </p>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Link 
+            href={`/tienda/${encodeURIComponent(product.seller.toLowerCase().replace(/\s+/g, '-'))}`}
+            onClick={(e) => e.stopPropagation()}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}
+            className="hover:opacity-80 transition-opacity"
+            title={`Visitar tienda de ${product.seller}`}
+          >
             <div style={{
               width: 30, height: 30, borderRadius: '50%',
               backgroundColor: 'var(--bg-secondary)',
@@ -137,24 +147,26 @@ export function ProductCard({ product, onOpen }: ProductCardProps) {
             <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>
               {product.seller}
             </span>
-          </div>
+          </Link>
 
-          <button
-            onClick={handleAddToCart}
-            style={{
-              backgroundColor: inCart ? '#10B981' : 'var(--accent)',
-              color: 'white',
-              border: 'none', borderRadius: 12,
-              width: 36, height: 36,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', transition: 'all 0.2s',
-              transform: 'scale(1)',
-            }}
-            title={inCart ? 'Ya en el carrito — agregar otro' : 'Añadir al carrito'}
-            className="vint-btn-primary"
-          >
-            <ShoppingCart size={18} />
-          </button>
+          {role !== 'vendedor' && (
+            <button
+              onClick={handleAddToCart}
+              style={{
+                backgroundColor: inCart ? '#10B981' : 'var(--accent)',
+                color: 'white',
+                border: 'none', borderRadius: 12,
+                width: 36, height: 36,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', transition: 'all 0.2s',
+                transform: 'scale(1)',
+              }}
+              title={inCart ? 'Ya en el carrito — agregar otro' : 'Añadir al carrito'}
+              className="vint-btn-primary"
+            >
+              <ShoppingCart size={18} />
+            </button>
+          )}
         </div>
       </div>
     </article>

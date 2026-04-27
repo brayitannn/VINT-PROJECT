@@ -1,6 +1,6 @@
 'use client'
 
-import { getSupabaseClient } from './supabase/client'
+import { getSupabaseClient } from '@/lib/supabase/client'
 import type { Product, ProductInsert, ProductUpdate, ProductFilters } from '@/types/product'
 
 const VIEW = 'v_catalogo_publico'
