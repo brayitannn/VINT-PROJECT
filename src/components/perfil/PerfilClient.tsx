@@ -8,7 +8,7 @@ import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import {
-  User, Lock, Bell, Shield, Palette, HelpCircle,
+  User, Lock, Bell, Shield, Palette, HelpCircle, Heart,
   AlertTriangle, ChevronRight, Camera, Save, Check,
   Sun, Moon, Eye, EyeOff, MessageCircle, FileText, Trash2, Loader2, ArrowLeft
 } from 'lucide-react'
@@ -24,7 +24,7 @@ const calcularEdad = (fechaNacimiento: string) => {
   return edad
 }
 
-type Section = 'perfil' | 'cuenta' | 'notificaciones' | 'privacidad' | 'apariencia' | 'ayuda' | 'peligro'
+type Section = 'perfil' | 'cuenta' | 'notificaciones' | 'privacidad' | 'apariencia' | 'ayuda' | 'peligro' | 'compras-prefs'
 
 interface SidebarItem {
   id: Section
@@ -640,7 +640,7 @@ export function PerfilClient() {
   const { user, loading } = useAuth()
   const searchParams = useSearchParams()
   const tabFromUrl = searchParams.get('tab') as Section | null
-  const VALID_TABS: Section[] = ['perfil', 'cuenta', 'notificaciones', 'privacidad', 'apariencia', 'ayuda', 'peligro']
+  const VALID_TABS: Section[] = ['perfil', 'cuenta', 'notificaciones', 'privacidad', 'apariencia', 'ayuda', 'peligro', 'compras-prefs']
   const [active, setActive] = useState<Section>(
     tabFromUrl && VALID_TABS.includes(tabFromUrl) ? tabFromUrl : 'perfil'
   )
@@ -695,9 +695,40 @@ export function PerfilClient() {
     apariencia: <AparienciaSection />,
     ayuda: <AyudaSection />,
     peligro: <PeligroSection />,
+    'compras-prefs': (
+      <SectionCard title="Preferencias de Compra" description="Personaliza las recomendaciones de prendas que aparecen en tu dashboard">
+        <div style={{ padding: '24px', background: 'var(--bg-secondary)', borderRadius: 16, border: '1px solid var(--border)', textAlign: 'center' }}>
+          <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 20, lineHeight: 1.5 }}>
+            ¿Quieres volver a realizar el test de estilo para actualizar tus tallas, categorías favoritas, presupuesto y estilos de vida?
+          </p>
+          <button
+            onClick={() => window.dispatchEvent(new Event('vint-reset-onboarding'))}
+            style={{
+              padding: '12px 24px', borderRadius: 12, border: 'none',
+              backgroundColor: 'var(--accent)', color: 'white',
+              fontSize: 14, fontWeight: 700, cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+            className="hover:scale-105"
+          >
+            ✦ Reconfigurar mis preferencias
+          </button>
+        </div>
+      </SectionCard>
+    ),
   }
 
-  const activeItem = SIDEBAR_ITEMS.find(i => i.id === active)!
+  let userRole = user?.user_metadata?.role || (user?.user_metadata?.id_rol === 2 ? 'vendedor' : 'comprador')
+  if (userRole === 'buyer') userRole = 'comprador'
+  if (userRole === 'seller') userRole = 'vendedor'
+
+  const filteredItems = [...SIDEBAR_ITEMS]
+  if (userRole === 'comprador') {
+    const notifIndex = filteredItems.findIndex(i => i.id === 'notificaciones')
+    filteredItems.splice(notifIndex + 1, 0, { id: 'compras-prefs', label: 'Preferencias de Compra', icon: Heart })
+  }
+
+  const activeItem = filteredItems.find(i => i.id === active)!
   
   const fallbackName = user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuario'
   const nombreCompleto = perfilData 
@@ -763,7 +794,7 @@ export function PerfilClient() {
               </div>
 
               {/* Sidebar Items */}
-              {SIDEBAR_ITEMS.map(item => {
+              {filteredItems.map(item => {
                 const Icon = item.icon
                 const isActive = active === item.id
                 return (

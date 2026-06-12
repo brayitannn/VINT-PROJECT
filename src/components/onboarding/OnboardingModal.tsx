@@ -42,7 +42,10 @@ export function OnboardingModal() {
 
   useEffect(() => {
     if (!user) return
-    const role = user.user_metadata?.role
+    let role = user.user_metadata?.role || (user.user_metadata?.id_rol === 2 ? 'vendedor' : 'comprador')
+    if (role === 'buyer') role = 'comprador'
+    if (role === 'seller') role = 'vendedor'
+    
     const prefs = user.user_metadata?.preferencias
     // Solo mostrar para compradores sin preferencias guardadas
     if (role === 'comprador' && !prefs) {
@@ -51,6 +54,15 @@ export function OnboardingModal() {
       return () => clearTimeout(t)
     }
   }, [user])
+
+  useEffect(() => {
+    const handleReset = () => {
+      setStep(1)
+      setVisible(true)
+    }
+    window.addEventListener('vint-reset-onboarding', handleReset)
+    return () => window.removeEventListener('vint-reset-onboarding', handleReset)
+  }, [])
 
   const toggleItem = (item: string, list: string[], setter: (v: string[]) => void) => {
     setter(list.includes(item) ? list.filter(x => x !== item) : [...list, item])
@@ -79,6 +91,7 @@ export function OnboardingModal() {
         },
       })
       setVisible(false)
+      window.location.reload()
     } catch (e) {
       console.error('[OnboardingModal] Error guardando preferencias:', e)
     } finally {
@@ -101,6 +114,7 @@ export function OnboardingModal() {
       },
     })
     setVisible(false)
+    window.location.reload()
   }
 
   if (!visible) return null

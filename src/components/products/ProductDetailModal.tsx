@@ -30,7 +30,9 @@ export function ProductDetailModal({ product, onClose }: Props) {
   const { addItem, isInCart } = useCart()
   const { isFavorito, toggleFavorito } = useFavorites()
   const { user } = useAuth()
-  const role = user?.user_metadata?.role || 'comprador'
+  let role = user?.user_metadata?.role || 'comprador'
+  if (role === 'buyer') role = 'comprador'
+  if (role === 'seller') role = 'vendedor'
 
   const isOpen = product !== null
   const inCart = product ? isInCart(product.id) : false

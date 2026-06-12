@@ -42,7 +42,9 @@ export function ProductCard({ product, onOpen }: ProductCardProps) {
   const { isFavorito, toggleFavorito } = useFavorites()
   const { addItem, isInCart } = useCart()
   const { user } = useAuth()
-  const role = user?.user_metadata?.role || 'comprador'
+  let role = user?.user_metadata?.role || 'comprador'
+  if (role === 'buyer') role = 'comprador'
+  if (role === 'seller') role = 'vendedor'
   const productId = product.id.toString()
   const isLiked = isFavorito(productId)
   const inCart = isInCart(product.id)

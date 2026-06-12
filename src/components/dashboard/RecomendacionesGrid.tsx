@@ -14,16 +14,38 @@ export function RecomendacionesGrid({ loading, error, recomendaciones }: Recomen
 
   return (
     <div style={{ animation: 'fadeIn 0.8s ease forwards 0.4s', opacity: 0 }}>
-      <div className="dash-section-header">
-        <div className="dash-section-icon" style={{ background: 'var(--accent)', boxShadow: '0 8px 20px rgba(139, 94, 60, 0.25)' }}>
-          <Heart size={24} />
+      <div className="dash-section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div className="dash-section-icon" style={{ background: 'var(--accent)', boxShadow: '0 8px 20px rgba(139, 94, 60, 0.25)' }}>
+            <Heart size={24} />
+          </div>
+          <div>
+            <h2 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 4px', color: 'var(--text-primary)' }}>Recomendado para ti</h2>
+            <p style={{ fontSize: 15, color: 'var(--text-secondary)', margin: 0 }}>
+              Una selección basada en tus intereses y favoritos recientes.
+            </p>
+          </div>
         </div>
-        <div>
-          <h2 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 4px', color: 'var(--text-primary)' }}>Recomendado para ti</h2>
-          <p style={{ fontSize: 15, color: 'var(--text-secondary)', margin: 0 }}>
-            Una selección basada en tus intereses y favoritos recientes.
-          </p>
-        </div>
+        <button
+          onClick={() => window.dispatchEvent(new Event('vint-reset-onboarding'))}
+          style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border)',
+            borderRadius: 12,
+            padding: '10px 20px',
+            fontSize: 14,
+            fontWeight: 700,
+            color: 'var(--text-primary)',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+          className="hover:border-[var(--accent)] hover:text-[var(--accent)]"
+        >
+          ⚙️ Ajustar Preferencias
+        </button>
       </div>
 
       {loading && (
@@ -68,13 +90,28 @@ export function RecomendacionesGrid({ loading, error, recomendaciones }: Recomen
                 <div className="dash-card-overlay" />
               </div>
               
-              <div style={{ padding: 24 }}>
+              <div style={{ padding: 24, display: 'flex', flexDirection: 'column', height: 'calc(100% - 240px)' }}>
                 <h3 style={{ fontSize: 18, fontWeight: 700, color: hoveredProduct === prenda.id_prenda ? 'var(--accent)' : 'var(--text-primary)', margin: '0 0 12px', transition: 'color 0.3s' }}>
                   {prenda.titulo}
                 </h3>
-                <p style={{ fontSize: 24, fontWeight: 900, color: 'var(--text-primary)', margin: 0 }}>
+                <p style={{ fontSize: 24, fontWeight: 900, color: 'var(--text-primary)', margin: '0 0 12px 0' }}>
                   ${Number(prenda.precio).toLocaleString('es-CO')} <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-muted)' }}>COP</span>
                 </p>
+                {prenda.razon && (
+                  <p style={{ 
+                    fontSize: 12.5, 
+                    color: 'var(--accent)', 
+                    background: 'var(--bg-secondary)', 
+                    padding: '8px 12px', 
+                    borderRadius: 12,
+                    marginTop: 'auto',
+                    fontWeight: 500,
+                    lineHeight: 1.4,
+                    border: '1px solid var(--border)'
+                  }}>
+                    ✨ {prenda.razon}
+                  </p>
+                )}
               </div>
             </Link>
           ))}

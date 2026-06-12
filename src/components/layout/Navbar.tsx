@@ -52,7 +52,9 @@ export function Navbar() {
     return null;
   }
 
-  const role = user?.user_metadata?.role || 'comprador';
+  let role = user?.user_metadata?.role || 'comprador';
+  if (role === 'buyer') role = 'comprador';
+  if (role === 'seller') role = 'vendedor';
   const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuario';
   const initials = userName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
 

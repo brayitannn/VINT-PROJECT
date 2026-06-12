@@ -58,6 +58,91 @@ async function getResumenComportamiento(admin: ReturnType<typeof getAdminClient>
   }
 }
 
+function obtenerRecomendacionesLocales(prendas: any[], preferencias: any) {
+  if (!preferencias) {
+    return prendas.slice(0, 4).map(p => ({
+      id_prenda: p.id_prenda,
+      titulo: p.titulo,
+      precio: Number(p.precio),
+      talla: p.talla,
+      condicion: p.condicion,
+      vendedor: p.vendedor,
+      imagen_principal: p.imagen_principal,
+      categoria: p.categoria,
+      razon: 'Seleccionado especialmente para ti basándonos en las últimas novedades.',
+    }))
+  }
+
+  let filtradas = [...prendas]
+
+  // 1. Filtrar por talla
+  if (preferencias.tallas && preferencias.tallas.length > 0) {
+    const tallasSet = new Set(preferencias.tallas.map((t: string) => t.toUpperCase()))
+    const preFiltro = filtradas.filter(p => p.talla && tallasSet.has(p.talla.toUpperCase()))
+    if (preFiltro.length > 0) filtradas = preFiltro
+  }
+
+  // 2. Filtrar por categoría
+  if (preferencias.categorias && preferencias.categorias.length > 0) {
+    const categoriasSet = new Set(preferencias.categorias.map((c: string) => c.toLowerCase()))
+    const preFiltro = filtradas.filter(p => p.categoria && (
+      categoriasSet.has(p.categoria.toLowerCase()) ||
+      preferencias.categorias.some((c: string) => p.categoria.toLowerCase().includes(c.toLowerCase()))
+    ))
+    if (preFiltro.length > 0) filtradas = preFiltro
+  }
+
+  // 3. Filtrar por presupuesto máximo
+  if (preferencias.presupuesto_max) {
+    const preFiltro = filtradas.filter(p => Number(p.precio) <= Number(preferencias.presupuesto_max))
+    if (preFiltro.length > 0) filtradas = preFiltro
+  }
+
+  // Tomar hasta 4
+  const seleccionadas = filtradas.slice(0, 4)
+  
+  // Rellenar si faltan
+  if (seleccionadas.length < 4) {
+    const idsSeleccionados = new Set(seleccionadas.map(p => p.id_prenda))
+    for (const p of prendas) {
+      if (seleccionadas.length >= 4) break
+      if (!idsSeleccionados.has(p.id_prenda)) {
+        seleccionadas.push(p)
+      }
+    }
+  }
+
+  // Asignar razones personalizadas para cada recomendación
+  return seleccionadas.map(p => {
+    let razones = []
+    if (preferencias.tallas?.map((t: string) => t.toUpperCase()).includes(p.talla?.toUpperCase())) {
+      razones.push(`disponible en tu talla (${p.talla})`)
+    }
+    if (preferencias.categorias?.map((c: string) => c.toLowerCase()).includes(p.categoria?.toLowerCase())) {
+      razones.push('es de tus categorías favoritas')
+    }
+    if (preferencias.presupuesto_max && Number(p.precio) <= Number(preferencias.presupuesto_max)) {
+      razones.push(`se ajusta a tu presupuesto`)
+    }
+    
+    const razonStr = razones.length > 0 
+      ? `Recomendado porque ${razones.join(' y ')}.`
+      : 'Elegido especialmente para complementar tu estilo.'
+      
+    return {
+      id_prenda: p.id_prenda,
+      titulo: p.titulo,
+      precio: Number(p.precio),
+      talla: p.talla,
+      condicion: p.condicion,
+      vendedor: p.vendedor,
+      imagen_principal: p.imagen_principal,
+      categoria: p.categoria,
+      razon: razonStr
+    }
+  })
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { userId, preferencias } = await req.json()
@@ -131,13 +216,9 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin backticks, co
     // 4. Llamar a Claude si hay API key
     const anthropicKey = process.env.ANTHROPIC_API_KEY
     if (!anthropicKey) {
-      console.warn('[recomendaciones] ANTHROPIC_API_KEY no configurada — usando fallback ordenado')
-      return NextResponse.json({
-        recomendaciones: prendas.slice(0, 4).map(p => ({
-          ...p,
-          razon: 'Seleccionado especialmente para ti',
-        })),
-      })
+      console.warn('[recomendaciones] ANTHROPIC_API_KEY no configurada — usando fallback local filtrado')
+      const fallbackRecs = obtenerRecomendacionesLocales(prendas, preferencias)
+      return NextResponse.json({ recomendaciones: fallbackRecs })
     }
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -157,13 +238,9 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin backticks, co
     const aiData = await response.json()
 
     if (!response.ok || !aiData.content) {
-      console.warn('[recomendaciones] Anthropic falló:', aiData)
-      return NextResponse.json({
-        recomendaciones: prendas.slice(0, 4).map(p => ({
-          ...p,
-          razon: 'Seleccionado especialmente para ti',
-        })),
-      })
+      console.warn('[recomendaciones] Anthropic falló — usando fallback local filtrado')
+      const fallbackRecs = obtenerRecomendacionesLocales(prendas, preferencias)
+      return NextResponse.json({ recomendaciones: fallbackRecs })
     }
 
     const text = aiData.content?.[0]?.text ?? '{}'
@@ -171,6 +248,21 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin backticks, co
     return NextResponse.json(parsed)
   } catch (e: any) {
     console.error('[recomendaciones] Error inesperado:', e.message)
+    try {
+      // Intentar al menos retornar recomendaciones locales en caso de error
+      const admin = getAdminClient()
+      const { data: prendas } = await admin
+        .from('v_catalogo_publico')
+        .select('id_prenda, titulo, precio, talla, condicion, vendedor, imagen_principal, categoria')
+        .limit(40)
+      if (prendas && prendas.length > 0) {
+        const body = await req.json().catch(() => ({}))
+        const fallbackRecs = obtenerRecomendacionesLocales(prendas, body.preferencias)
+        return NextResponse.json({ recomendaciones: fallbackRecs })
+      }
+    } catch (dbErr) {
+      console.error('[recomendaciones] Error en fallback de emergencia:', dbErr)
+    }
     return NextResponse.json({ recomendaciones: [] }, { status: 500 })
   }
 }
