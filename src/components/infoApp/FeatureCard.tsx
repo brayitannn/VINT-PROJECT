@@ -48,7 +48,7 @@ export function FeatureCard({
           position: "relative",
           overflow: "hidden",
           // Desenfoque y fondo semi-transparente estilo cristal (Glassmorphism)
-          backgroundColor: hovered ? "rgba(255, 255, 255, 0.7)" : "var(--bg-card)",
+          backgroundColor: hovered ? "var(--bg-card-hover)" : "var(--bg-card)",
           backdropFilter: "blur(16px)", // <- Este es el desenfoque
           zIndex: hovered ? 50 : 1, // <- ¡ESTO EVITA QUE SE ESCONDA DETRÁS DE LAS OTRAS!
           border: "1px solid var(--border)",
@@ -58,7 +58,7 @@ export function FeatureCard({
           transition: "all 0.3s ease",
           // Aquí combinamos el levantamiento (translate) con el agrande (scale) 
           transform: hovered ? "translateY(-4px) scale(1.05)" : "translateY(0) scale(1)",
-          boxShadow: hovered ? "0 25px 50px -12px rgba(0,0,0,0.15)" : "none"
+          boxShadow: hovered ? "0 25px 50px -12px var(--shadow-hover)" : "none"
         }}
       >
         <div
@@ -87,7 +87,7 @@ export function FeatureCard({
             justifyContent: "center",
             margin: "0 auto 16px",
             transform: hovered ? 'scale(1.15)' : 'scale(1)',
-            boxShadow: hovered ? '0 0 0 8px rgba(220, 165, 114, 0.2)' : 'none',
+            boxShadow: hovered ? '0 0 0 8px color-mix(in srgb, var(--accent) 20%, transparent)' : 'none',
             transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
             color: hovered ? 'white' : 'var(--accent)'
           }}>

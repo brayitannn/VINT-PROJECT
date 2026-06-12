@@ -10,6 +10,7 @@
   --bg-primary: #F4EFE6;        /* Crema muy suave */
   --bg-secondary: #EBE3D5;      /* Crema oscurecida / Latte */
   --bg-card: #FCF9F2;           /* Blanco roto cálido para cards */
+  --bg-card-hover: rgba(255, 255, 255, 0.85); /* Vidrio blanco brillante */
   --text-primary: #2C241E;      /* Café expreso casi negro */
   --text-secondary: #7A7369;    /* Taupe / Gris Pardo (sin verde) */
   --text-muted: #A8A39D;        /* Gris cálido claro */
@@ -18,12 +19,14 @@
   --accent-light: #F4EFE6;      /* Crema suave */
   --border: #D6CCC0;            /* Taupe claro para bordes */
   --shadow: rgba(44, 36, 30, 0.08); /* Sombra cálida muy suave */
+  --shadow-hover: rgba(44, 36, 30, 0.15); /* Sombra elevada para hover */
 }
 
 [data-theme='dark'] {
   --bg-primary: #1A1714;        /* Café carbón muy oscuro */
   --bg-secondary: #24201C;      /* Café carbón */
   --bg-card: #2A2520;           /* Café grisáceo para cards */
+  --bg-card-hover: rgba(53, 46, 40, 0.85); /* Vidrio oscuro cálido */
   --text-primary: #F4EFE6;      /* Crema suave */
   --text-secondary: #A8A39D;    /* Gris cálido claro */
   --text-muted: #7A7369;        /* Taupe oscuro */
@@ -32,6 +35,7 @@
   --accent-light: #2A2520;      /* Fondo de botones secundarios */
   --border: #3D352F;            /* Borde café oscuro elegante */
   --shadow: rgba(0, 0, 0, 0.5); /* Sombra profunda */
+  --shadow-hover: rgba(0, 0, 0, 0.65); /* Sombra profunda elevada para hover */
 }
 
 * {
