@@ -35,7 +35,7 @@ export function PublicNavbar() {
 
         {/* LOGO */}
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-          <Image src="img/logo1.png" alt="Vint" width={32} height={32} />
+          <Image src="/img/logo1.png" alt="Vint" width={32} height={32} />
           <span style={{
             fontFamily: "'Playfair Display', serif",
             fontWeight: 700, fontSize: 22, color: 'var(--text-primary)',
