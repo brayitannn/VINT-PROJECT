@@ -22,10 +22,10 @@ function mapCondicion(condicion: string): Product['condition'] {
 
 function getConditionStyle(condition: string): React.CSSProperties {
   switch (condition) {
-    case 'Excelente': return { backgroundColor: '#D1FAE5', color: '#065F46' }
-    case 'Muy Bueno': return { backgroundColor: '#FEF3C7', color: '#92400E' }
-    case 'Bueno': return { backgroundColor: '#E0E7FF', color: '#3730A3' }
-    default: return { backgroundColor: '#F3F4F6', color: '#374151' }
+    case 'Excelente': return { backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10B981' }
+    case 'Muy Bueno': return { backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B' }
+    case 'Bueno': return { backgroundColor: 'rgba(99, 102, 241, 0.15)', color: '#818CF8' }
+    default: return { backgroundColor: 'rgba(107, 114, 128, 0.15)', color: 'var(--text-secondary)' }
   }
 }
 
@@ -168,7 +168,8 @@ export function FavoritesModal({ isOpen, onClose }: Props) {
             style={{
               width: 44, height: 44, borderRadius: '50%',
               border: '1px solid var(--border, #D4C5B0)',
-              backgroundColor: 'white', cursor: 'pointer',
+              backgroundColor: 'var(--bg-card)', cursor: 'pointer',
+              color: 'var(--text-primary)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               transition: 'all 0.2s'
             }}
@@ -342,9 +343,11 @@ export function FavoritesModal({ isOpen, onClose }: Props) {
             onClick={onClose} 
             style={{
               padding: '12px 24px', borderRadius: 14, textDecoration: 'none',
-              border: '1px solid var(--border, #D4C5B0)', backgroundColor: 'white',
+              border: '1px solid var(--border, #D4C5B0)',
+              backgroundColor: 'var(--bg-card)',
               color: 'var(--text-primary)', fontSize: 14, fontWeight: 600, cursor: 'pointer',
-              display: 'inline-flex', alignItems: 'center'
+              display: 'inline-flex', alignItems: 'center',
+              transition: 'all 0.2s'
             }}>
             Seguir explorando
           </Link>
