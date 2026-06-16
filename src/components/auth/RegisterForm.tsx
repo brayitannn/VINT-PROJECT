@@ -67,6 +67,9 @@ export function RegisterForm() {
             <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)] transition-colors group-focus-within:text-[var(--accent)] z-20 pointer-events-none" />
             <Input
               type="text"
+              name="firstName"
+              id="firstName"
+              autoComplete="given-name"
               placeholder="Primer Nombre"
               value={formData.primerNombre}
               onChange={(e) => setFormData({ ...formData, primerNombre: e.target.value })}
@@ -106,6 +109,9 @@ export function RegisterForm() {
             <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)] transition-colors group-focus-within:text-[var(--accent)] z-20 pointer-events-none" />
             <Input
               type="text"
+              name="lastName"
+              id="lastName"
+              autoComplete="family-name"
               placeholder="Primer Apellido"
               value={formData.primerApellido}
               onChange={(e) => setFormData({ ...formData, primerApellido: e.target.value })}
@@ -146,6 +152,9 @@ export function RegisterForm() {
             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)] transition-colors group-focus-within:text-[var(--accent)] z-20 pointer-events-none" />
             <Input
               type="email"
+              name="email"
+              id="email"
+              autoComplete="username"
               placeholder="Email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -241,6 +250,9 @@ export function RegisterForm() {
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)] transition-colors group-focus-within:text-[var(--accent)] z-20 pointer-events-none" />
               <Input
                 type={showPassword ? "text" : "password"}
+                name="password"
+                id="password"
+                autoComplete="new-password"
                 placeholder="Contraseña"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -267,6 +279,9 @@ export function RegisterForm() {
             <div className="relative group">
               <Input
                 type={showConfirmPassword ? "text" : "password"}
+                name="confirmPassword"
+                id="confirmPassword"
+                autoComplete="new-password"
                 placeholder="Confirmar contraseña"
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}

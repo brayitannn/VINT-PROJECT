@@ -82,6 +82,9 @@ function LoginForm() {
             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)] transition-colors group-focus-within:text-[var(--accent)] z-20 pointer-events-none" />
             <Input
               type="email"
+              name="email"
+              id="email"
+              autoComplete="username"
               placeholder="Correo electrónico"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -101,6 +104,9 @@ function LoginForm() {
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)] transition-colors group-focus-within:text-[var(--accent)] z-20 pointer-events-none" />
             <Input
               type={showPassword ? "text" : "password"}
+              name="password"
+              id="password"
+              autoComplete="current-password"
               placeholder="Contraseña"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
