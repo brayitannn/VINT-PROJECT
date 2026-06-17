@@ -128,6 +128,35 @@ function Input({ value, onChange, placeholder, type = 'text', max, disabled }: {
   )
 }
 
+function Textarea({ value, onChange, placeholder, maxLength = 160 }: { value: string; onChange: (v: string) => void; placeholder?: string; maxLength?: number }) {
+  return (
+    <div style={{ position: 'relative' }}>
+      <textarea
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        maxLength={maxLength}
+        rows={3}
+        style={{
+          width: '100%', padding: '12px 16px', borderRadius: 12, fontSize: 14,
+          border: '1px solid var(--border)', backgroundColor: 'var(--bg-primary)',
+          color: value ? 'var(--text-primary)' : 'var(--text-muted)', outline: 'none',
+          fontFamily: "'DM Sans', sans-serif",
+          boxSizing: 'border-box', resize: 'vertical', minHeight: 80,
+          transition: 'border-color 0.2s', lineHeight: 1.5,
+        }}
+      />
+      <span style={{
+        position: 'absolute', bottom: 10, right: 14,
+        fontSize: 11, color: 'var(--text-muted)',
+        pointerEvents: 'none',
+      }}>
+        {value.length}/{maxLength}
+      </span>
+    </div>
+  )
+}
+
 function ToggleRow({ label, description, checked, onChange }: { label: string; description?: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 0', borderBottom: '1px solid var(--border)' }}>
@@ -153,6 +182,7 @@ function PerfilSection() {
   const realLocation = user?.user_metadata?.location || 'Colombia'
   const realBirthday = user?.user_metadata?.fecha_nacimiento || ''
   const realGender = user?.user_metadata?.genero || ''
+  const realDescripcion = user?.user_metadata?.descripcion || ''
 
   const [name, setName] = useState('')
   const [perfilData, setPerfilData] = useState<any>(null)
@@ -184,6 +214,7 @@ function PerfilSection() {
   const [location, setLocation] = useState(realLocation)
   const [birthday, setBirthday] = useState(realBirthday)
   const [gender, setGender] = useState(realGender)
+  const [descripcion, setDescripcion] = useState(realDescripcion)
   const [saved, setSaved] = useState(false)
   const [updating, setUpdating] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(avatarUrl)
@@ -229,7 +260,7 @@ function PerfilSection() {
 
       // 1. Actualizar Auth Metadata
       const { error: authError } = await supabase.auth.updateUser({
-        data: { name, username, location, fecha_nacimiento: birthday, genero: gender }
+        data: { name, username, location, fecha_nacimiento: birthday, genero: gender, descripcion }
       })
       if (authError) throw authError
 
@@ -361,7 +392,17 @@ function PerfilSection() {
             />
           </FieldRow>
         </div>
-        
+
+        {/* Descripción — ancho completo */}
+        <FieldRow label="Descripción">
+          <Textarea
+            value={descripcion}
+            onChange={setDescripcion}
+            placeholder="Cuéntale a otros cómo describes tu estilo... (máx. 160 caracteres)"
+            maxLength={160}
+          />
+        </FieldRow>
+
         {error && (
           <p style={{ fontSize: 13, color: '#EF4444', marginTop: 16, marginBottom: 0 }}>{error}</p>
         )}
@@ -697,25 +738,55 @@ export function PerfilClient() {
     peligro: <PeligroSection />,
     'compras-prefs': (
       <SectionCard title="Preferencias de Compra" description="Personaliza las recomendaciones de prendas que aparecen en tu dashboard">
-        <div style={{ padding: '24px', background: 'var(--bg-secondary)', borderRadius: 16, border: '1px solid var(--border)', textAlign: 'center' }}>
-          <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 20, lineHeight: 1.5 }}>
-            ¿Quieres volver a realizar el test de estilo para actualizar tus tallas, categorías favoritas, presupuesto y estilos de vida?
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Info cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            {[
+              { emoji: '📐', label: 'Tallas', desc: 'S, M, L, XL…' },
+              { emoji: '👗', label: 'Categorías', desc: 'Casual, Vintage, Sport…' },
+              { emoji: '💰', label: 'Presupuesto', desc: 'Precio máximo por prenda' },
+              { emoji: '✨', label: 'Estilos de vida', desc: 'Minimalista, Streetwear…' },
+            ].map(item => (
+              <div key={item.label} style={{
+                padding: '14px 16px', borderRadius: 14,
+                background: 'var(--bg-primary)',
+                border: '1px solid var(--border)',
+                display: 'flex', alignItems: 'center', gap: 12,
+              }}>
+                <span style={{ fontSize: 24 }}>{item.emoji}</span>
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{item.label}</p>
+                  <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '2px 0 0' }}>{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Hint */}
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
+            Al completar el formulario, tu dashboard actualizará automáticamente las prendas recomendadas para reflejar tus nuevas preferencias.
           </p>
-          <button
-            onClick={() => window.dispatchEvent(new Event('vint-reset-onboarding'))}
-            style={{
-              padding: '12px 24px', borderRadius: 12, border: 'none',
-              backgroundColor: 'var(--accent)', color: 'white',
-              fontSize: 14, fontWeight: 700, cursor: 'pointer',
-              transition: 'all 0.2s',
-            }}
-            className="hover:scale-105"
-          >
-            ✦ Reconfigurar mis preferencias
-          </button>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+            <button
+              onClick={() => window.dispatchEvent(new Event('vint-reset-onboarding'))}
+              style={{
+                padding: '12px 24px', borderRadius: 12, border: 'none',
+                backgroundColor: 'var(--accent)', color: 'white',
+                fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                boxShadow: '0 6px 16px -4px rgba(139,94,60,0.35)',
+              }}
+              className="hover:scale-105"
+            >
+              ✦ Reconfigurar mis preferencias
+            </button>
+          </div>
         </div>
       </SectionCard>
     ),
+
   }
 
   let userRole = user?.user_metadata?.role || (user?.user_metadata?.id_rol === 2 ? 'vendedor' : 'comprador')

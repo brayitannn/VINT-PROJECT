@@ -4,31 +4,16 @@ import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Package, Tag, TrendingUp, DollarSign, ShoppingBag, Clock, ArrowUpRight, ArrowDownRight, Minus, Store } from 'lucide-react'
 import { type MockUser } from '@/lib/supabase/mock-user'
-import { DashboardNavbar, AccesoRapido } from './DashboardNavbar'
+import { useAuth } from '@/context/AuthContext'
+import { useCompradorStats } from '@/hooks/useCompradorStats'
 import { MisVentasModal } from './MisVentasModal'
 import { EstadisticasDetalleModal, type DetalleTipo } from './EstadisticasDetalleModal'
 import { fetchEstadisticasVendedor, type EstadisticasVendedor } from '@/services/estadisticas'
+import { ProfileCoverHeader, type AccesoRapido } from './ProfileCoverHeader'
 
 interface VendedorDashboardProps {
   user: MockUser
 }
-
-const ACCESOS_RAPIDOS: AccesoRapido[] = [
-  {
-    id: 'mi-tienda',
-    icon: Store,
-    label: 'Mi Tienda',
-    href: '/dashboard/vendedor/mi-tienda',
-    accent: '#8B5E3C'
-  },
-  {
-    id: 'mis-productos',
-    icon: Package,
-    label: 'Mis Productos',
-    href: '/products',
-    accent: '#8B5E3C'
-  }
-]
 
 // ─── Mini Sparkline SVG ───────────────────────────────────────────────────────
 function Sparkline({ data, color = '#10B981' }: { data: number[]; color?: string }) {
@@ -61,15 +46,22 @@ function StatSkeleton() {
   )
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
 export function VendedorDashboard({ user }: VendedorDashboardProps) {
+  const { user: authUser } = useAuth()
+  const { stats: userStats } = useCompradorStats()
   const [modalVentas, setModalVentas] = useState(false)
   const [detalleActivo, setDetalleActivo] = useState<DetalleTipo | null>(null)
   const [stats, setStats] = useState<EstadisticasVendedor | null>(null)
   const [loadingStats, setLoadingStats] = useState(true)
 
-  const hora = new Date().getHours()
-  const saludo = hora < 12 ? 'Buenos días' : hora < 18 ? 'Buenas tardes' : 'Buenas noches'
+  const tagline = authUser?.user_metadata?.descripcion || 'Impulsando la moda circular'
+
+  const ACCESOS_RAPIDOS: AccesoRapido[] = [
+    { id: 'mi-tienda', icon: Store, label: 'Mi Tienda', href: '/dashboard/vendedor/mi-tienda', accent: '#8B5E3C' },
+    { id: 'mis-productos', icon: Package, label: 'Mis Productos', href: '/products', accent: '#8B5E3C' },
+    { id: 'mis-ventas', icon: TrendingUp, label: 'Mis Ventas', onClick: () => setModalVentas(true), accent: '#8B5E3C' },
+    { id: 'ver-comprador', icon: Tag, label: 'Comprar', href: '/explorar', accent: '#8B5E3C' },
+  ]
 
   useEffect(() => {
     // =========================================================================
@@ -79,22 +71,13 @@ export function VendedorDashboard({ user }: VendedorDashboardProps) {
     // Para volver a usar los datos reales de Supabase, borra el bloque del setTimeout
     // y descomenta las siguientes 4 líneas de código:
     //
-    // fetchEstadisticasVendedor(user.id)
-    //   .then(setStats)
-    //   .catch(() => setStats(null))
-    //   .finally(() => setLoadingStats(false))
-    
-    setTimeout(() => {
-      setStats({
-        ingresosTotal: 237000,
-        ingresosMesAnterior: 195000, // Para dar un ~21% de crecimiento
-        trendIngresos: [20, 35, 25, 60, 50, 80, 100],
-        prendasVendidas: 3,
-        prendasVendidasSemana: 1,
-        pedidosEnCurso: 2
+    fetchEstadisticasVendedor(user.id)
+      .then(setStats)
+      .catch((e) => {
+        console.error("Error fetching stats:", e)
+        setStats(null)
       })
-      setLoadingStats(false)
-    }, 600)
+      .finally(() => setLoadingStats(false))
     // =========================================================================
   }, [user.id])
 
@@ -116,112 +99,6 @@ export function VendedorDashboard({ user }: VendedorDashboardProps) {
           padding: 60px 2rem;
           font-family: 'DM Sans', sans-serif;
         }
-        
-        .dash-greeting {
-          animation: slideDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-          margin-bottom: 60px;
-          text-align: center;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-        }
-        
-        .dash-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 8px 20px;
-          border-radius: 999px;
-          background: var(--bg-card);
-          border: 1px solid var(--border);
-          font-size: 16px;
-          color: var(--text-secondary);
-          margin-bottom: 20px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.02);
-        }
-
-        .crud-hub {
-          background: var(--bg-card);
-          border: 1px solid var(--border);
-          border-radius: 32px;
-          padding: 48px;
-          display: flex;
-          flex-direction: column;
-          gap: 40px;
-          position: relative;
-          overflow: hidden;
-          background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);
-          box-shadow: 0 20px 50px rgba(0,0,0,0.05);
-          animation: fadeIn 1s ease forwards 0.2s;
-          opacity: 0;
-          margin-bottom: 48px;
-        }
-
-        .hub-glow {
-          position: absolute;
-          top: -100px;
-          right: -100px;
-          width: 300px;
-          height: 300px;
-          background: var(--accent);
-          filter: blur(120px);
-          opacity: 0.1;
-          z-index: 0;
-        }
-
-        .hub-content {
-          position: relative;
-          z-index: 1;
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-end;
-          gap: 40px;
-          flex-wrap: wrap;
-        }
-
-        .hub-actions {
-          display: flex;
-          gap: 16px;
-          flex-wrap: wrap;
-        }
-
-        .hub-btn {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 16px 32px;
-          border-radius: 16px;
-          font-weight: 700;
-          font-size: 15px;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          text-decoration: none;
-        }
-
-        .hub-btn-primary {
-          background: var(--accent);
-          color: white;
-          box-shadow: 0 10px 25px rgba(139, 94, 60, 0.25);
-        }
-
-        .hub-btn-primary:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 15px 35px rgba(139, 94, 60, 0.35);
-        }
-
-        .hub-btn-secondary {
-          background: var(--bg-secondary);
-          color: var(--text-primary);
-          border: 1px solid var(--border);
-        }
-
-        .hub-btn-secondary:hover {
-          background: rgba(139, 94, 60, 0.08);
-          transform: translateY(-3px);
-          border-color: var(--accent);
-          color: var(--accent);
-          box-shadow: 0 8px 20px rgba(139, 94, 60, 0.12);
-        }
-
         /* STATS CARDS */
         .stats-section-title {
           font-family: 'Playfair Display', serif;
@@ -328,119 +205,36 @@ export function VendedorDashboard({ user }: VendedorDashboardProps) {
           50% { opacity: 1; }
         }
 
-        /* ── Responsive ─────────────────────────────────────── */
         @media (max-width: 1024px) {
           .dash-container { padding: 40px 1.5rem; }
-          .crud-hub { padding: 36px 32px; }
-          .hub-content { flex-direction: column; align-items: flex-start; gap: 28px; }
           .stats-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
         }
 
         @media (max-width: 640px) {
           .dash-container { padding: 28px 1rem; }
-          .crud-hub { padding: 28px 20px; border-radius: 20px; }
-          .hub-actions { flex-direction: column; width: 100%; }
-          .hub-btn { width: 100%; justify-content: center; padding: 14px 20px; }
           .stats-grid { grid-template-columns: 1fr; }
           .stat-card { padding: 24px 20px; }
           .stat-value { font-size: 30px; }
           .stats-section-title { font-size: 18px; }
-          .dash-greeting { margin-bottom: 28px; padding: 24px 0; }
         }
       `}</style>
 
       <div className="dash-container">
-        {/* GREETING */}
-        <div className="dash-greeting" style={{ marginBottom: 40, marginTop: -20, position: 'relative', padding: '40px 0' }}>
-          <div style={{
-            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-            width: '300px', height: '100px', background: 'var(--accent)', filter: 'blur(100px)', opacity: 0.05, zIndex: -1
-          }} />
+        <ProfileCoverHeader
+          name={user.name}
+          email={user.email}
+          avatarUrl={user.avatar || null}
+          stats={[
+            { value: stats?.prendasVendidas || 0, label: 'ventas' },
+            { value: userStats.seguidos, label: 'seguidos' },
+            { value: userStats.seguidores, label: 'seguidores' }
+          ]}
+          tagline={tagline}
+          accesos={ACCESOS_RAPIDOS}
+        />
 
-          <div className="dash-badge" style={{
-            fontSize: 14, background: 'rgba(139, 94, 60, 0.05)',
-            border: '1px solid rgba(139, 94, 60, 0.1)',
-            padding: '6px 16px', color: 'var(--accent)', fontWeight: 700,
-            letterSpacing: '0.05em', textTransform: 'uppercase'
-          }}>
-            {saludo}
-          </div>
-
-          <h1 style={{
-            fontFamily: "'Playfair Display', serif",
-            fontSize: 'clamp(40px, 6vw, 64px)',
-            fontWeight: 900, color: 'var(--text-primary)',
-            margin: '12px 0', lineHeight: 1
-          }}>
-            Hola, <span style={{
-              background: 'linear-gradient(135deg, var(--accent) 0%, #A8724D 100%)',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
-            }}>{user.name.split(' ')[0]}</span>{' '}
-            <span style={{ fontSize: '0.8em', animation: 'bounce 2s infinite', display: 'inline-block' }}>✦</span>
-          </h1>
-
-          <p style={{
-            fontSize: 22, color: 'var(--text-secondary)', maxWidth: 600, lineHeight: 1.6,
-            margin: '0 auto', textAlign: 'center', fontStyle: 'italic', opacity: 0.9,
-            fontFamily: "'Playfair Display', serif"
-          }}>
-            Tu negocio va por buen camino.
-          </p>
-        </div>
-
-        {/* CENTRAL MANAGEMENT HUB */}
-        <div className="crud-hub">
-          <div className="hub-glow" />
-
-          <div className="hub-content">
-            <div style={{ flex: 1, minWidth: 300 }}>
-              <div style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                backgroundColor: 'rgba(139, 94, 60, 0.1)', color: 'var(--accent)',
-                borderRadius: 999, fontSize: 13, fontWeight: 800,
-                padding: '8px 20px', marginBottom: 24,
-                backdropFilter: 'blur(10px)',
-                letterSpacing: '0.05em', textTransform: 'uppercase'
-              }}>
-                ✦ Centro de Gestión
-              </div>
-
-              <h2 style={{
-                fontFamily: "'Playfair Display', serif",
-                fontSize: 'clamp(32px, 4vw, 48px)',
-                fontWeight: 900, color: 'var(--text-primary)',
-                margin: '0 0 16px', lineHeight: 1.1
-              }}>
-                Administra tu Catálogo Personal
-              </h2>
-
-              <p style={{
-                fontSize: 18, color: 'var(--text-secondary)', margin: 0,
-                maxWidth: 550, lineHeight: 1.6, opacity: 0.8
-              }}>
-                Crea nuevas publicaciones, edita detalles de tus prendas o gestiona tu inventario en tiempo real. Todo desde una interfaz diseñada para tu éxito.
-              </p>
-            </div>
-
-            <div className="hub-actions">
-              <Link href="/dashboard/vendedor/mi-tienda" className="hub-btn hub-btn-secondary" style={{ backgroundColor: 'var(--accent)', color: 'white', border: 'none' }}>
-                <Store size={20} /> Mi Tienda
-              </Link>
-              <Link href="/products" className="hub-btn hub-btn-secondary">
-                <Package size={20} /> Mis Prendas
-              </Link>
-              <button onClick={() => setModalVentas(true)} className="hub-btn hub-btn-secondary" style={{ border: '1px solid var(--border)', cursor: 'pointer' }}>
-                <TrendingUp size={20} /> Mis Ventas
-              </button>
-              <Link href="/explorar" className="hub-btn hub-btn-secondary">
-                <Tag size={20} /> Ver como Comprador
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        {/* STATS SECTION */}
-        <p className="stats-section-title">Tu Resumen</p>
+        <div style={{ marginTop: 40 }}>
+          <p className="stats-section-title">Tu Rendimiento Comercial</p>
         <div className="stats-grid">
           {loadingStats ? (
             <>
@@ -514,6 +308,7 @@ export function VendedorDashboard({ user }: VendedorDashboardProps) {
               </div>
             </>
           )}
+        </div>
         </div>
 
         {/* MODAL MIS VENTAS */}
