@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { ArrowLeft, Settings, MapPin, Calendar, Star, Package, MessageCircle, UserPlus, MessageSquare, Trash2, Send } from 'lucide-react'
+import { ArrowLeft, Settings, MapPin, Calendar, Star, Package, MessageCircle, UserPlus, MessageSquare, Trash2, Send, Check } from 'lucide-react'
 import Link from 'next/link'
 import { ProductCard, type Product } from '@/components/products/ProductCard'
 import { useAuth } from '@/context/AuthContext'
@@ -328,6 +328,7 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
     : (sellerSlug ? sellerSlug.replace(/-/g, ' ') : 'Vendedor')
   
   const initials = nombreCompleto.split(' ').filter(Boolean).map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) || 'US'
+  const firstInitial = (username ? username[0] : (nombreCompleto ? nombreCompleto[0] : 'V')).toUpperCase()
 
   return (
     <>
@@ -335,7 +336,7 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
         .store-banner {
           height: 250px;
           width: 100%;
-          background: linear-gradient(135deg, rgba(139,94,60,0.8) 0%, rgba(16,185,129,0.8) 100%), url('https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=1200&h=400&fit=crop');
+          background: linear-gradient(to bottom, color-mix(in srgb, var(--accent) 30%, transparent) 0%, color-mix(in srgb, var(--text-primary) 85%, transparent) 100%), url('https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=1200&h=400&fit=crop');
           background-size: cover;
           background-position: center;
           position: relative;
@@ -350,20 +351,39 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 40px;
-          font-weight: 900;
-          color: white;
+          font-size: 48px;
+          font-weight: 700;
+          font-family: var(--font-serif);
+          color: var(--bg-card);
           position: absolute;
           bottom: -70px;
           left: 48px;
           box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-          overflow: hidden;
+          overflow: visible;
         }
 
-        .store-avatar img {
+        .store-avatar-img {
           width: 100%;
           height: 100%;
+          border-radius: 50%;
           object-fit: cover;
+        }
+
+        .avatar-badge {
+          position: absolute;
+          bottom: 2px;
+          right: 2px;
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          background: var(--bg-card);
+          color: var(--accent);
+          border: 3px solid var(--bg-secondary);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+          z-index: 2;
         }
 
         .store-info {
@@ -376,11 +396,12 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
         }
 
         .store-stats {
-          display: flex;
-          gap: 32px;
-          margin-top: 24px;
-          padding-top: 24px;
-          border-top: 1px dashed var(--border);
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 12px;
+          margin-top: 20px;
+          width: 100%;
+          max-width: 600px;
         }
 
         .stat-block p { margin: 0; }
@@ -391,8 +412,158 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
           .store-info { flex-direction: column; padding: 85px 24px 32px; }
           .store-avatar { left: 50%; transform: translateX(-50%); bottom: -50px; width: 100px; height: 100px; }
           .store-actions { margin-top: 24px; width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
-          .store-stats { flex-wrap: wrap; justify-content: center; text-align: center; }
+          .store-stats { grid-template-columns: 1fr; width: 100%; max-width: 100%; }
           .comments-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+        }
+
+        /* PREMIUM ACTIONS BUTTONS */
+        .store-btn-primary {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 12px 24px;
+          border-radius: 14px;
+          font-size: 15px;
+          font-weight: 700;
+          text-decoration: none;
+          border: 1px solid var(--border);
+          cursor: pointer;
+          background-color: var(--bg-card);
+          color: var(--text-primary);
+          box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .store-btn-primary:hover {
+          transform: translateY(-2px);
+          background-color: var(--accent);
+          color: var(--bg-card);
+          border-color: transparent;
+          box-shadow: 0 8px 20px -4px color-mix(in srgb, var(--accent) 65%, transparent);
+        }
+
+        .store-btn-primary:active {
+          transform: translateY(1px);
+          box-shadow: 0 2px 8px -2px color-mix(in srgb, var(--accent) 40%, transparent);
+        }
+
+        .store-btn-primary svg {
+          transition: transform 0.25s ease;
+        }
+
+        .store-btn-primary:hover svg {
+          transform: scale(1.1) rotate(-5deg);
+        }
+
+        .store-btn-secondary {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 12px 24px;
+          border-radius: 14px;
+          font-size: 15px;
+          font-weight: 700;
+          text-decoration: none;
+          cursor: pointer;
+          background: var(--bg-card);
+          color: var(--text-primary);
+          border: 1px solid var(--border);
+          box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .store-btn-secondary:hover {
+          transform: translateY(-2px);
+          background: var(--bg-card-hover);
+          border-color: var(--accent);
+          color: var(--accent);
+          box-shadow: 0 6px 16px rgba(139, 94, 60, 0.08);
+        }
+
+        .store-btn-secondary:active {
+          transform: translateY(1px);
+          box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        .store-btn-secondary svg {
+          transition: transform 0.25s ease;
+        }
+
+        .store-btn-secondary:hover svg {
+          transform: scale(1.1) translateY(-1px);
+        }
+
+        /* PREMIUM STATS CARDS */
+        .store-stat-card {
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          padding: 16px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          gap: 4px;
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          cursor: default;
+        }
+
+        .store-stat-card.clickable {
+          cursor: pointer;
+        }
+
+        .store-stat-card .val {
+          font-size: 20px;
+          font-weight: 600;
+          color: var(--text-primary);
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          margin: 0;
+          transition: all 0.3s ease;
+        }
+
+        .store-stat-card .lbl {
+          font-size: 11px;
+          font-weight: 600;
+          color: var(--text-muted);
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          margin: 0;
+          transition: all 0.3s ease;
+        }
+
+        .store-stat-card .star-icon {
+          fill: var(--accent);
+          color: var(--accent);
+          transition: all 0.3s ease;
+        }
+
+        /* Hover State - turns brown */
+        .store-stat-card:hover {
+          transform: translateY(-2px);
+          background: var(--accent);
+          border-color: transparent;
+          box-shadow: 0 8px 20px -4px color-mix(in srgb, var(--accent) 65%, transparent);
+        }
+
+        .store-stat-card:hover .val {
+          color: var(--bg-card);
+          font-weight: 700;
+        }
+
+        .store-stat-card:hover .lbl {
+          color: var(--accent-light);
+        }
+
+        .store-stat-card:hover .star-icon {
+          fill: var(--bg-card);
+          color: var(--bg-card);
+        }
+
+        .store-stat-card:active {
+          transform: translateY(1px);
         }
       `}</style>
 
@@ -430,20 +601,41 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
             </div>
             
             <div className="store-avatar">
-              {avatarUrl ? <img src={avatarUrl} alt="Avatar" /> : initials}
+              {avatarUrl ? <img src={avatarUrl} alt="Avatar" className="store-avatar-img" /> : firstInitial}
+              {/* Badge verificado */}
+              <div className="avatar-badge" title="Vendedor Verificado">
+                <Check size={14} strokeWidth={3.5} />
+              </div>
             </div>
           </div>
           
           <div className="store-info">
             <div>
-              <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 36, fontWeight: 900, color: 'var(--text-primary)', margin: '0 0 4px', lineHeight: 1 }}>
+              {/* Rol Vendedor Chip */}
+              <div style={{
+                display: 'inline-block',
+                backgroundColor: 'var(--bg-card)',
+                color: 'var(--text-secondary)',
+                borderRadius: '8px',
+                padding: '3px 10px',
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+                marginBottom: 8,
+                border: '1px solid var(--border)'
+              }}>
+                Vendedor
+              </div>
+
+              <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 36, fontWeight: 700, color: 'var(--text-primary)', margin: 0, lineHeight: 1.1 }}>
                 {nombreCompleto}
               </h1>
-              <p style={{ fontSize: 16, color: 'var(--text-secondary)', margin: '0 0 16px', fontWeight: 500 }}>
+              <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '2px 0 16px', fontWeight: 500 }}>
                 @{username}
               </p>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16, color: 'var(--text-muted)', fontSize: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, color: 'var(--text-secondary)', fontSize: 14 }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <MapPin size={16} /> {location}
                 </span>
@@ -452,30 +644,47 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
                 </span>
               </div>
 
+              {/* Separador Horizontal */}
+              <div style={{ borderBottom: '1px solid var(--border)', margin: '20px 0' }} />
+
               <div className="store-stats">
+                {/* Calificación */}
                 <div 
-                  className="stat-block" 
                   onClick={() => {
                     setActiveTab('comentarios');
                     setTimeout(() => {
                       document.getElementById('comentarios-tab-btn')?.scrollIntoView({ behavior: 'smooth' });
                     }, 100);
                   }}
-                  style={{ cursor: 'pointer' }}
+                  className="store-stat-card clickable"
                 >
-                  <p className="val" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <p className="val">
                     {comentarios.length > 0 ? (comentarios.reduce((acc, c) => acc + c.calificacion, 0) / comentarios.length).toFixed(1) : '5.0'} 
-                    <Star size={16} fill="#F59E0B" color="#F59E0B" />
+                    <Star size={16} className="star-icon" />
                   </p>
-                  <p className="lbl">Calificación</p>
+                  <p className="lbl">
+                    Calificación
+                  </p>
                 </div>
-                <div className="stat-block">
-                  <p className="val">{productos.length}</p>
-                  <p className="lbl">Prendas en Venta</p>
+
+                {/* Prendas en Venta */}
+                <div className="store-stat-card">
+                  <p className="val">
+                    {productos.length}
+                  </p>
+                  <p className="lbl">
+                    Prendas en Venta
+                  </p>
                 </div>
-                <div className="stat-block">
-                  <p className="val">+100</p>
-                  <p className="lbl">Ventas Exitosas</p>
+
+                {/* Ventas Exitosas */}
+                <div className="store-stat-card">
+                  <p className="val">
+                    +100
+                  </p>
+                  <p className="lbl">
+                    Ventas Exitosas
+                  </p>
                 </div>
               </div>
             </div>
@@ -485,14 +694,7 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
                 <div style={{ display: 'flex', gap: 12 }}>
                   <Link
                     href="/perfil"
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 8,
-                      padding: '12px 24px', borderRadius: 14,
-                      backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)',
-                      fontSize: 15, fontWeight: 700, textDecoration: 'none',
-                      border: '1px solid var(--border)', transition: 'all 0.2s',
-                    }}
-                    className="hover:scale-105 hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                    className="store-btn-primary"
                   >
                     <Settings size={18} /> Editar Perfil
                   </Link>
@@ -503,14 +705,7 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
                         document.getElementById('comentarios-tab-btn')?.scrollIntoView({ behavior: 'smooth' });
                       }, 100);
                     }}
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 8,
-                      padding: '12px 24px', borderRadius: 14,
-                      backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)',
-                      fontSize: 15, fontWeight: 700, border: '1px solid var(--border)', cursor: 'pointer',
-                      transition: 'all 0.2s',
-                    }}
-                    className="hover:scale-105 hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                    className="store-btn-secondary"
                   >
                     <MessageSquare size={18} /> Ver Comentarios
                   </button>
@@ -518,27 +713,13 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
               ) : (
                 <div style={{ display: 'flex', gap: 12 }}>
                   <button
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 8,
-                      padding: '12px 24px', borderRadius: 14,
-                      backgroundColor: 'var(--accent)', color: 'white',
-                      fontSize: 15, fontWeight: 700, border: 'none', cursor: 'pointer',
-                      transition: 'all 0.2s', boxShadow: '0 4px 12px rgba(139,94,60,0.3)',
-                    }}
-                    className="hover:scale-105"
+                    className="store-btn-primary"
                   >
                     <UserPlus size={18} /> Seguir Tienda
                   </button>
                   <button
                     onClick={() => setChatOpen(true)}
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 8,
-                      padding: '12px 24px', borderRadius: 14,
-                      backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)',
-                      fontSize: 15, fontWeight: 700, border: '1px solid var(--border)', cursor: 'pointer',
-                      transition: 'all 0.2s',
-                    }}
-                    className="hover:scale-105 hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                    className="store-btn-secondary"
                   >
                     <MessageCircle size={18} /> Contactar
                   </button>
@@ -549,14 +730,7 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
                         document.getElementById('comentarios-tab-btn')?.scrollIntoView({ behavior: 'smooth' });
                       }, 100);
                     }}
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 8,
-                      padding: '12px 24px', borderRadius: 14,
-                      backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)',
-                      fontSize: 15, fontWeight: 700, border: '1px solid var(--border)', cursor: 'pointer',
-                      transition: 'all 0.2s',
-                    }}
-                    className="hover:scale-105 hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                    className="store-btn-secondary"
                   >
                     <MessageSquare size={18} /> Comentarios
                   </button>

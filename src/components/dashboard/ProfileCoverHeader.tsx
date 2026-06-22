@@ -264,6 +264,8 @@ export function ProfileCoverHeader({
         .pch-nav-item {
           display: flex;
           align-items: center;
+          justify-content: flex-start;
+          text-align: left;
           gap: 10px;
           padding: 12px 18px;
           border-radius: 16px;
