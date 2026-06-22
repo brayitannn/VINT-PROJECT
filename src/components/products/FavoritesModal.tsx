@@ -235,12 +235,14 @@ export function FavoritesModal({ isOpen, onClose }: Props) {
                       position: 'relative', overflow: 'hidden',
                       height: 200, backgroundColor: 'var(--bg-secondary, #EAD9C3)'
                     }}>
-                      <Image
-                        src={product.image}
-                        alt={product.name}
-                        width={400} height={200}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
+                      <Link href={`/explorar?producto=${product.id}`} onClick={onClose} style={{ display: 'block', height: '100%' }}>
+                        <Image
+                          src={product.image}
+                          alt={product.name}
+                          width={400} height={200}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      </Link>
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleFavorito(String(product.id)) }}
                         title="Quitar de favoritos"
@@ -264,10 +266,12 @@ export function FavoritesModal({ isOpen, onClose }: Props) {
                     {/* Info */}
                     <div style={{ padding: '16px 16px 20px', display: 'flex', flexDirection: 'column', flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
-                        <h3 style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary, #2C1F14)', lineHeight: 1.3, margin: 0 }}
-                          className="line-clamp-2">
-                          {product.name}
-                        </h3>
+                        <Link href={`/explorar?producto=${product.id}`} onClick={onClose} style={{ textDecoration: 'none', color: 'inherit', display: 'block', width: '100%' }}>
+                          <h3 style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary, #2C1F14)', lineHeight: 1.3, margin: 0 }}
+                            className="line-clamp-2 hover:text-[var(--accent)] transition-colors">
+                            {product.name}
+                          </h3>
+                        </Link>
                         <span style={{
                           ...getConditionStyle(product.condition),
                           fontSize: 10, fontWeight: 700, padding: '3px 8px',
