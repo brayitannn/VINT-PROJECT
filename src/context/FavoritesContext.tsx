@@ -5,7 +5,6 @@ import { getFavoritos, addFavorito, removeFavorito } from '@/services/favoritos'
 import { createClient } from '@/lib/supabase/client'
 import { useNotificationsContext } from '@/context/NotificationsContext'
 import { useAuth } from '@/context/AuthContext'
-import { FavoritesModal } from '@/components/products/FavoritesModal'
 import { useTracker } from '@/hooks/useTracker'
 
 interface FavoritesContextType {
@@ -13,30 +12,20 @@ interface FavoritesContextType {
   loading: boolean
   toggleFavorito: (id_prenda: string) => Promise<void>
   isFavorito: (id_prenda: string) => boolean
-  isFavoritesModalOpen: boolean
-  openFavoritesModal: () => void
-  closeFavoritesModal: () => void
 }
 
 const FavoritesContext = createContext<FavoritesContextType>({
   favoriteIds: new Set(),
   loading: true,
   toggleFavorito: async () => {},
-  isFavorito: () => false,
-  isFavoritesModalOpen: false,
-  openFavoritesModal: () => {},
-  closeFavoritesModal: () => {}
+  isFavorito: () => false
 })
 
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
-  const [isFavoritesModalOpen, setIsFavoritesModalOpen] = useState(false)
   const { addLocalNotification } = useNotificationsContext()
-
-  const openFavoritesModal = useCallback(() => setIsFavoritesModalOpen(true), [])
-  const closeFavoritesModal = useCallback(() => setIsFavoritesModalOpen(false), [])
   const { track } = useTracker()
 
   // Carga inicial desde Supabase
@@ -126,11 +115,9 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <FavoritesContext.Provider value={{ 
-      favoriteIds, loading, toggleFavorito, isFavorito,
-      isFavoritesModalOpen, openFavoritesModal, closeFavoritesModal
+      favoriteIds, loading, toggleFavorito, isFavorito
     }}>
       {children}
-      <FavoritesModal isOpen={isFavoritesModalOpen} onClose={closeFavoritesModal} />
     </FavoritesContext.Provider>
   )
 }

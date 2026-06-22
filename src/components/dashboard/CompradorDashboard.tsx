@@ -5,7 +5,6 @@ import { useState } from 'react'
 import { type MockUser } from '@/lib/supabase/mock-user'
 import { useAuth } from '@/context/AuthContext'
 import { useRecomendaciones } from '@/hooks/useRecomendaciones'
-import { useFavorites } from '@/context/FavoritesContext'
 import { useCompradorStats } from '@/hooks/useCompradorStats'
 import { RecomendacionesGrid } from './RecomendacionesGrid'
 import { MisTransaccionesModal } from './MisTransaccionesModal'
@@ -18,7 +17,6 @@ interface CompradorDashboardProps {
 export function CompradorDashboard({ user }: CompradorDashboardProps) {
   const { user: authUser } = useAuth()
   const { recomendaciones, loading, error, lastUpdated, refetch } = useRecomendaciones()
-  const { openFavoritesModal } = useFavorites()
   const { stats: compradorStats } = useCompradorStats()
   const [modalOpen, setModalOpen] = useState(false)
 
@@ -26,7 +24,7 @@ export function CompradorDashboard({ user }: CompradorDashboardProps) {
 
   const ACCESOS_RAPIDOS: AccesoRapido[] = [
     { id: 'explorar', icon: Search, label: 'Explorar', href: '/explorar', accent: '#8B5E3C' },
-    { id: 'favoritos', icon: Heart, label: 'Favoritos', onClick: openFavoritesModal, accent: '#8B5E3C' },
+    { id: 'favoritos', icon: Heart, label: 'Favoritos', href: '/favoritos', accent: '#8B5E3C' },
     { id: 'compras', icon: ShoppingBag, label: 'Mis Compras', onClick: () => setModalOpen(true), accent: '#8B5E3C' },
   ]
 

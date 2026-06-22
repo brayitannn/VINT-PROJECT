@@ -5,7 +5,6 @@ import { Bell, X, ShoppingBag, Heart, MessageCircle, Star, Package, Settings, Lo
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { RealtimeNotification } from '@/hooks/useNotifications'
-import { useFavorites } from '@/context/FavoritesContext'
 
 export interface NotificationPrefs {
   emailOfertas: boolean
@@ -52,7 +51,6 @@ interface Props {
 export function NotificationsPanel({ isOpen, onClose, notifications, unreadCount, loading, markAllRead, dismiss }: Props) {
   const panelRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
-  const { openFavoritesModal } = useFavorites()
 
   useEffect(() => {
     function handleOutside(e: MouseEvent) {
@@ -150,7 +148,7 @@ export function NotificationsPanel({ isOpen, onClose, notifications, unreadCount
                 className="notif-item"
                 onClick={() => {
                   if (notif.tipo === 'favorito') {
-                    openFavoritesModal()
+                    router.push('/favoritos')
                     onClose()
                   }
                 }}

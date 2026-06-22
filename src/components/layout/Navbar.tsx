@@ -11,7 +11,6 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { useCart } from '@/context/CartContext'
 import { CartDrawer } from '@/components/cart/CartDrawer'
-import { useFavorites } from '@/context/FavoritesContext'
 
 export function Navbar() {
   const { theme, setTheme } = useTheme()
@@ -27,7 +26,6 @@ export function Navbar() {
   const router = useRouter()
   const { user, signOut, loading } = useAuth()
   const { totalItems, openCart } = useCart()
-  const { openFavoritesModal } = useFavorites()
 
   useEffect(() => {
     setMounted(true)
@@ -347,22 +345,20 @@ export function Navbar() {
                             <ChevronRight size={18} className="text-[var(--text-muted)]" />
                           </Link>
                         ) : (
-                          <button 
-                            onClick={() => {
-                              setMenuOpen(false)
-                              openFavoritesModal()
-                            }}
+                          <Link 
+                            href="/favoritos"
+                            onClick={() => setMenuOpen(false)}
                             className="fb-menu-item group"
-                            style={{ background: 'none', border: 'none', width: '100%', textDecoration: 'none' }}
+                            style={{ textDecoration: 'none' }}
                           >
                             <div className="fb-icon-circle group-hover:bg-[var(--bg-primary)]">
                               <Heart size={18} fill="currentColor" className="opacity-80" />
                             </div>
-                            <div className="flex-1 flex flex-col items-start">
+                            <div className="flex-1 flex flex-col">
                               <span className="text-[15px] font-semibold text-[var(--text-primary)] tracking-tight">Favoritos</span>
                             </div>
                             <ChevronRight size={18} className="text-[var(--text-muted)]" />
-                          </button>
+                          </Link>
                         )}
                         
                         <Link 
