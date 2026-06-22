@@ -7,67 +7,80 @@ const VIEW = 'v_catalogo_publico'
 
 // ── Mapper ─────────────────────────────────────────────────────────────────
 function mapFromDB(item: any): Product {
+  const dbStatus = (item.estado_publicacion || '').toUpperCase()
+  let status: 'published' | 'draft' | 'archived' = 'draft'
+  if (dbStatus === 'DISPONIBLE') status = 'published'
+  else if (dbStatus === 'VENDIDA') status = 'archived'
+  // PAUSADA → draft (default)
+
   return {
-    id: String(item.id_prenda),
-    name: item.titulo || 'Sin título',
-    description: item.descripcion || '',
-    price: Number(item.precio) || 0,
+    id: String(item.id_prenda || item.id),
+    name: item.titulo || item.name || 'Sin título',
+    description: item.descripcion || item.description || '',
+    price: Number(item.precio ?? item.price) || 0,
     stock: item.stock || 1,
     sku: item.sku || '',
-    category: item.categoria || 'General',
-    category_id: item.id_categoria || null,
-    status: (item.estado_publicacion?.toUpperCase() === 'DISPONIBLE' ? 'published' : 'draft') as any,
-    image_url: item.imagen_principal || null,
-    created_at: item.fecha_publicacion || new Date().toISOString(),
-    updated_at: item.fecha_publicacion || new Date().toISOString(),
+    category: item.categoria || item.category || 'General',
+    category_id: item.id_categoria ?? item.category_id ?? null,
+    status,
+    image_url: item.imagen_principal ?? item.image_url ?? null,
+    created_at: item.fecha_publicacion || item.created_at || new Date().toISOString(),
+    updated_at: item.fecha_publicacion || item.updated_at || new Date().toISOString(),
   }
 }
 
-// ── READ: Uses public view (no schema issue) ────────────────────────────────
+// ── READ: Uses authenticated API to get seller's own products ──────────────
 export async function getProducts(
   filters: ProductFilters = {},
   page = 1,
   pageSize = 10
 ): Promise<{ data: Product[]; count: number; error: string | null }> {
   try {
-    const supabase = getSupabaseClient()
-    const from = (page - 1) * pageSize
-    const to = from + pageSize - 1
+    const res = await fetch('/api/products', { method: 'GET' })
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}))
+      return { data: [], count: 0, error: json.error ?? 'Error al cargar productos' }
+    }
+    const json = await res.json()
+    let products: Product[] = (json.data || []).map((p: any) =>
+      // API already maps the shape, but run through mapFromDB for safety
+      (p.estado_publicacion !== undefined ? mapFromDB(p) : p) as Product
+    )
 
-    let query = supabase
-      .from(VIEW)
-      .select('*', { count: 'exact' })
-      .range(from, to)
-
+    // Client-side filtering (search, status, category)
     if (filters.search) {
-      query = query.or(`titulo.ilike.%${filters.search}%,descripcion.ilike.%${filters.search}%`)
+      const q = filters.search.toLowerCase()
+      products = products.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          (p.description || '').toLowerCase().includes(q)
+      )
     }
-
+    if (filters.status && filters.status !== 'all') {
+      products = products.filter((p) => p.status === filters.status)
+    }
     if (filters.category && filters.category !== 'all') {
-      query = query.eq('categoria', filters.category)
+      products = products.filter((p) => p.category === filters.category)
     }
 
-    const sortByMap: Record<string, string> = {
-      name: 'titulo',
-      price: 'precio',
-      created_at: 'fecha_publicacion',
-      updated_at: 'fecha_publicacion',
-    }
-    const sortBy = sortByMap[filters.sortBy ?? ''] ?? 'fecha_publicacion'
-    const ascending = filters.sortOrder === 'asc'
-    query = query.order(sortBy as string, { ascending })
+    // Client-side sort
+    const sortKey = (
+      filters.sortBy === 'name' ? 'name' :
+      filters.sortBy === 'price' ? 'price' : 'created_at'
+    ) as keyof Product
+    const asc = filters.sortOrder === 'asc' ? 1 : -1
+    products.sort((a, b) => {
+      const av = a[sortKey] as any
+      const bv = b[sortKey] as any
+      return av < bv ? -asc : av > bv ? asc : 0
+    })
 
-    const { data, count, error } = await query
+    // Client-side pagination
+    const total = products.length
+    const from = (page - 1) * pageSize
+    const paginated = products.slice(from, from + pageSize)
 
-    if (error) {
-      return { data: [], count: 0, error: error.message }
-    }
-
-    return {
-      data: (data || []).map(mapFromDB),
-      count: count ?? 0,
-      error: null,
-    }
+    return { data: paginated, count: total, error: null }
   } catch (err: any) {
     return { data: [], count: 0, error: err.message }
   }
@@ -101,6 +114,7 @@ export async function createProduct(
         price: payload.price,
         category: payload.category,
         image_url: payload.image_url,
+        status: payload.status || 'draft',
       }),
     })
 

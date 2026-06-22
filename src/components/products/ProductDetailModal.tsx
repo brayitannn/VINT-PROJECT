@@ -6,8 +6,9 @@ import Link from 'next/link'
 import { useCart } from '@/context/CartContext'
 import { useFavorites } from '@/context/FavoritesContext'
 import type { Product } from './ProductCard'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
+import { ChatModal } from '@/components/chat/ChatModal'
 
 interface Props {
   product: Product | null
@@ -30,6 +31,7 @@ export function ProductDetailModal({ product, onClose }: Props) {
   const { addItem, isInCart } = useCart()
   const { isFavorito, toggleFavorito } = useFavorites()
   const { user } = useAuth()
+  const [chatOpen, setChatOpen] = useState(false)
   let role = user?.user_metadata?.role || 'comprador'
   if (role === 'buyer') role = 'comprador'
   if (role === 'seller') role = 'vendedor'
@@ -310,6 +312,7 @@ export function ProductDetailModal({ product, onClose }: Props) {
               )}
 
               <button
+                onClick={() => setChatOpen(true)}
                 style={{
                   padding: '13px 18px',
                   backgroundColor: 'transparent',
@@ -375,6 +378,13 @@ export function ProductDetailModal({ product, onClose }: Props) {
           color: var(--accent) !important;
         }
       `}</style>
+
+      <ChatModal
+        isOpen={chatOpen}
+        onClose={() => setChatOpen(false)}
+        sellerName={product.seller}
+        sellerSlug={product.seller.toLowerCase().replace(/\s+/g, '-')}
+      />
     </>
   )
 }

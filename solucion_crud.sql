@@ -86,3 +86,40 @@ BEGIN
   RETURN jsonb_build_object('success', true);
 END;
 $$;
+
+-- 4. Tabla para COMENTARIOS de vendedores (esquema público)
+CREATE TABLE IF NOT EXISTS public.vendedor_comentarios (
+  id SERIAL PRIMARY KEY,
+  vendedor_id VARCHAR NOT NULL, -- Puede ser el id_auth_supabase o el slug/username del vendedor
+  autor_id VARCHAR NOT NULL,
+  autor_nombre VARCHAR NOT NULL,
+  autor_avatar VARCHAR,
+  calificacion INT NOT NULL CHECK (calificacion >= 1 AND calificacion <= 5),
+  contenido TEXT NOT NULL,
+  fecha TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Habilitar RLS (Row Level Security)
+ALTER TABLE public.vendedor_comentarios ENABLE ROW LEVEL SECURITY;
+
+-- Crear políticas para permitir lectura a cualquiera y escritura a usuarios autenticados
+CREATE POLICY "Permitir lectura de comentarios a todos" ON public.vendedor_comentarios FOR SELECT USING (true);
+CREATE POLICY "Permitir insertar comentarios a autenticados" ON public.vendedor_comentarios FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+CREATE POLICY "Permitir eliminar sus propios comentarios a los autores" ON public.vendedor_comentarios FOR DELETE USING (auth.uid()::text = autor_id);
+
+-- 5. Tabla para MENSAJES (Chat de Vint)
+CREATE TABLE IF NOT EXISTS public.mensajes (
+  id SERIAL PRIMARY KEY,
+  remitente_id VARCHAR NOT NULL,
+  destinatario_id VARCHAR NOT NULL,
+  contenido TEXT NOT NULL,
+  leido BOOLEAN DEFAULT FALSE,
+  fecha TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Habilitar RLS (Row Level Security)
+ALTER TABLE public.mensajes ENABLE ROW LEVEL SECURITY;
+
+-- Crear políticas para permitir leer sus propios mensajes y enviar nuevos
+CREATE POLICY "Permitir lectura de mensajes propios" ON public.mensajes FOR SELECT USING (auth.uid()::text = remitente_id OR auth.uid()::text = destinatario_id);
+CREATE POLICY "Permitir enviar mensajes" ON public.mensajes FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);

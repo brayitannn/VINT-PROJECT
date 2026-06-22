@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import type { Product, ProductInsert, ProductUpdate, ProductStatus } from '@/types/product'
+import { getSupabaseClient } from '@/lib/supabase/client'
 
 interface Props {
   open: boolean
@@ -79,14 +80,28 @@ export function ProductModal({ open, product, onClose, onSubmit, categories = []
     setFieldError(null)
 
     try {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        set('image_url', reader.result as string)
-        setSubmitting(false)
-      }
-      reader.readAsDataURL(file)
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+      const fileName = `prendas/${user?.id ?? 'anon'}_${Date.now()}.${ext}`
+
+      const supabase = getSupabaseClient()
+      const { data, error: uploadError } = await supabase.storage
+        .from('prendas')
+        .upload(fileName, file, {
+          contentType: file.type,
+          cacheControl: '3600',
+          upsert: false,
+        })
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('prendas')
+        .getPublicUrl(data.path)
+
+      set('image_url', publicUrl)
     } catch (err: any) {
-      setFieldError("Error al cargar la imagen: " + err.message)
+      setFieldError('Error al subir imagen: ' + err.message)
+    } finally {
       setSubmitting(false)
     }
   }

@@ -17,5 +17,5 @@ export default function MiTiendaPage() {
 
   if (!user) return null
 
-  return <StoreFront isOwner={true} sellerId={user.id} />
+  return <StoreFront isOwner={true} sellerId={user.id} sellerEmail={user.email ?? undefined} />
 }
