@@ -3,6 +3,7 @@
 import { X, Heart, ShoppingCart, Star } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { ProductDetailModal } from '@/components/products/ProductDetailModal'
 import { useEffect, useState } from 'react'
 import { useFavorites } from '@/context/FavoritesContext'
 import { useCart } from '@/context/CartContext'
@@ -38,6 +39,7 @@ export function FavoritesModal({ isOpen, onClose }: Props) {
   const [mounted, setMounted] = useState(false)
   const [favoritos, setFavoritos] = useState<Product[]>([])
   const [fetchingProducts, setFetchingProducts] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const { favoriteIds, toggleFavorito, loading: favsLoading } = useFavorites()
   const { addItem, isInCart, openCart } = useCart()
 
@@ -235,14 +237,14 @@ export function FavoritesModal({ isOpen, onClose }: Props) {
                       position: 'relative', overflow: 'hidden',
                       height: 200, backgroundColor: 'var(--bg-secondary, #EAD9C3)'
                     }}>
-                      <Link href={`/explorar?producto=${product.id}`} onClick={onClose} style={{ display: 'block', height: '100%' }}>
+                      <div onClick={() => setSelectedProduct(product)} style={{ display: 'block', height: '100%', cursor: 'pointer' }}>
                         <Image
                           src={product.image}
                           alt={product.name}
                           width={400} height={200}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
-                      </Link>
+                      </div>
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleFavorito(String(product.id)) }}
                         title="Quitar de favoritos"
@@ -266,12 +268,12 @@ export function FavoritesModal({ isOpen, onClose }: Props) {
                     {/* Info */}
                     <div style={{ padding: '16px 16px 20px', display: 'flex', flexDirection: 'column', flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
-                        <Link href={`/explorar?producto=${product.id}`} onClick={onClose} style={{ textDecoration: 'none', color: 'inherit', display: 'block', width: '100%' }}>
+                        <div onClick={() => setSelectedProduct(product)} style={{ cursor: 'pointer', display: 'block', width: '100%' }}>
                           <h3 style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary, #2C1F14)', lineHeight: 1.3, margin: 0 }}
                             className="line-clamp-2 hover:text-[var(--accent)] transition-colors">
                             {product.name}
                           </h3>
-                        </Link>
+                        </div>
                         <span style={{
                           ...getConditionStyle(product.condition),
                           fontSize: 10, fontWeight: 700, padding: '3px 8px',
@@ -381,6 +383,11 @@ export function FavoritesModal({ isOpen, onClose }: Props) {
           0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; }
         }
       `}</style>
+
+      <ProductDetailModal
+        product={selectedProduct}
+        onClose={() => setSelectedProduct(null)}
+      />
     </div>
   )
 }
