@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Search, X, LayoutGrid, List, ArrowUpDown } from 'lucide-react'
+import { Search, X, LayoutGrid, List, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { ProductCard, type Product } from '@/components/products/ProductCard'
 import { FilterSidebar, type Filters } from '@/components/explorar/FilterSidebar'
@@ -84,20 +84,31 @@ export function ExplorarClient() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const { track, trackVistaDebounced, cancelTrackVista } = useTracker()
 
-  // Sync URL with filters
-  const syncURL = useCallback((f: Filters, s: SortOption) => {
+  const [currentPage, setCurrentPage] = useState<number>(() => {
+    const p = searchParams.get('page')
+    return p ? parseInt(p, 10) : 1
+  })
+  const [totalCount, setTotalCount] = useState<number>(0)
+  const mountedRef = useRef(false)
+  const contentRef = useRef<HTMLDivElement>(null)
+
+  const ITEMS_PER_PAGE = 15
+
+  // Sync URL with filters and page
+  const syncURL = useCallback((f: Filters, s: SortOption, page: number) => {
     const params = new URLSearchParams()
     if (f.search) params.set('q', f.search)
     if (f.categorias.length === 1) params.set('categoria', f.categorias[0])
     if (f.tallas.length === 1) params.set('talla', f.tallas[0])
     if (s !== 'reciente') params.set('orden', s)
+    if (page > 1) params.set('page', String(page))
     router.replace(`/explorar?${params.toString()}`, { scroll: false })
   }, [router])
 
-  const fetchProducts = useCallback(async (f: Filters, s: SortOption) => {
+  const fetchProducts = useCallback(async (f: Filters, s: SortOption, page: number) => {
     setLoading(true)
     try {
-    let query = supabase.from('v_catalogo_publico').select('*')
+      let query = supabase.from('v_catalogo_publico').select('*', { count: 'exact' })
 
       if (f.search) {
         query = query.ilike('titulo', `%${f.search}%`)
@@ -126,7 +137,12 @@ export function ExplorarClient() {
       else if (s === 'precio_desc') query = query.order('precio', { ascending: false })
       else query = query.order('fecha_publicacion', { ascending: false })
 
-      const { data, error } = await query.limit(48)
+      // Range is zero-indexed and inclusive
+      const from = (page - 1) * ITEMS_PER_PAGE
+      const to = from + ITEMS_PER_PAGE - 1
+      query = query.range(from, to)
+
+      const { data, error, count } = await query
       if (error) throw error
 
       const mapped: Product[] = (data ?? []).map((item: any) => ({
@@ -140,25 +156,58 @@ export function ExplorarClient() {
         rating: 4.5,
       }))
       setProducts(mapped)
+      setTotalCount(count ?? 0)
     } catch (err) {
       console.error('Error fetching products:', err)
       setProducts([])
+      setTotalCount(0)
     } finally {
       setLoading(false)
     }
   }, [supabase])
 
-  // Debounced fetch on filter change
+  // Reset page to 1 when filters or sort change
+  const lastFiltersRef = useRef(filters)
+  const lastSortRef = useRef(sort)
+
+  useEffect(() => {
+    if (lastFiltersRef.current !== filters || lastSortRef.current !== sort) {
+      lastFiltersRef.current = filters
+      lastSortRef.current = sort
+      setCurrentPage(1)
+    }
+  }, [filters, sort])
+
+  // Sync URL searchParams to currentPage
+  useEffect(() => {
+    const p = searchParams.get('page')
+    const pageVal = p ? parseInt(p, 10) : 1
+    setCurrentPage(pageVal)
+  }, [searchParams])
+
+  // Debounced fetch on filter or page change
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
-      fetchProducts(filters, sort)
-      syncURL(filters, sort)
+      fetchProducts(filters, sort, currentPage)
+      syncURL(filters, sort, currentPage)
     }, 300)
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
-  }, [filters, sort, fetchProducts, syncURL])
+  }, [filters, sort, currentPage, fetchProducts, syncURL])
+
+  // Scroll to top when page changes
+  useEffect(() => {
+    if (mountedRef.current) {
+      if (contentRef.current) {
+        const topPos = contentRef.current.getBoundingClientRect().top + window.scrollY - 80
+        window.scrollTo({ top: topPos, behavior: 'smooth' })
+      }
+    } else {
+      mountedRef.current = true
+    }
+  }, [currentPage])
 
   // Debounced search input
   const handleSearchInput = (val: string) => {
@@ -204,9 +253,17 @@ export function ExplorarClient() {
           box-shadow: 0 0 0 3px var(--accent-light);
         }
         .view-btn:hover { background-color: var(--bg-secondary) !important; }
+        .pag-btn:not(:disabled):hover {
+          background-color: var(--bg-secondary) !important;
+          border-color: var(--accent) !important;
+          transform: translateY(-2px);
+        }
+        .pag-btn.active:hover {
+          background-color: var(--accent) !important;
+          color: var(--bg-primary) !important;
+          transform: none;
+        }
       `}</style>
-
-      {/* Search Bar moved inside the content area */}
 
       {/* Main layout */}
       <div style={{
@@ -217,11 +274,11 @@ export function ExplorarClient() {
         <FilterSidebar
           filters={filters}
           onChange={setFilters}
-          totalResults={products.length}
+          totalResults={totalCount}
         />
 
         {/* Content */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div ref={contentRef} style={{ flex: 1, minWidth: 0 }}>
           
           {/* Aesthetic Integrated Search Bar */}
           <div
@@ -230,7 +287,7 @@ export function ExplorarClient() {
               marginBottom: 32,
               display: 'flex', alignItems: 'center', gap: 12,
               backgroundColor: 'var(--bg-card)',
-              border: '1px solid var(--border)', // Mantenemos el borde fino para integración
+              border: '1px solid var(--border)',
               borderRadius: 16, padding: '12px 20px',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               boxShadow: '0 2px 8px var(--shadow-sm)'
@@ -264,7 +321,15 @@ export function ExplorarClient() {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-                <strong style={{ color: 'var(--text-primary)' }}>{loading ? '...' : products.length}</strong> productos encontrados
+                {loading ? (
+                  'Buscando productos...'
+                ) : totalCount === 0 ? (
+                  'No se encontraron productos'
+                ) : (
+                  <>
+                    Mostrando <strong style={{ color: 'var(--text-primary)' }}>{Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, totalCount)}-{Math.min(currentPage * ITEMS_PER_PAGE, totalCount)}</strong> de <strong style={{ color: 'var(--text-primary)' }}>{totalCount}</strong> productos
+                  </>
+                )}
               </span>
               {activeFilterCount > 0 && (
                 <span style={{
@@ -394,6 +459,134 @@ export function ExplorarClient() {
                 ))
             }
           </ul>
+
+          {/* Paginación */}
+          {!loading && totalCount > ITEMS_PER_PAGE && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: 8,
+              marginTop: 40,
+              flexWrap: 'wrap',
+            }}>
+              {/* Botón Anterior */}
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="pag-btn"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 40,
+                  height: 40,
+                  borderRadius: '50%',
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-card)',
+                  color: currentPage === 1 ? 'var(--text-muted)' : 'var(--text-primary)',
+                  cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s',
+                  opacity: currentPage === 1 ? 0.5 : 1,
+                }}
+              >
+                <ChevronLeft size={18} />
+              </button>
+
+              {/* Números de Página */}
+              {(() => {
+                const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
+                const pages: (number | string)[] = []
+                const maxVisiblePages = 5
+                
+                if (totalPages <= maxVisiblePages) {
+                  for (let i = 1; i <= totalPages; i++) pages.push(i)
+                } else {
+                  pages.push(1)
+                  let start = Math.max(2, currentPage - 1)
+                  let end = Math.min(totalPages - 1, currentPage + 1)
+                  if (currentPage <= 3) {
+                    end = 4
+                  } else if (currentPage >= totalPages - 2) {
+                    start = totalPages - 3
+                  }
+                  if (start > 2) pages.push('...')
+                  for (let i = start; i <= end; i++) pages.push(i)
+                  if (end < totalPages - 1) pages.push('...')
+                  pages.push(totalPages)
+                }
+
+                return pages.map((page, idx) => {
+                  if (page === '...') {
+                    return (
+                      <span
+                        key={`dots-${idx}`}
+                        style={{
+                          padding: '0 8px',
+                          color: 'var(--text-muted)',
+                          fontSize: 14,
+                          userSelect: 'none',
+                        }}
+                      >
+                        ...
+                      </span>
+                    )
+                  }
+
+                  const isActive = page === currentPage
+                  return (
+                    <button
+                      key={`page-${page}`}
+                      onClick={() => setCurrentPage(Number(page))}
+                      className={`pag-btn ${isActive ? 'active' : ''}`}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 40,
+                        height: 40,
+                        borderRadius: '50%',
+                        border: isActive ? '1px solid var(--accent)' : '1px solid var(--border)',
+                        background: isActive ? 'var(--accent)' : 'var(--bg-card)',
+                        color: isActive ? 'var(--bg-primary)' : 'var(--text-primary)',
+                        fontWeight: isActive ? 600 : 500,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      {page}
+                    </button>
+                  )
+                })
+              })()}
+
+              {/* Botón Siguiente */}
+              <button
+                onClick={() => {
+                  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
+                  setCurrentPage(prev => Math.min(prev + 1, totalPages))
+                }}
+                disabled={currentPage === Math.ceil(totalCount / ITEMS_PER_PAGE)}
+                className="pag-btn"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 40,
+                  height: 40,
+                  borderRadius: '50%',
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-card)',
+                  color: currentPage === Math.ceil(totalCount / ITEMS_PER_PAGE) ? 'var(--text-muted)' : 'var(--text-primary)',
+                  cursor: currentPage === Math.ceil(totalCount / ITEMS_PER_PAGE) ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s',
+                  opacity: currentPage === Math.ceil(totalCount / ITEMS_PER_PAGE) ? 0.5 : 1,
+                }}
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

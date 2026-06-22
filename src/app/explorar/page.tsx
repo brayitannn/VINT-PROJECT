@@ -1,6 +1,4 @@
 import { Suspense } from 'react'
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
 import { ExplorarClient } from '@/components/explorar/ExplorarClient'
 
 export const metadata = {
@@ -55,23 +53,9 @@ export default function ExplorarPage() {
       <div style={{
         backgroundColor: 'var(--bg-secondary)',
         borderBottom: '1px solid var(--border)',
-        padding: '24px 2rem 0',
+        padding: '24px 2rem',
       }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          <Link
-            href="/dashboard"
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              padding: '10px 20px', borderRadius: '999px',
-              backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)',
-              border: '1px solid var(--border)',
-              fontSize: 14, fontWeight: 700, textDecoration: 'none',
-              marginBottom: 24, transition: 'all 0.2s',
-            }}
-            className="hover:scale-105 hover:border-[var(--accent)] hover:text-[var(--accent)]"
-          >
-            <ArrowLeft size={18} /> Volver al Dashboard
-          </Link>
           <h1 style={{
             fontFamily: "'Playfair Display', serif",
             fontSize: 'clamp(22px, 3vw, 32px)',
@@ -81,7 +65,7 @@ export default function ExplorarPage() {
           }}>
             Explorar
           </h1>
-          <p style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 20 }}>
+          <p style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 0 }}>
             Encuentra tu próxima prenda favorita
           </p>
         </div>

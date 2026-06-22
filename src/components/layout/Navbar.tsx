@@ -1,7 +1,7 @@
 'use client'
 
 import { useTheme } from 'next-themes'
-import { Sun, Moon, Bell, ShoppingCart, ChevronDown, ChevronRight, LogOut, Settings, Package, Heart, LayoutDashboard, User } from 'lucide-react'
+import { Sun, Moon, Bell, ShoppingCart, ChevronDown, ChevronRight, LogOut, Settings, Package, Heart, LayoutDashboard, User, Menu } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -18,6 +18,7 @@ export function Navbar() {
   const [mounted, setMounted] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const notifRef = useRef<HTMLDivElement>(null)
 
@@ -57,6 +58,17 @@ export function Navbar() {
   if (role === 'seller') role = 'vendedor';
   const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuario';
   const initials = userName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+
+  const navLinks = role === 'vendedor' ? [
+    { label: 'Mi Tienda', href: '/dashboard/vendedor/mi-tienda' },
+    { label: 'Mis Productos', href: '/products' },
+    { label: 'Dashboard', href: '/dashboard' },
+  ] : [
+    { label: 'Explorar', href: '/explorar' },
+    { label: 'Favoritos', href: '/favoritos' },
+  ];
+
+  const isLinkActive = (href: string) => pathname === href;
 
   return (
     <>
@@ -100,38 +112,81 @@ export function Navbar() {
         }
       `}</style>
 
-      <header className="sticky top-0 z-50 w-full border-b border-[var(--border)] bg-[var(--bg-primary)]/80 backdrop-blur-lg transition-colors duration-300">
+      <header className="sticky top-0 z-50 w-full border-b border-[var(--border)] bg-[var(--bg-primary)]/80 backdrop-blur-lg transition-colors duration-300" style={{ boxShadow: '0 2px 8px var(--shadow)' }}>
         <nav style={{ maxWidth: 1280, margin: '0 auto', padding: '0 2rem', height: 64, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          {/* LOGO */}
-          <Link href={(!loading && user) ? "/dashboard" : "/"} className="flex items-center gap-[10px] group">
-            <Image src="/img/logo1.png" alt="Vint" width={32} height={32} className="transition-transform group-hover:rotate-12 duration-300" />
-            <span className="font-display text-2xl font-bold text-[var(--accent)]">Vint</span>
-          </Link>
+          
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+            {/* LOGO */}
+            <Link href={(!loading && user) ? "/dashboard" : "/"} className="flex items-center gap-[10px] group" style={{ textDecoration: 'none' }}>
+              <Image src="/img/logo1.png" alt="Vint" width={34} height={34} className="transition-transform group-hover:rotate-12 duration-300" style={{ alignSelf: 'center' }} />
+              <span className="font-display text-2xl font-bold text-[var(--accent)]" style={{ alignSelf: 'center', lineHeight: 1 }}>Vint</span>
+            </Link>
+          </div>
 
-          {/* ACCIONES */}
-          <div className="flex items-center gap-3">
-            {mounted && (
-              <button
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-primary)] transition-all hover:scale-105 hover:border-[var(--accent)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)]"
-              >
-                {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-              </button>
-            )}
+          {/* NAVEGACIÓN CENTRAL (DESKTOP) */}
+          <div className="hide-mobile" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
+            {navLinks.map((link) => {
+              const active = isLinkActive(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  style={{
+                    color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    fontWeight: active ? 500 : 400,
+                    borderBottom: active ? '2px solid var(--accent)' : 'none',
+                    paddingBottom: active ? 2 : 0,
+                    textDecoration: 'none',
+                    fontSize: 14,
+                    transition: 'all 0.2s',
+                  }}
+                  className="hover:text-[var(--text-primary)]"
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </div>
 
+          {/* ACCIONES DE LA DERECHA */}
+          <div className="flex items-center gap-3 justify-end" style={{ flex: 1 }}>
             {!loading && user ? (
               <div className="flex items-center gap-3">
+                
+                {/* HAMBURGER MENU ON MOBILE */}
+                <button
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="show-mobile-only flex h-[38px] w-[38px] items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                  style={{
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <Menu size={18} />
+                </button>
+
                 {/* NOTIFICACIONES */}
                 <div ref={notifRef} className="relative">
                   <button
                     onClick={() => setNotifOpen(!notifOpen)}
-                    className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-primary)] transition-all hover:scale-105 hover:border-[var(--accent)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)]"
+                    className="relative flex h-[38px] w-[38px] items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-secondary)] transition-all hover:scale-105 hover:border-[var(--accent)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)]"
+                    style={{ background: 'transparent', cursor: 'pointer' }}
                   >
                     <Bell size={18} />
                     {unreadCount > 0 && (
-                      <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#ef4444] text-[10px] font-bold text-white shadow-sm ring-2 ring-[var(--bg-primary)]">
-                        {unreadCount > 9 ? '9+' : unreadCount}
-                      </span>
+                      <span 
+                        style={{
+                          position: 'absolute',
+                          top: 6,
+                          right: 6,
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          background: 'var(--accent)',
+                          border: '1.5px solid var(--bg-primary)',
+                        }}
+                      />
                     )}
                   </button>
                   <NotificationsPanel
@@ -150,11 +205,30 @@ export function Navbar() {
                   <div className="relative">
                     <button
                       onClick={openCart}
-                      className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-primary)] transition-all hover:scale-105 hover:border-[var(--accent)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)]"
+                      className="relative flex h-[38px] w-[38px] items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-secondary)] transition-all hover:scale-105 hover:border-[var(--accent)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)]"
+                      style={{ background: 'transparent', cursor: 'pointer' }}
                     >
                       <ShoppingCart size={18} />
                       {totalItems > 0 && (
-                        <span className="absolute -right-1 -top-1 flex min-w-[16px] h-4 items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[10px] font-bold text-white shadow-sm ring-2 ring-[var(--bg-primary)]">
+                        <span 
+                          style={{
+                            position: 'absolute',
+                            top: -4,
+                            right: -4,
+                            minWidth: 16,
+                            height: 16,
+                            borderRadius: 8,
+                            background: 'var(--accent)',
+                            color: 'var(--bg-card)',
+                            fontSize: 10,
+                            fontWeight: 600,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '0 4px',
+                            border: '1.5px solid var(--bg-primary)',
+                          }}
+                        >
                           {totalItems > 99 ? '99+' : totalItems}
                         </span>
                       )}
@@ -162,25 +236,47 @@ export function Navbar() {
                   </div>
                 )}
 
-                {/* MENÚ DESPLEGABLE (ESTILO REDES SOCIALES / COMPACTO) */}
+                {/* SEPARADOR VERTICAL */}
+                <div style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 4px' }} />
+
+                {/* MENÚ DESPLEGABLE DE USUARIO */}
                 <div ref={menuRef} className="relative">
                   <button
                     onClick={() => setMenuOpen(!menuOpen)}
-                    className="flex items-center gap-2.5 rounded-full border border-[var(--border)] bg-[var(--bg-card)] p-1.5 pr-4 transition-all duration-300 hover:border-[var(--accent)] active:scale-95"
+                    className="flex items-center transition-all duration-300 active:scale-95"
+                    style={{
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '999px',
+                      padding: '4px 12px 4px 4px',
+                      cursor: 'pointer',
+                      gap: 10
+                    }}
                   >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-[11px] font-bold text-white uppercase">
+                    <div 
+                      className="flex items-center justify-center rounded-full uppercase"
+                      style={{
+                        width: 28,
+                        height: 28,
+                        background: 'var(--accent)',
+                        color: 'var(--bg-card)',
+                        fontSize: 11,
+                        fontWeight: 700,
+                        fontFamily: 'var(--font-serif)'
+                      }}
+                    >
                       {initials}
                     </div>
-                    <span className="text-[14px] font-bold text-[var(--text-primary)] hidden sm:inline-block tracking-tight capitalize">
+                    <span className="hidden sm:inline-block tracking-tight capitalize" style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
                       {userName.split(' ')[0]}
                     </span>
-                    <ChevronDown size={14} className={`text-[var(--text-muted)] transition-transform duration-300 ${menuOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} className={`transition-transform duration-300 ${menuOpen ? 'rotate-180' : ''}`} />
                   </button>
 
                   {menuOpen && (
                     <div className="fb-dropdown absolute right-0 top-[110%] w-[340px] z-50">
                       
-                      {/* CARTA DE PERFIL SUPERIOR (ESTILO RED SOCIAL) */}
+                      {/* CARTA DE PERFIL SUPERIOR */}
                       <div className="mb-3 flex flex-col" style={{ 
                         padding: '12px', 
                         borderRadius: '12px', 
@@ -192,7 +288,7 @@ export function Navbar() {
                           href="/perfil"
                           onClick={() => setMenuOpen(false)}
                           className="flex items-center transition-colors hover:opacity-80"
-                          style={{ gap: '12px' }}
+                          style={{ gap: '12px', textDecoration: 'none' }}
                         >
                           <div className="w-10 h-10 rounded-full bg-[var(--accent)] shadow-sm flex-shrink-0 flex items-center justify-center text-[15px] font-bold text-white uppercase">
                             {initials}
@@ -203,12 +299,35 @@ export function Navbar() {
                         </Link>
                       </div>
 
-                      {/* LISTA DE OPCIONES TIPO FACEBOOK */}
+                      {/* LISTA DE OPCIONES */}
                       <div className="flex flex-col gap-1">
+                        
+                        {/* TOGGLE MODO OSCURO */}
+                        {mounted && (
+                          <button
+                            onClick={() => {
+                              setTheme(theme === 'dark' ? 'light' : 'dark')
+                            }}
+                            className="fb-menu-item group text-left"
+                            style={{ background: 'none', border: 'none', width: '100%' }}
+                          >
+                            <div className="fb-icon-circle group-hover:bg-[var(--bg-primary)]" style={{ color: 'var(--text-secondary)' }}>
+                              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                            </div>
+                            <div className="flex-1 flex flex-col">
+                              <span className="text-[15px] font-semibold text-[var(--text-primary)] tracking-tight">
+                                {theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+                              </span>
+                            </div>
+                            <ChevronRight size={18} className="text-[var(--text-muted)]" />
+                          </button>
+                        )}
+
                         <Link 
                           href="/dashboard" 
                           onClick={() => setMenuOpen(false)}
                           className="fb-menu-item group"
+                          style={{ textDecoration: 'none' }}
                         >
                           <div className="fb-icon-circle group-hover:bg-[var(--bg-primary)]">
                             <LayoutDashboard size={18} fill="currentColor" className="opacity-80" />
@@ -224,6 +343,7 @@ export function Navbar() {
                             href="/products" 
                             onClick={() => setMenuOpen(false)}
                             className="fb-menu-item group"
+                            style={{ textDecoration: 'none' }}
                           >
                             <div className="fb-icon-circle group-hover:bg-[var(--bg-primary)]">
                               <Package size={18} fill="currentColor" className="opacity-80" />
@@ -240,6 +360,7 @@ export function Navbar() {
                               openFavoritesModal()
                             }}
                             className="fb-menu-item group"
+                            style={{ background: 'none', border: 'none', width: '100%', textDecoration: 'none' }}
                           >
                             <div className="fb-icon-circle group-hover:bg-[var(--bg-primary)]">
                               <Heart size={18} fill="currentColor" className="opacity-80" />
@@ -255,6 +376,7 @@ export function Navbar() {
                           href="/perfil" 
                           onClick={() => setMenuOpen(false)}
                           className="fb-menu-item group"
+                          style={{ textDecoration: 'none' }}
                         >
                           <div className="fb-icon-circle group-hover:bg-[var(--bg-primary)]">
                             <Settings size={18} fill="currentColor" className="opacity-80" />
@@ -268,6 +390,7 @@ export function Navbar() {
                         <button 
                           onClick={handleLogout} 
                           className="fb-menu-item group"
+                          style={{ background: 'none', border: 'none', width: '100%', textDecoration: 'none' }}
                         >
                           <div className="fb-icon-circle group-hover:bg-[var(--bg-primary)]">
                             <LogOut size={18} fill="currentColor" className="opacity-80" />
@@ -286,12 +409,27 @@ export function Navbar() {
             ) : (
               /* VISTA INVITADO */
               <div className="flex items-center gap-6 pr-2">
-                <Link href="/login" className="text-[14px] font-bold text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors">
+                
+                {/* HAMBURGER MENU ON MOBILE (GUEST) */}
+                <button
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="show-mobile-only flex h-[38px] w-[38px] items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                  style={{
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <Menu size={18} />
+                </button>
+
+                <Link href="/login" className="text-[14px] font-bold text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors" style={{ textDecoration: 'none' }}>
                   Ingresar
                 </Link>
                 <Link 
                   href="/register" 
                   className="rounded-full bg-[var(--text-primary)] px-5 py-2 text-[14px] font-bold text-[var(--bg-primary)] transition-all hover:scale-105 active:scale-95 shadow-sm"
+                  style={{ textDecoration: 'none' }}
                 >
                   Regístrate
                 </Link>
@@ -299,6 +437,44 @@ export function Navbar() {
             )}
           </div>
         </nav>
+
+        {/* NAVEGACIÓN MÓVIL DESPLEGABLE */}
+        {mobileMenuOpen && (
+          <div className="show-mobile-only" style={{
+            position: 'absolute',
+            top: 64,
+            left: 0,
+            right: 0,
+            background: 'var(--bg-card)',
+            borderBottom: '1px solid var(--border)',
+            padding: '16px 2rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 16,
+            zIndex: 49,
+            boxShadow: '0 4px 12px var(--shadow)'
+          }}>
+            {navLinks.map((link) => {
+              const active = isLinkActive(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  style={{
+                    color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    fontWeight: active ? 600 : 500,
+                    textDecoration: 'none',
+                    fontSize: 15,
+                  }}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+
         <CartDrawer />
       </header>
     </>
