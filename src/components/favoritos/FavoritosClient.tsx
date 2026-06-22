@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { Heart, ShoppingCart } from 'lucide-react'
 import { useFavorites } from '@/context/FavoritesContext'
 import { useCart } from '@/context/CartContext'
@@ -137,12 +138,14 @@ export function FavoritosClient() {
                   position: 'relative', overflow: 'hidden',
                   height: 230, backgroundColor: 'var(--bg-secondary, #EAD9C3)'
                 }}>
-                  <Image
-                    src={product.image}
-                    alt={product.name}
-                    width={400} height={230}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
+                  <Link href={`/explorar?producto=${product.id}`} style={{ display: 'block', height: '100%' }}>
+                    <Image
+                      src={product.image}
+                      alt={product.name}
+                      width={400} height={230}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  </Link>
                   <button
                     onClick={(e) => { e.preventDefault(); toggleFavorito(String(product.id)) }}
                     style={{
@@ -161,10 +164,12 @@ export function FavoritosClient() {
 
                 <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
-                    <h3 style={{ fontWeight: 700, fontSize: 16, color: 'var(--text-primary, #2C1F14)', lineHeight: 1.3, margin: 0 }}
-                      className="line-clamp-2">
-                      {product.name}
-                    </h3>
+                    <Link href={`/explorar?producto=${product.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block', width: '100%' }}>
+                      <h3 style={{ fontWeight: 700, fontSize: 16, color: 'var(--text-primary, #2C1F14)', lineHeight: 1.3, margin: 0 }}
+                        className="line-clamp-2 hover:text-[var(--accent)] transition-colors">
+                        {product.name}
+                      </h3>
+                    </Link>
                   </div>
 
                   <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 10px' }}>

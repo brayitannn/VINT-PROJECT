@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Search, X, LayoutGrid, List, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, X, LayoutGrid, List, ArrowUpDown, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { ProductCard, type Product } from '@/components/products/ProductCard'
 import { FilterSidebar, type Filters } from '@/components/explorar/FilterSidebar'
@@ -89,8 +89,56 @@ export function ExplorarClient() {
     return p ? parseInt(p, 10) : 1
   })
   const [totalCount, setTotalCount] = useState<number>(0)
+  const [sortOpen, setSortOpen] = useState(false)
+  const sortRef = useRef<HTMLDivElement>(null)
   const mountedRef = useRef(false)
   const contentRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) {
+        setSortOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  // Effect to load product from query param if provided
+  useEffect(() => {
+    const prodId = searchParams.get('producto') || searchParams.get('prenda') || searchParams.get('id')
+    if (!prodId) return
+
+    const loadProductDetail = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('v_catalogo_publico')
+          .select('*')
+          .eq('id_prenda', prodId)
+          .single()
+
+        if (error) throw error
+
+        if (data) {
+          const mapped: Product = {
+            id: data.id_prenda,
+            name: data.titulo,
+            price: Number(data.precio),
+            size: data.talla ?? 'M',
+            condition: mapCondicion(data.condicion),
+            seller: data.vendedor ?? 'Vendedor',
+            image: data.imagen_principal ?? 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&h=500&fit=crop',
+            rating: 4.5,
+          }
+          setSelectedProduct(mapped)
+        }
+      } catch (err) {
+        console.error('Error fetching deep-linked product:', err)
+      }
+    }
+
+    loadProductDetail()
+  }, [searchParams, supabase])
 
   const ITEMS_PER_PAGE = 15
 
@@ -263,6 +311,12 @@ export function ExplorarClient() {
           color: var(--bg-primary) !important;
           transform: none;
         }
+        .sort-trigger-btn:hover {
+          border-color: var(--accent) !important;
+        }
+        .sort-option-btn:hover {
+          background-color: var(--bg-secondary) !important;
+        }
       `}</style>
 
       {/* Main layout */}
@@ -343,26 +397,99 @@ export function ExplorarClient() {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               {/* Sort */}
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)',
-                borderRadius: 10, padding: '7px 12px',
-              }}>
-                <ArrowUpDown size={13} style={{ color: 'var(--text-muted)' }} />
-                <select
-                  value={sort}
-                  onChange={e => setSort(e.target.value as SortOption)}
-                  className="sort-select"
+              <div ref={sortRef} style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setSortOpen(!sortOpen)}
+                  className="sort-trigger-btn"
                   style={{
-                    background: 'none', border: 'none', fontSize: 13,
-                    color: 'var(--text-primary)', cursor: 'pointer',
-                    fontFamily: "'DM Sans', sans-serif",
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    backgroundColor: 'var(--bg-card)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 10,
+                    padding: '7px 12px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    color: 'var(--text-primary)',
+                    fontSize: 13,
+                    fontWeight: 500,
+                    outline: 'none',
                   }}
                 >
-                  <option value="reciente">Más recientes</option>
-                  <option value="precio_asc">Menor precio</option>
-                  <option value="precio_desc">Mayor precio</option>
-                </select>
+                  <ArrowUpDown size={13} style={{ color: 'var(--text-muted)' }} />
+                  <span>
+                    {sort === 'reciente' && 'Más recientes'}
+                    {sort === 'precio_asc' && 'Menor precio'}
+                    {sort === 'precio_desc' && 'Mayor precio'}
+                  </span>
+                  <ChevronDown
+                    size={12}
+                    style={{
+                      color: 'var(--text-muted)',
+                      marginLeft: 2,
+                      transform: sortOpen ? 'rotate(180deg)' : 'none',
+                      transition: 'transform 0.2s',
+                    }}
+                  />
+                </button>
+
+                {sortOpen && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 'calc(100% + 6px)',
+                      right: 0,
+                      backgroundColor: 'var(--bg-card)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 12,
+                      boxShadow: '0 8px 24px var(--shadow)',
+                      zIndex: 40,
+                      padding: '6px',
+                      minWidth: 150,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 2,
+                      animation: 'fadeInUp 0.15s ease forwards',
+                    }}
+                  >
+                    {(['reciente', 'precio_asc', 'precio_desc'] as const).map((option) => {
+                      const isSelected = sort === option
+                      return (
+                        <button
+                          key={option}
+                          onClick={() => {
+                            setSort(option)
+                            setSortOpen(false)
+                          }}
+                          className="sort-option-btn"
+                          style={{
+                            padding: '8px 12px',
+                            borderRadius: 8,
+                            border: 'none',
+                            backgroundColor: isSelected ? 'var(--accent-light)' : 'transparent',
+                            color: isSelected ? 'var(--accent)' : 'var(--text-primary)',
+                            fontWeight: isSelected ? 600 : 400,
+                            fontSize: 13,
+                            textAlign: 'left',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            transition: 'all 0.15s',
+                            width: '100%',
+                          }}
+                        >
+                          <span>
+                            {option === 'reciente' && 'Más recientes'}
+                            {option === 'precio_asc' && 'Menor precio'}
+                            {option === 'precio_desc' && 'Mayor precio'}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* View toggle */}
@@ -593,7 +720,15 @@ export function ExplorarClient() {
       {/* Product detail modal */}
       <ProductDetailModal
         product={selectedProduct}
-        onClose={() => setSelectedProduct(null)}
+        onClose={() => {
+          setSelectedProduct(null)
+          // Clean product query params
+          const params = new URLSearchParams(searchParams.toString())
+          params.delete('producto')
+          params.delete('prenda')
+          params.delete('id')
+          router.replace(`/explorar?${params.toString()}`, { scroll: false })
+        }}
       />
     </>
   )

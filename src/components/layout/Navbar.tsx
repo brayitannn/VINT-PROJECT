@@ -64,6 +64,7 @@ export function Navbar() {
     { label: 'Mis Productos', href: '/products' },
     { label: 'Dashboard', href: '/dashboard' },
   ] : [
+    { label: 'Dashboard', href: '/dashboard' },
     { label: 'Explorar', href: '/explorar' },
     { label: 'Favoritos', href: '/favoritos' },
   ];
@@ -165,6 +166,17 @@ export function Navbar() {
                 >
                   <Menu size={18} />
                 </button>
+
+                {/* CAMBIAR TEMA */}
+                {mounted && (
+                  <button
+                    onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                    className="flex h-[38px] w-[38px] items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-secondary)] transition-all hover:scale-105 hover:border-[var(--accent)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)]"
+                    style={{ background: 'transparent', cursor: 'pointer' }}
+                  >
+                    {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                  </button>
+                )}
 
                 {/* NOTIFICACIONES */}
                 <div ref={notifRef} className="relative">
@@ -302,26 +314,7 @@ export function Navbar() {
                       {/* LISTA DE OPCIONES */}
                       <div className="flex flex-col gap-1">
                         
-                        {/* TOGGLE MODO OSCURO */}
-                        {mounted && (
-                          <button
-                            onClick={() => {
-                              setTheme(theme === 'dark' ? 'light' : 'dark')
-                            }}
-                            className="fb-menu-item group text-left"
-                            style={{ background: 'none', border: 'none', width: '100%' }}
-                          >
-                            <div className="fb-icon-circle group-hover:bg-[var(--bg-primary)]" style={{ color: 'var(--text-secondary)' }}>
-                              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-                            </div>
-                            <div className="flex-1 flex flex-col">
-                              <span className="text-[15px] font-semibold text-[var(--text-primary)] tracking-tight">
-                                {theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
-                              </span>
-                            </div>
-                            <ChevronRight size={18} className="text-[var(--text-muted)]" />
-                          </button>
-                        )}
+
 
                         <Link 
                           href="/dashboard" 
