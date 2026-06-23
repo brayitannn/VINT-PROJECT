@@ -5,7 +5,7 @@ import { ShippingForm } from "@/components/checkout/ShippingForm";
 import { PaymentForm } from "@/components/checkout/PaymentForm";
 import { OrderSummary } from "@/components/checkout/OrderSummary";
 import { SimulationModal } from "@/components/checkout/SimulationModal";
-import { CheckoutToast } from "@/components/checkout/Toast";
+import { CheckoutRecommendations } from "@/components/checkout/CheckoutRecommendations";
 import { Check, ArrowLeft, ShieldCheck } from "lucide-react";
 
 // --- Utilidades de Formateo ---
@@ -35,11 +35,6 @@ export default function CheckoutPage() {
     nequi,
     setNequi,
     nequiErrors,
-    promoCode,
-    setPromoCode,
-    discountAmount,
-    promoMessage,
-    setPromoMessage,
     showSimModal,
     setShowSimModal,
     simState,
@@ -51,7 +46,6 @@ export default function CheckoutPage() {
     setSimBankUser,
     finalPrice,
     handleNextStep,
-    handleApplyPromo,
     handleCheckoutSubmit,
     handlePseLoginSubmit,
     handlePseOtpSubmit,
@@ -181,25 +175,28 @@ export default function CheckoutPage() {
               handleNextStep={handleNextStep}
             />
           ) : (
-            <PaymentForm
-              paymentMethod={paymentMethod}
-              setPaymentMethod={setPaymentMethod}
-              card={card}
-              setCard={setCard}
-              focusedField={focusedField}
-              setFocusedField={setFocusedField}
-              cardErrors={cardErrors}
-              pse={pse}
-              setPse={setPse}
-              pseErrors={pseErrors}
-              nequi={nequi}
-              setNequi={setNequi}
-              nequiErrors={nequiErrors}
-              isProcessing={isProcessing}
-              finalPrice={finalPrice}
-              handleCheckoutSubmit={handleCheckoutSubmit}
-              formatPrice={formatPrice}
-            />
+            <div className="flex flex-col gap-8 w-full">
+              <PaymentForm
+                paymentMethod={paymentMethod}
+                setPaymentMethod={setPaymentMethod}
+                card={card}
+                setCard={setCard}
+                focusedField={focusedField}
+                setFocusedField={setFocusedField}
+                cardErrors={cardErrors}
+                pse={pse}
+                setPse={setPse}
+                pseErrors={pseErrors}
+                nequi={nequi}
+                setNequi={setNequi}
+                nequiErrors={nequiErrors}
+                isProcessing={isProcessing}
+                finalPrice={finalPrice}
+                handleCheckoutSubmit={handleCheckoutSubmit}
+                formatPrice={formatPrice}
+              />
+              <CheckoutRecommendations />
+            </div>
           )}
 
           {/* RESUMEN DE LA ORDEN (Ubicado Abajo de los formularios) */}
@@ -207,10 +204,6 @@ export default function CheckoutPage() {
             items={items}
             totalItems={totalItems}
             totalPrice={totalPrice}
-            discountAmount={discountAmount}
-            promoCode={promoCode}
-            setPromoCode={setPromoCode}
-            handleApplyPromo={handleApplyPromo}
             finalPrice={finalPrice}
             formatPrice={formatPrice}
           />
@@ -229,14 +222,7 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      {/* MENSAJE EMERGENTE GENERAL DE CUPONES / VALIDACIÓN */}
-      <CheckoutToast
-        show={!!promoMessage.text}
-        title={promoMessage.type === 'success' ? 'Cupón Aplicado' : 'Error de Cupón'}
-        message={promoMessage.text}
-        type={promoMessage.type === 'success' ? 'success' : 'error'}
-        onClose={() => setPromoMessage({ text: '', type: '' })}
-      />
+
 
       {/* MODAL DE SIMULACIÓN DE PAGOS INTERACTIVO */}
       <SimulationModal

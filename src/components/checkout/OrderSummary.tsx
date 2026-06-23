@@ -1,16 +1,11 @@
 import React from "react";
 import Image from "next/image";
-import { Ticket, Check, AlertCircle, Percent } from "lucide-react";
 import { SHIPPING_COST } from "@/context/CartContext";
 
 interface OrderSummaryProps {
   items: any[];
   totalItems: number;
   totalPrice: number;
-  discountAmount: number;
-  promoCode: string;
-  setPromoCode: (code: string) => void;
-  handleApplyPromo: () => void;
   finalPrice: number;
   formatPrice: (price: number) => string;
 }
@@ -19,10 +14,6 @@ export const OrderSummary = ({
   items,
   totalItems,
   totalPrice,
-  discountAmount,
-  promoCode,
-  setPromoCode,
-  handleApplyPromo,
   finalPrice,
   formatPrice
 }: OrderSummaryProps) => {
@@ -88,40 +79,6 @@ export const OrderSummary = ({
         )}
       </div>
 
-      {/* Código Promocional */}
-      <div 
-        style={{ borderTopColor: "color-mix(in srgb, var(--border) 60%, transparent)" }}
-        className="border-t pt-8 flex flex-col gap-3"
-      >
-        <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-secondary)] mb-1">
-          <Ticket className="w-3.5 h-3.5" /> ¿Tienes un cupón de descuento?
-        </div>
-        <div className="flex gap-2 w-full">
-          <input
-            type="text"
-            placeholder="Ej. VINT10"
-            value={promoCode}
-            onChange={(e) => setPromoCode(e.target.value)}
-            style={{ 
-              borderColor: "color-mix(in srgb, var(--border) 30%, transparent)",
-              paddingLeft: "16px",
-              paddingRight: "16px"
-            }}
-            className="flex-1 min-w-0 h-11 text-sm bg-[var(--bg-secondary)] border rounded-xl outline-none focus:ring-1 focus:ring-[var(--accent)] text-[var(--text-primary)] placeholder-[var(--text-secondary)]/70"
-          />
-          <button
-            type="button"
-            onClick={handleApplyPromo}
-            style={{
-              paddingLeft: "24px",
-              paddingRight: "24px"
-            }}
-            className="h-11 text-xs font-extrabold rounded-xl hover:opacity-95 transition-all flex-shrink-0 cursor-pointer bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm hover:scale-[1.01]"
-          >
-            Aplicar
-          </button>
-        </div>
-      </div>
 
       {/* Desglose de totales */}
       <div 
@@ -137,12 +94,6 @@ export const OrderSummary = ({
           <span className="text-[var(--text-primary)] font-bold">{formatPrice(totalPrice)}</span>
         </div>
         
-        {discountAmount > 0 && (
-          <div className="flex justify-between text-green-600 font-bold">
-            <span className="flex items-center gap-1"><Percent className="w-3.5 h-3.5" /> Descuento (10%)</span>
-            <span>-{formatPrice(discountAmount)}</span>
-          </div>
-        )}
 
         <div className="flex justify-between text-[var(--text-secondary)] font-semibold">
           <span>Costo de Envío</span>

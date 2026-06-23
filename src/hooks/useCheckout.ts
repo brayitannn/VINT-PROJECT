@@ -37,10 +37,6 @@ export function useCheckout() {
   const [nequi, setNequi] = useState({ phone: '' });
   const [nequiErrors, setNequiErrors] = useState<any>({});
 
-  // --- Códigos de Descuento ---
-  const [promoCode, setPromoCode] = useState('');
-  const [discountAmount, setDiscountAmount] = useState(0);
-  const [promoMessage, setPromoMessage] = useState({ text: '', type: '' }); // 'success' | 'error'
 
   // --- Estado de la Simulación ---
   const [showSimModal, setShowSimModal] = useState(false);
@@ -49,8 +45,8 @@ export function useCheckout() {
   const [simOtp, setSimOtp] = useState('');
   const [simBankUser, setSimBankUser] = useState('');
 
-  // Cálculo del Total considerando descuento
-  const finalPrice = Math.max(0, totalPrice - discountAmount + SHIPPING_COST);
+  // Cálculo del Total sin descuento
+  const finalPrice = totalPrice + SHIPPING_COST;
 
   // Contador regresivo para Nequi
   useEffect(() => {
@@ -86,19 +82,6 @@ export function useCheckout() {
 
   const formatPrice = (price: number) => `$${price.toLocaleString('es-CO')} COP`;
 
-  // --- Aplicar Cupón de Descuento ---
-  const handleApplyPromo = () => {
-    const cleanPromo = promoCode.trim().toUpperCase();
-    if (cleanPromo === 'VINT10' || cleanPromo === 'VINTAGE') {
-      const discount = Math.round(totalPrice * 0.1);
-      setDiscountAmount(discount);
-      setPromoMessage({ text: `¡Cupón ${cleanPromo} aplicado! Recibes 10% de descuento (-${formatPrice(discount)})`, type: 'success' });
-    } else if (cleanPromo === '') {
-      setPromoMessage({ text: 'Por favor escribe un código.', type: 'error' });
-    } else {
-      setPromoMessage({ text: 'Código de descuento no válido.', type: 'error' });
-    }
-  };
 
   // --- Ejecución y Simulación del Pago ---
   const validatePayment = () => {
@@ -218,11 +201,6 @@ export function useCheckout() {
     nequi,
     setNequi,
     nequiErrors,
-    promoCode,
-    setPromoCode,
-    discountAmount,
-    promoMessage,
-    setPromoMessage,
     showSimModal,
     setShowSimModal,
     simState,
@@ -234,7 +212,6 @@ export function useCheckout() {
     setSimBankUser,
     finalPrice,
     handleNextStep,
-    handleApplyPromo,
     handleCheckoutSubmit,
     handlePseLoginSubmit,
     handlePseOtpSubmit,

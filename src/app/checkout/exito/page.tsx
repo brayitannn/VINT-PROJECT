@@ -1,45 +1,297 @@
 'use client'
 
 import Link from 'next/link'
-import { CheckCircle, ShoppingBag } from 'lucide-react'
+import { Check, ShoppingBag, Copy, Calendar, Truck, Mail, ArrowRight, User } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 export default function ExitoPage() {
   const [orderNumber, setOrderNumber] = useState('')
+  const [copied, setCopied] = useState(false)
+  const [dateStr, setDateStr] = useState('')
 
   useEffect(() => {
-    setOrderNumber(`VN-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`)
+    setOrderNumber(`VN-${Math.floor(100000 + Math.random() * 900000).toString()}`)
+    const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' }
+    setDateStr(new Date().toLocaleDateString('es-CO', options))
   }, [])
 
+  const handleCopy = () => {
+    if (typeof window !== 'undefined' && orderNumber) {
+      navigator.clipboard.writeText(orderNumber)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
   return (
-    <div className="min-h-[85vh] flex flex-col items-center justify-center p-6 text-center">
-      <div className="bg-white p-10 rounded-3xl border border-gray-200 shadow-xl max-w-md w-full flex flex-col items-center">
-        
-        <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6 animate-bounce shadow-sm">
-          <CheckCircle size={40} />
-        </div>
-        
-        <h1 className="text-3xl font-extrabold text-gray-900 mb-2">¡Pago Exitoso!</h1>
-        <p className="text-gray-600 mb-6 leading-relaxed">
-          Tu orden ha sido procesada correctamente. Estamos preparando tus prendas para el envío.
-        </p>
+    <div 
+      style={{ padding: '24px 16px' }}
+      className="min-h-[90vh] flex flex-col items-center justify-center text-center bg-[var(--bg-primary)]"
+    >
+      
+      {/* Estilos locales para las animaciones del check y el ticket */}
+      <style>{`
+        @keyframes drawCheck {
+          0% { stroke-dashoffset: 24; }
+          100% { stroke-dashoffset: 0; }
+        }
+        @keyframes ringScale {
+          0% { transform: scale(0.8); opacity: 0; }
+          50% { transform: scale(1.05); opacity: 0.8; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes pulseAccent {
+          0% { box-shadow: 0 0 0 0 rgba(139, 94, 60, 0.4); }
+          70% { box-shadow: 0 0 0 12px rgba(139, 94, 60, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(139, 94, 60, 0); }
+        }
+        .animate-draw-check {
+          stroke-dasharray: 24;
+          stroke-dashoffset: 24;
+          animation: drawCheck 0.4s ease-out 0.3s forwards;
+        }
+        .animate-ring-scale {
+          animation: ringScale 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        .animate-pulse-accent {
+          animation: pulseAccent 2s infinite;
+        }
+      `}</style>
 
-        <div className="bg-gray-50 w-full rounded-xl p-4 mb-8 border border-gray-200">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-            Número de Orden
-          </p>
-          <p className="text-xl font-mono font-bold text-[var(--accent)]">
-            {orderNumber || 'VN-......'}
-          </p>
-        </div>
+      {/* Tarjeta Principal Premium */}
+      <div 
+        style={{ 
+          backgroundColor: 'var(--bg-card)', 
+          borderColor: 'var(--border)',
+          padding: '40px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '32px'
+        }}
+        className="border shadow-xl rounded-[32px] max-w-xl w-full relative overflow-hidden animate-fade-in-up"
+      >
+        {/* Adornos de Fondo Decorativo */}
+        <div className="absolute top-0 right-0 w-24 h-24 bg-[radial-gradient(circle,rgba(139,94,60,0.06)_0%,transparent_70%)] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-[radial-gradient(circle,rgba(139,94,60,0.04)_0%,transparent_70%)] pointer-events-none" />
 
-        <Link 
-          href="/" 
-          className="w-full py-4 bg-[var(--accent)] text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-md"
+        {/* Hero Area: Icono y Textos */}
+        <div 
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', width: '100%' }}
         >
-          <ShoppingBag size={18} />
-          Seguir Comprando
-        </Link>
+          {/* Ícono de Éxito Animado */}
+          <div className="relative animate-ring-scale">
+            <div 
+              style={{ borderColor: 'color-mix(in srgb, var(--accent) 20%, transparent)' }}
+              className="w-20 h-20 rounded-full border-4 flex items-center justify-center bg-white dark:bg-[var(--bg-secondary)] shadow-inner animate-pulse-accent"
+            >
+              <svg className="w-10 h-10 text-[var(--accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" className="animate-draw-check" />
+              </svg>
+            </div>
+            {/* Pequeño check flotante de confirmación */}
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center border-2 border-white dark:border-[var(--bg-card)] shadow z-10">
+              <Check size={12} strokeWidth={3} />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <h1 className="text-3xl sm:text-4xl font-black font-display text-[var(--text-primary)] tracking-tight">
+              ¡Pago Exitoso!
+            </h1>
+            <p className="text-sm sm:text-base text-[var(--text-secondary)] leading-relaxed max-w-md mx-auto">
+              Tu compra ha sido procesada de forma segura. El vendedor ya está notificado y preparando todo.
+            </p>
+          </div>
+        </div>
+
+        {/* Rastreador de Estado de Envío (Stepper) */}
+        <div 
+          style={{ 
+            borderColor: 'color-mix(in srgb, var(--border) 40%, transparent)',
+            paddingTop: '24px',
+            paddingBottom: '24px'
+          }}
+          className="w-full border-y text-left"
+        >
+          <h3 
+            style={{ marginBottom: '20px' }}
+            className="text-xs font-extrabold uppercase tracking-widest text-[var(--text-secondary)]"
+          >
+            Estado de tu pedido
+          </h3>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 sm:gap-2">
+            
+            {/* Paso 1: Completado */}
+            <div className="flex sm:flex-col items-center sm:text-center gap-3 sm:gap-2 flex-1">
+              <div className="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center shadow-md flex-shrink-0">
+                <Check size={14} strokeWidth={3} />
+              </div>
+              <div className="min-w-0">
+                <h4 className="text-xs font-bold text-[var(--text-primary)] leading-tight">Pago Recibido</h4>
+                <p className="text-[10px] text-green-600 font-semibold mt-0.5">Completado</p>
+              </div>
+            </div>
+
+            {/* Paso 2: Activo */}
+            <div className="flex sm:flex-col items-center sm:text-center gap-3 sm:gap-2 flex-1">
+              <div className="w-8 h-8 rounded-full bg-[var(--accent)] text-white flex items-center justify-center shadow-md animate-pulse flex-shrink-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
+              </div>
+              <div className="min-w-0">
+                <h4 className="text-xs font-bold text-[var(--text-primary)] leading-tight">Preparando Envío</h4>
+                <p className="text-[10px] text-[var(--accent)] font-semibold mt-0.5">En proceso</p>
+              </div>
+            </div>
+
+            {/* Paso 3: Pendiente */}
+            <div className="flex sm:flex-col items-center sm:text-center gap-3 sm:gap-2 flex-1">
+              <div 
+                style={{ borderColor: 'var(--border)' }}
+                className="w-8 h-8 rounded-full border-2 text-[var(--text-muted)] flex items-center justify-center flex-shrink-0 bg-[var(--bg-secondary)]/30"
+              >
+                <Truck size={14} />
+              </div>
+              <div className="min-w-0">
+                <h4 className="text-xs font-semibold text-[var(--text-muted)] leading-tight">En Camino</h4>
+                <p className="text-[10px] text-[var(--text-muted)] mt-0.5">Próximamente</p>
+              </div>
+            </div>
+
+            {/* Paso 4: Pendiente */}
+            <div className="flex sm:flex-col items-center sm:text-center gap-3 sm:gap-2 flex-1">
+              <div 
+                style={{ borderColor: 'var(--border)' }}
+                className="w-8 h-8 rounded-full border-2 text-[var(--text-muted)] flex items-center justify-center flex-shrink-0 bg-[var(--bg-secondary)]/30"
+              >
+                <ShoppingBag size={14} />
+              </div>
+              <div className="min-w-0">
+                <h4 className="text-xs font-semibold text-[var(--text-muted)] leading-tight">Entregado</h4>
+                <p className="text-[10px] text-[var(--text-muted)] mt-0.5">Pendiente</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Recibo Digital Estilizado con Muescas Laterales */}
+        <div 
+          style={{ 
+            backgroundColor: 'color-mix(in srgb, var(--bg-secondary) 25%, transparent)',
+            borderColor: 'var(--border)',
+            padding: '24px'
+          }}
+          className="border border-dashed rounded-2xl w-full text-left relative overflow-hidden"
+        >
+          {/* Muescas del Ticket (Efecto físico de boleto) */}
+          <div 
+            style={{ 
+              backgroundColor: 'var(--bg-card)', 
+              borderColor: 'var(--border)' 
+            }}
+            className="absolute top-1/2 -left-3.5 w-7 h-7 rounded-full border-r -translate-y-1/2 hidden sm:block z-10" 
+          />
+          <div 
+            style={{ 
+              backgroundColor: 'var(--bg-card)', 
+              borderColor: 'var(--border)' 
+            }}
+            className="absolute top-1/2 -right-3.5 w-7 h-7 rounded-full border-l -translate-y-1/2 hidden sm:block z-10" 
+          />
+
+          {/* Contenedor aislado para evitar colapsos */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
+            {/* Cabecera del ticket */}
+            <div 
+              style={{ borderBottomColor: 'var(--border)', paddingBottom: '16px' }}
+              className="flex justify-between items-center border-b border-dashed w-full"
+            >
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--text-secondary)]">
+                  Número de Orden
+                </span>
+                <h3 className="text-lg font-mono font-bold text-[var(--accent)] mt-0.5">
+                  {orderNumber || 'VN-......'}
+                </h3>
+              </div>
+              <button 
+                onClick={handleCopy}
+                title="Copiar número de orden"
+                style={{ borderColor: 'var(--border)' }}
+                className="py-1.5 px-3 rounded-xl bg-white dark:bg-[var(--bg-card)] hover:bg-[var(--bg-secondary)] transition-colors border text-[var(--text-secondary)] cursor-pointer shadow-sm active:scale-95 flex items-center justify-center gap-1.5"
+              >
+                {copied ? (
+                  <span className="text-xs font-bold text-green-600 flex items-center gap-1">
+                    <Check size={14} /> ¡Copiado!
+                  </span>
+                ) : (
+                  <>
+                    <Copy size={13} />
+                    <span className="text-xs font-bold">Copiar</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Detalles rápidos */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', width: '100%' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <p className="text-[11px] font-semibold text-[var(--text-muted)] flex items-center gap-1">
+                  <Calendar size={13} className="text-[var(--text-secondary)]" /> Fecha de Pago
+                </p>
+                <p className="text-xs font-bold text-[var(--text-primary)]">{dateStr || 'Cargando...'}</p>
+              </div>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <p className="text-[11px] font-semibold text-[var(--text-muted)] flex items-center gap-1">
+                  <Truck size={13} className="text-[var(--text-secondary)]" /> Envío Estimado
+                </p>
+                <p className="text-xs font-bold text-[var(--text-primary)]">2 - 4 días hábiles</p>
+              </div>
+            </div>
+
+            {/* Notificación de envío */}
+            <div 
+              style={{ 
+                backgroundColor: 'color-mix(in srgb, var(--accent) 5%, transparent)',
+                borderColor: 'color-mix(in srgb, var(--accent) 15%, transparent)',
+                padding: '14px',
+                display: 'flex',
+                gap: '10px'
+              }}
+              className="rounded-xl border text-xs text-[var(--text-primary)] font-medium leading-relaxed"
+            >
+              <Mail size={16} className="text-[var(--accent)] flex-shrink-0 mt-0.5" />
+              <div>
+                Te hemos enviado un correo de confirmación con el resumen y pronto recibirás el número de guía para el rastreo.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Acciones del Checkout */}
+        <div 
+          style={{ display: 'flex', gap: '12px', width: '100%', marginTop: '8px' }}
+          className="flex-col sm:flex-row"
+        >
+          <Link 
+            href="/" 
+            className="vint-btn-primary flex-1 py-3.5 px-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-md text-sm cursor-pointer"
+          >
+            <ShoppingBag size={16} />
+            Seguir Comprando
+          </Link>
+          <Link 
+            href="/perfil" 
+            className="vint-btn-secondary flex-1 py-3.5 px-6 rounded-xl font-bold flex items-center justify-center gap-2 border text-sm cursor-pointer"
+          >
+            <User size={16} />
+            Ir a mi Perfil
+            <ArrowRight size={14} />
+          </Link>
+        </div>
+
       </div>
     </div>
   )
