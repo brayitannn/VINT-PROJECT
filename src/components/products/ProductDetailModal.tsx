@@ -7,12 +7,14 @@ import { useCart } from '@/context/CartContext'
 import { useFavorites } from '@/context/FavoritesContext'
 import type { Product } from './ProductCard'
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useAuth } from '@/context/AuthContext'
 import { ChatModal } from '@/components/chat/ChatModal'
 
 interface Props {
   product: Product | null
   onClose: () => void
+  addToCartOptions?: { openDrawer?: boolean }
 }
 
 function formatPrice(price: number): string {
@@ -27,11 +29,12 @@ function getConditionStyle(condition: Product['condition']): React.CSSProperties
   }
 }
 
-export function ProductDetailModal({ product, onClose }: Props) {
+export function ProductDetailModal({ product, onClose, addToCartOptions }: Props) {
   const { addItem, isInCart } = useCart()
   const { isFavorito, toggleFavorito } = useFavorites()
   const { user } = useAuth()
   const [chatOpen, setChatOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   let role = user?.user_metadata?.role || 'comprador'
   if (role === 'buyer') role = 'comprador'
   if (role === 'seller') role = 'vendedor'
@@ -39,6 +42,10 @@ export function ProductDetailModal({ product, onClose }: Props) {
   const isOpen = product !== null
   const inCart = product ? isInCart(product.id) : false
   const isLiked = product ? isFavorito(product.id.toString()) : false
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Bloquear scroll cuando está abierto
   useEffect(() => {
@@ -57,30 +64,24 @@ export function ProductDetailModal({ product, onClose }: Props) {
     return () => window.removeEventListener('keydown', handler)
   }, [onClose])
 
-  if (!product) return null
+  if (!product || !mounted) return null
 
   const handleAddToCart = () => {
-    addItem(product)
+    addItem(product, addToCartOptions)
     onClose()
   }
 
   const handleToggleFav = () => toggleFavorito(product.id.toString())
 
-  // Rating simulado basado en el id del producto
   const rating = (4 + (product.id % 10) / 10).toFixed(1)
   const sales = 10 + (product.id % 90)
 
-  return (
+  const modalContent = (
     <>
       {/* Overlay */}
       <div
         onClick={onClose}
-        style={{
-          position: 'fixed', inset: 0, zIndex: 1000,
-          backgroundColor: 'rgba(0,0,0,0.55)',
-          backdropFilter: 'blur(6px)',
-          animation: 'fadeOverlay 0.25s ease forwards',
-        }}
+        className="product-detail-overlay"
       />
 
       {/* Modal */}
@@ -88,161 +89,78 @@ export function ProductDetailModal({ product, onClose }: Props) {
         role="dialog"
         aria-modal="true"
         aria-label={product.name}
-        style={{
-          position: 'fixed', inset: 0, zIndex: 1001,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: '20px 16px',
-          pointerEvents: 'none',
-        }}
+        className="product-detail-shell"
       >
-        <div
-          style={{
-            width: '100%', maxWidth: 900,
-            backgroundColor: 'var(--bg-card)',
-            borderRadius: 24,
-            boxShadow: '0 24px 80px rgba(0,0,0,0.3)',
-            display: 'flex',
-            overflow: 'hidden',
-            maxHeight: '90vh',
-            pointerEvents: 'auto',
-            animation: 'slideUpModal 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards',
-          }}
-        >
+        <div className="product-detail-modal">
           {/* ── LEFT: Image ── */}
-          <div style={{
-            width: '45%', flexShrink: 0,
-            position: 'relative', overflow: 'hidden',
-            backgroundColor: 'var(--bg-secondary)',
-            minHeight: 480,
-          }}>
+          <div className="product-detail-image">
             <Image
               src={product.image}
               alt={product.name}
               fill
               style={{ objectFit: 'cover' }}
-              sizes="(max-width: 900px) 45vw, 400px"
+              sizes="280px"
             />
-            {/* Fav button on image */}
             <button
               onClick={handleToggleFav}
-              style={{
-                position: 'absolute', top: 14, right: 14,
-                width: 38, height: 38, borderRadius: '50%',
-                backgroundColor: 'rgba(255,255,255,0.88)',
-                backdropFilter: 'blur(4px)',
-                border: 'none', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.15)',
-                color: isLiked ? '#EC4899' : '#9CA3AF',
-                transition: 'all 0.2s',
-              }}
-              className="detail-fav-btn"
+              className="detail-fav-btn product-detail-fav"
               title={isLiked ? 'Quitar de favoritos' : 'Añadir a favoritos'}
             >
-              <Heart size={18} fill={isLiked ? 'currentColor' : 'none'} />
+              <Heart size={16} fill={isLiked ? 'currentColor' : 'none'} />
             </button>
 
-            {/* Condition badge on image */}
-            <span style={{
-              position: 'absolute', bottom: 14, left: 14,
-              ...getConditionStyle(product.condition),
-              fontSize: 12, fontWeight: 700,
-              padding: '5px 12px', borderRadius: 999,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-            }}>
+            <span
+              className="product-detail-condition"
+              style={getConditionStyle(product.condition)}
+            >
               {product.condition}
             </span>
           </div>
 
           {/* ── RIGHT: Info ── */}
-          <div style={{
-            flex: 1, overflowY: 'auto',
-            display: 'flex', flexDirection: 'column',
-            padding: '28px 28px 24px',
-          }}>
-            {/* Close button */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+          <div className="product-detail-info">
+            <div className="product-detail-close-wrap">
               <button
                 onClick={onClose}
-                style={{
-                  width: 34, height: 34, borderRadius: '50%',
-                  border: '1px solid var(--border)', background: 'transparent',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: 'var(--text-muted)', transition: 'all 0.2s',
-                }}
-                className="detail-close-btn"
+                className="detail-close-btn product-detail-close"
                 aria-label="Cerrar"
               >
-                <X size={16} />
+                <X size={15} />
               </button>
             </div>
 
-            {/* Name + condition */}
-            <div style={{ marginBottom: 6 }}>
-              <h2 style={{
-                fontFamily: "'Playfair Display', serif",
-                fontWeight: 800, fontSize: 'clamp(18px, 2.5vw, 24px)',
-                color: 'var(--text-primary)', lineHeight: 1.25,
-                margin: '0 0 12px',
-              }}>
-                {product.name}
-              </h2>
-
-              {/* Tags */}
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
-                <span style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 4,
-                  backgroundColor: 'var(--bg-secondary)', color: 'var(--text-secondary)',
-                  border: '1px solid var(--border)',
-                  fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 8,
-                }}>
+            <div className="product-detail-head">
+              <h2 className="product-detail-title">{product.name}</h2>
+              <div className="product-detail-tags">
+                <span className="product-detail-tag">
                   <Tag size={11} /> {product.condition}
                 </span>
-                <span style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 4,
-                  backgroundColor: 'var(--bg-secondary)', color: 'var(--text-secondary)',
-                  border: '1px solid var(--border)',
-                  fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 8,
-                }}>
+                <span className="product-detail-tag">
                   <Ruler size={11} /> Talla {product.size}
                 </span>
               </div>
             </div>
 
-            {/* Price */}
-            <p style={{
-              fontWeight: 900, fontSize: 'clamp(22px, 3vw, 30px)',
-              color: 'var(--accent)', margin: '0 0 20px',
-              letterSpacing: '-0.5px',
-            }}>
-              {formatPrice(product.price)}
-            </p>
+            <p className="product-detail-price">{formatPrice(product.price)}</p>
+            <div className="product-detail-divider" />
 
-            <div style={{ width: '100%', height: 1, backgroundColor: 'var(--border)', marginBottom: 18 }} />
-
-            {/* Descripción */}
-            <div style={{ marginBottom: 18 }}>
-              <h3 style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)', marginBottom: 6 }}>
-                Descripción
-              </h3>
-              <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
+            <div className="product-detail-section">
+              <h3>Descripción</h3>
+              <p>
                 Prenda en estado <strong>{product.condition}</strong>, talla <strong>{product.size}</strong>.
                 Ideal para cualquier ocasión. Publicada por {product.seller}.
               </p>
             </div>
 
-            {/* Detalles del Producto */}
-            <div style={{ marginBottom: 18 }}>
-              <h3 style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)', marginBottom: 10 }}>
-                Detalles del Producto
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+            <div className="product-detail-section">
+              <h3>Detalles del Producto</h3>
+              <div className="product-detail-list">
                 {[
                   { icon: '🏷️', label: `Condición: ${product.condition}` },
                   { icon: '✅', label: 'Estado: Disponible' },
                   { icon: '📦', label: 'Envío disponible a toda Colombia' },
                 ].map(d => (
-                  <div key={d.label} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
+                  <div key={d.label} className="product-detail-list-item">
                     <span>{d.icon}</span>
                     <span>{d.label}</span>
                   </div>
@@ -250,105 +168,55 @@ export function ProductDetailModal({ product, onClose }: Props) {
               </div>
             </div>
 
-            {/* Vendedor */}
             <Link
               href={`/tienda/${encodeURIComponent(product.seller.toLowerCase().replace(/\s+/g, '-'))}`}
               onClick={onClose}
-              style={{
-                border: '1px solid var(--border)',
-                borderRadius: 14, padding: '14px 16px',
-                marginBottom: 20,
-                backgroundColor: 'var(--bg-secondary)',
-                display: 'block', textDecoration: 'none',
-                transition: 'all 0.2s'
-              }}
-              className="hover:scale-[1.02] hover:border-[var(--accent)] hover:shadow-sm"
+              className="product-detail-seller"
             >
-              <p style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)', margin: '0 0 10px' }}>
-                Vendedor
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{
-                  width: 42, height: 42, borderRadius: '50%',
-                  backgroundColor: 'var(--accent)', color: 'white',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontWeight: 800, fontSize: 16, flexShrink: 0,
-                }}>
+              <p className="product-detail-seller-label">Vendedor</p>
+              <div className="product-detail-seller-row">
+                <div className="product-detail-seller-avatar">
                   {product.seller.charAt(0)}
                 </div>
                 <div>
-                  <p style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)', margin: 0 }}>
-                    {product.seller}
-                  </p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
+                  <p className="product-detail-seller-name">{product.seller}</p>
+                  <div className="product-detail-seller-meta">
                     <Star size={12} fill="#F59E0B" color="#F59E0B" />
-                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                      {rating} · {sales} ventas
-                    </span>
+                    <span>{rating} · {sales} ventas</span>
                   </div>
                 </div>
               </div>
             </Link>
 
-            {/* Botones CTA */}
-            <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+            <div className="product-detail-actions">
               {role !== 'vendedor' && (
                 <button
                   onClick={handleAddToCart}
-                  style={{
-                    flex: 1, padding: '13px 20px',
-                    backgroundColor: inCart ? '#10B981' : 'var(--accent)',
-                    color: 'white', border: 'none', borderRadius: 12,
-                    fontWeight: 700, fontSize: 14, cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                    transition: 'all 0.2s',
-                    boxShadow: '0 4px 14px rgba(0,0,0,0.15)',
-                  }}
-                  className="detail-cart-btn vint-btn-primary"
+                  className="detail-cart-btn vint-btn-primary product-detail-cart-btn"
                 >
-                  <ShoppingCart size={17} />
+                  <ShoppingCart size={16} />
                   {inCart ? 'Agregar otro' : 'Agregar al Carrito'}
                 </button>
               )}
 
               <button
                 onClick={() => setChatOpen(true)}
-                style={{
-                  padding: '13px 18px',
-                  backgroundColor: 'transparent',
-                  color: 'var(--text-primary)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 12, fontWeight: 600, fontSize: 14,
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 7,
-                  transition: 'all 0.2s',
-                }}
-                className="detail-contact-btn vint-btn-secondary"
+                className="detail-contact-btn vint-btn-secondary product-detail-contact-btn"
               >
-                <MessageCircle size={16} />
+                <MessageCircle size={15} />
                 Contactar
               </button>
             </div>
 
-            {/* Trust badges */}
-            <div style={{
-              display: 'flex', gap: 6,
-              padding: '12px 14px',
-              backgroundColor: 'var(--bg-secondary)',
-              borderRadius: 12, border: '1px solid var(--border)',
-            }}>
+            <div className="product-detail-trust">
               {[
-                { icon: <Shield size={16} />, label: 'Compra Protegida' },
-                { icon: <Truck size={16} />, label: 'Envío Seguro' },
-                { icon: <HeadphonesIcon size={16} />, label: 'Soporte 24/7' },
+                { icon: <Shield size={14} />, label: 'Compra Protegida' },
+                { icon: <Truck size={14} />, label: 'Envío Seguro' },
+                { icon: <HeadphonesIcon size={14} />, label: 'Soporte 24/7' },
               ].map(b => (
-                <div key={b.label} style={{
-                  flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                  textAlign: 'center',
-                }}>
-                  <span style={{ color: 'var(--accent)' }}>{b.icon}</span>
-                  <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', lineHeight: 1.2 }}>
-                    {b.label}
-                  </span>
+                <div key={b.label} className="product-detail-trust-item">
+                  <span>{b.icon}</span>
+                  <span>{b.label}</span>
                 </div>
               ))}
             </div>
@@ -357,12 +225,314 @@ export function ProductDetailModal({ product, onClose }: Props) {
       </div>
 
       <style>{`
+        .product-detail-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 1000;
+          background-color: rgba(0,0,0,0.55);
+          backdrop-filter: blur(6px);
+          animation: fadeOverlay 0.25s ease forwards;
+        }
+
+        .product-detail-shell {
+          position: fixed;
+          inset: 0;
+          z-index: 1001;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 16px;
+          pointer-events: none;
+        }
+
+        .product-detail-modal {
+          width: 100%;
+          max-width: 680px;
+          background-color: var(--bg-card);
+          border-radius: 20px;
+          box-shadow: 0 20px 60px rgba(0,0,0,0.28);
+          display: flex;
+          overflow: hidden;
+          max-height: 82vh;
+          pointer-events: auto;
+          animation: slideUpModal 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards;
+        }
+
+        .product-detail-image {
+          width: 42%;
+          flex-shrink: 0;
+          position: relative;
+          overflow: hidden;
+          background-color: var(--bg-secondary);
+          min-height: 320px;
+        }
+
+        .product-detail-fav {
+          position: absolute;
+          top: 12px;
+          right: 12px;
+          width: 34px;
+          height: 34px;
+          border-radius: 50%;
+          background-color: rgba(255,255,255,0.88);
+          backdrop-filter: blur(4px);
+          border: none;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+          color: ${isLiked ? '#EC4899' : '#9CA3AF'};
+          transition: all 0.2s;
+        }
+
+        .product-detail-condition {
+          position: absolute;
+          bottom: 12px;
+          left: 12px;
+          font-size: 11px;
+          font-weight: 700;
+          padding: 4px 10px;
+          border-radius: 999px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        }
+
+        .product-detail-info {
+          flex: 1;
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+          padding: 18px 20px 16px;
+          min-width: 0;
+        }
+
+        .product-detail-close-wrap {
+          display: flex;
+          justify-content: flex-end;
+          margin-bottom: 8px;
+        }
+
+        .product-detail-close {
+          width: 30px;
+          height: 30px;
+          border-radius: 50%;
+          border: 1px solid var(--border);
+          background: transparent;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--text-muted);
+          transition: all 0.2s;
+        }
+
+        .product-detail-title {
+          font-family: 'Playfair Display', serif;
+          font-weight: 800;
+          font-size: 18px;
+          color: var(--text-primary);
+          line-height: 1.25;
+          margin: 0 0 10px;
+        }
+
+        .product-detail-tags {
+          display: flex;
+          gap: 6px;
+          flex-wrap: wrap;
+          margin-bottom: 12px;
+        }
+
+        .product-detail-tag {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          background-color: var(--bg-secondary);
+          color: var(--text-secondary);
+          border: 1px solid var(--border);
+          font-size: 11px;
+          font-weight: 600;
+          padding: 3px 8px;
+          border-radius: 8px;
+        }
+
+        .product-detail-price {
+          font-weight: 900;
+          font-size: 22px;
+          color: var(--accent);
+          margin: 0 0 14px;
+          letter-spacing: -0.5px;
+        }
+
+        .product-detail-divider {
+          width: 100%;
+          height: 1px;
+          background-color: var(--border);
+          margin-bottom: 14px;
+        }
+
+        .product-detail-section {
+          margin-bottom: 14px;
+        }
+
+        .product-detail-section h3 {
+          font-weight: 700;
+          font-size: 13px;
+          color: var(--text-primary);
+          margin: 0 0 5px;
+        }
+
+        .product-detail-section p {
+          font-size: 12px;
+          color: var(--text-secondary);
+          line-height: 1.55;
+          margin: 0;
+        }
+
+        .product-detail-list {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        .product-detail-list-item {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          font-size: 12px;
+          color: var(--text-secondary);
+        }
+
+        .product-detail-seller {
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          padding: 12px 14px;
+          margin-bottom: 14px;
+          background-color: var(--bg-secondary);
+          display: block;
+          text-decoration: none;
+          transition: all 0.2s;
+        }
+
+        .product-detail-seller:hover {
+          transform: scale(1.01);
+          border-color: var(--accent);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .product-detail-seller-label {
+          font-weight: 700;
+          font-size: 12px;
+          color: var(--text-primary);
+          margin: 0 0 8px;
+        }
+
+        .product-detail-seller-row {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .product-detail-seller-avatar {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          background-color: var(--accent);
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 800;
+          font-size: 14px;
+          flex-shrink: 0;
+        }
+
+        .product-detail-seller-name {
+          font-weight: 700;
+          font-size: 13px;
+          color: var(--text-primary);
+          margin: 0;
+        }
+
+        .product-detail-seller-meta {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          margin-top: 2px;
+          font-size: 11px;
+          color: var(--text-muted);
+        }
+
+        .product-detail-actions {
+          display: flex;
+          gap: 8px;
+          margin-bottom: 12px;
+        }
+
+        .product-detail-cart-btn {
+          flex: 1;
+          padding: 11px 16px;
+          background-color: ${inCart ? '#10B981' : 'var(--accent)'};
+          color: white;
+          border: none;
+          border-radius: 10px;
+          font-weight: 700;
+          font-size: 13px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 7px;
+          transition: all 0.2s;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+
+        .product-detail-contact-btn {
+          padding: 11px 14px;
+          background-color: transparent;
+          color: var(--text-primary);
+          border: 1px solid var(--border);
+          border-radius: 10px;
+          font-weight: 600;
+          font-size: 13px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          transition: all 0.2s;
+        }
+
+        .product-detail-trust {
+          display: flex;
+          gap: 6px;
+          padding: 10px 12px;
+          background-color: var(--bg-secondary);
+          border-radius: 10px;
+          border: 1px solid var(--border);
+        }
+
+        .product-detail-trust-item {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 3px;
+          text-align: center;
+          color: var(--accent);
+        }
+
+        .product-detail-trust-item span:last-child {
+          font-size: 9px;
+          font-weight: 600;
+          color: var(--text-muted);
+          line-height: 1.2;
+        }
+
         @keyframes fadeOverlay {
           from { opacity: 0; }
           to   { opacity: 1; }
         }
         @keyframes slideUpModal {
-          from { opacity: 0; transform: translateY(32px) scale(0.97); }
+          from { opacity: 0; transform: translateY(24px) scale(0.97); }
           to   { opacity: 1; transform: translateY(0) scale(1); }
         }
         .detail-close-btn:hover {
@@ -370,12 +540,30 @@ export function ProductDetailModal({ product, onClose }: Props) {
           border-color: var(--accent) !important;
           color: var(--text-primary) !important;
         }
-        .detail-fav-btn:hover { transform: scale(1.12); }
+        .detail-fav-btn:hover { transform: scale(1.1); }
         .detail-cart-btn:hover { opacity: 0.88; transform: translateY(-1px); }
         .detail-contact-btn:hover {
           background-color: var(--bg-secondary) !important;
           border-color: var(--accent) !important;
           color: var(--accent) !important;
+        }
+
+        @media (max-width: 640px) {
+          .product-detail-shell {
+            align-items: flex-end;
+            padding: 0;
+          }
+          .product-detail-modal {
+            max-width: 100%;
+            max-height: 92vh;
+            border-radius: 20px 20px 0 0;
+            flex-direction: column;
+          }
+          .product-detail-image {
+            width: 100%;
+            min-height: 220px;
+            max-height: 38vh;
+          }
         }
       `}</style>
 
@@ -387,4 +575,6 @@ export function ProductDetailModal({ product, onClose }: Props) {
       />
     </>
   )
+
+  return createPortal(modalContent, document.body)
 }

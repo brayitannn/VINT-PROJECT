@@ -14,7 +14,7 @@ interface CartContextType {
   totalItems: number
   totalPrice: number
   totalWithShipping: number
-  addItem: (product: Product) => void
+  addItem: (product: Product, options?: { openDrawer?: boolean }) => void
   removeItem: (productId: number) => void
   updateQuantity: (productId: number, quantity: number) => void
   clearCart: () => void
@@ -43,17 +43,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
   const [isOpen, setIsOpen] = useState(false)
 
-  const addItem = useCallback((product: Product) => {
+  const addItem = useCallback((product: Product, options?: { openDrawer?: boolean }) => {
     setItems(prev => {
       const exists = prev.find(i => i.id === product.id)
       if (exists) {
-        // Si ya está, solo aumentamos cantidad
         return prev.map(i => i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i)
       }
       return [...prev, { ...product, quantity: 1 }]
     })
-    // Abrir el drawer al agregar
-    setIsOpen(true)
+    if (options?.openDrawer !== false) {
+      setIsOpen(true)
+    }
   }, [])
 
   const removeItem = useCallback((productId: number) => {
