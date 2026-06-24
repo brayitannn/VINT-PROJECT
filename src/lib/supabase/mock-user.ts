@@ -1,4 +1,4 @@
-export type UserRole = 'comprador' | 'vendedor'
+export type UserRole = 'comprador' | 'vendedor' | 'admin'
 
 export interface MockUser {
   id: string

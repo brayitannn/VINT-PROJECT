@@ -43,8 +43,16 @@ export function useRegister() {
       setError("Las contraseñas no coinciden.");
       return;
     }
-    if (formData.password.length < 6) {
-      setError("La contraseña debe tener mínimo 6 caracteres.");
+    if (formData.password.length < 8) {
+      setError("La contraseña debe tener mínimo 8 caracteres.");
+      return;
+    }
+    if (!/[A-Z]/.test(formData.password)) {
+      setError("La contraseña debe incluir al menos una letra mayúscula.");
+      return;
+    }
+    if (!/[0-9]/.test(formData.password)) {
+      setError("La contraseña debe incluir al menos un número.");
       return;
     }
 
@@ -79,7 +87,7 @@ export function useRegister() {
 
       // Si Supabase requiere verificación de correo
       if (data.user && !data.session) {
-        router.push('/login?message=Revisa tu correo para verificar tu cuenta')
+        router.push(`/verify?email=${encodeURIComponent(formData.email)}`)
         return
       }
 
@@ -88,10 +96,11 @@ export function useRegister() {
       router.push(`/dashboard/${formData.userType}`);
 
     } catch (err: any) {
+      console.error("Error en registro:", err);
       if (err.message?.includes("User already registered")) {
         setError("Este correo ya está registrado.");
       } else {
-        setError("Ocurrió un error al crear la cuenta.");
+        setError(err.message || "Ocurrió un error al crear la cuenta.");
       }
       setLoading(false);
     }

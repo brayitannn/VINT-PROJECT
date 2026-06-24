@@ -430,17 +430,79 @@ function PerfilSection() {
 }
 
 function CuentaSection() {
+  const supabase = createClient()
   const [showCurrent, setShowCurrent] = useState(false)
   const [showNew, setShowNew] = useState(false)
   const [currentPass, setCurrentPass] = useState('')
   const [newPass, setNewPass] = useState('')
   const [confirmPass, setConfirmPass] = useState('')
   const [saved, setSaved] = useState(false)
-  const handleSave = () => { setSaved(true); setTimeout(() => setSaved(false), 2500) }
+  const [updating, setUpdating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const passwordChecks = [
+    { label: 'Mínimo 8 caracteres', ok: newPass.length >= 8 },
+    { label: 'Una letra mayúscula', ok: /[A-Z]/.test(newPass) },
+    { label: 'Un número', ok: /[0-9]/.test(newPass) },
+  ]
+  const allChecksPassed = passwordChecks.every(c => c.ok)
+
+  const handleSave = async () => {
+    setError(null)
+
+    if (!currentPass) { setError('Ingresa tu contraseña actual.'); return }
+    if (!newPass) { setError('Ingresa la nueva contraseña.'); return }
+    if (!allChecksPassed) { setError('La nueva contraseña no cumple los requisitos.'); return }
+    if (newPass !== confirmPass) { setError('Las contraseñas no coinciden.'); return }
+
+    setUpdating(true)
+    try {
+      const res = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword: currentPass, newPassword: newPass }),
+      })
+      const json = await res.json()
+
+      if (!json.success) {
+        setError(json.message)
+        return
+      }
+
+      setSaved(true)
+      setCurrentPass('')
+      setNewPass('')
+      setConfirmPass('')
+      setTimeout(() => setSaved(false), 3000)
+    } catch {
+      setError('Error de conexión. Intenta de nuevo.')
+    } finally {
+      setUpdating(false)
+    }
+  }
 
   return (
     <>
-      <SectionCard title="Cambiar Contraseña" description="Usa una contraseña fuerte con al menos 8 caracteres">
+      <SectionCard title="Cambiar Contraseña" description="Usa una contraseña fuerte con al menos 8 caracteres, una mayúscula y un número">
+        {error && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px',
+            borderRadius: 12, backgroundColor: 'rgba(239, 68, 68, 0.08)',
+            border: '1px solid rgba(239, 68, 68, 0.25)', marginBottom: 20,
+          }}>
+            <span style={{ fontSize: 13, color: '#EF4444', fontWeight: 500 }}>{error}</span>
+          </div>
+        )}
+        {saved && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px',
+            borderRadius: 12, backgroundColor: 'rgba(16, 185, 129, 0.08)',
+            border: '1px solid rgba(16, 185, 129, 0.25)', marginBottom: 20,
+          }}>
+            <Check size={16} style={{ color: '#10B981' }} />
+            <span style={{ fontSize: 13, color: '#10B981', fontWeight: 600 }}>Contraseña actualizada correctamente.</span>
+          </div>
+        )}
         <FieldRow label="Contraseña actual">
           <div style={{ position: 'relative' }}>
             <Input value={currentPass} onChange={setCurrentPass} type={showCurrent ? 'text' : 'password'} placeholder="••••••••" />
@@ -456,12 +518,35 @@ function CuentaSection() {
               {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
+          {newPass && (
+            <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {passwordChecks.map(check => (
+                <div key={check.label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: check.ok ? '#10B981' : 'var(--text-muted)', fontWeight: check.ok ? 600 : 400 }}>
+                  {check.ok ? <Check size={13} /> : <div style={{ width: 13, height: 13, borderRadius: '50%', border: '1.5px solid var(--border)' }} />}
+                  {check.label}
+                </div>
+              ))}
+            </div>
+          )}
         </FieldRow>
         <FieldRow label="Confirmar nueva contraseña">
           <Input value={confirmPass} onChange={setConfirmPass} type="password" placeholder="Repite la nueva contraseña" />
         </FieldRow>
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <SaveButton onClick={handleSave} saved={saved} />
+          <button
+            onClick={handleSave}
+            disabled={updating}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '12px 24px', borderRadius: 12, border: 'none',
+              backgroundColor: saved ? '#10B981' : 'var(--accent)',
+              color: 'white', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+              transition: 'all 0.3s', opacity: updating ? 0.7 : 1,
+            }}
+          >
+            {updating ? <div style={{ width: 16, height: 16, border: '2px solid white', borderTop: '2px solid transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /> : saved ? <Check size={16} /> : <Save size={16} />}
+            {updating ? 'Actualizando...' : saved ? '¡Actualizada!' : 'Cambiar contraseña'}
+          </button>
         </div>
       </SectionCard>
     </>

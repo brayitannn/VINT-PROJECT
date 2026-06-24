@@ -7,9 +7,12 @@ import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 import { createClient } from "@/lib/supabase/client";
 
+type UserRole = 'comprador' | 'vendedor' | 'admin'
+
 type AuthContextType = {
   user: User | null;
   loading: boolean;
+  role: UserRole;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 };
@@ -19,6 +22,17 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 type Props = {
   children: ReactNode;
 };
+
+function getRoleFromUser(user: User | null): UserRole {
+  if (!user) return 'comprador'
+  let role = user.user_metadata?.role || 'comprador'
+  if (role === 'buyer') role = 'comprador'
+  if (role === 'seller') role = 'vendedor'
+  if (role !== 'admin' && role !== 'comprador' && role !== 'vendedor') {
+    role = 'comprador'
+  }
+  return role as UserRole
+}
 
 export function AuthProvider({ children }: Props) {
   const supabase = createClient(); // ✅ cliente correcto
@@ -69,8 +83,10 @@ export function AuthProvider({ children }: Props) {
     if (error) throw error;
   };
 
+  const role = getRoleFromUser(user)
+
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, loading, role, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );
@@ -84,4 +100,4 @@ export function useAuth() {
   }
 
   return context;
-}
+}

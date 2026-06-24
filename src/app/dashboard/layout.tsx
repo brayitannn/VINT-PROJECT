@@ -27,13 +27,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       if (role === "buyer") role = "comprador";
       if (role === "seller") role = "vendedor";
 
+      // Normalizar: si el id_rol es de admin, asignar el rol correspondiente
+      const idRol = currentUser?.user_metadata?.id_rol;
+      if (idRol) {
+        // Verificar si el rol en la BD es ADMIN consultando la metadata
+        // Si el role name no coincide, intentar derivar del id_rol
+        if (role !== 'admin' && role !== 'comprador' && role !== 'vendedor') {
+          role = 'comprador'; // fallback
+        }
+      }
+
       // Validation
       if (pathname === "/dashboard") {
         router.push(`/dashboard/${role}`);
+      } else if (pathname.includes("/dashboard/admin") && role !== "admin") {
+        router.push(`/dashboard/${role}`);
       } else if (pathname.includes("/dashboard/comprador") && role !== "comprador") {
-        router.push("/dashboard/vendedor");
+        if (role === "admin") router.push("/dashboard/admin");
+        else router.push("/dashboard/vendedor");
       } else if (pathname.includes("/dashboard/vendedor") && role !== "vendedor") {
-        router.push("/dashboard/comprador");
+        if (role === "admin") router.push("/dashboard/admin");
+        else router.push("/dashboard/comprador");
       } else {
         setRoleValidated(true);
       }
@@ -50,6 +64,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  // Aquí el children ya renderiza el page.tsx de comprador o vendedor
+  // Aquí el children ya renderiza el page.tsx de comprador, vendedor o admin
   return <>{children}</>;
-}
+}
