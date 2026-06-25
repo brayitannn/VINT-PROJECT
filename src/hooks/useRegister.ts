@@ -26,6 +26,7 @@ export function useRegister() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showLoader, setShowLoader] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -57,6 +58,7 @@ export function useRegister() {
     }
 
     setLoading(true);
+    setShowLoader(true);
     try {
       // aqui empieza el cambio q hice
       const { data, error: signUpError } = await supabase.auth.signUp({
@@ -87,12 +89,14 @@ export function useRegister() {
 
       // Si Supabase requiere verificación de correo
       if (data.user && !data.session) {
+        await new Promise((resolve) => setTimeout(resolve, 2500));
         router.push(`/verify?email=${encodeURIComponent(formData.email)}`)
         return
       }
 
       // Si no requiere verificación, entrar directo
       await signIn(formData.email, formData.password);
+      await new Promise((resolve) => setTimeout(resolve, 2500));
       router.push(`/dashboard/${formData.userType}`);
 
     } catch (err: any) {
@@ -102,6 +106,7 @@ export function useRegister() {
       } else {
         setError(err.message || "Ocurrió un error al crear la cuenta.");
       }
+      setShowLoader(false);
       setLoading(false);
     }
   };
@@ -114,6 +119,7 @@ export function useRegister() {
     showConfirmPassword,
     setShowConfirmPassword,
     loading,
+    showLoader,
     error,
     handleSubmit
   };

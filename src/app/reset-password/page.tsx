@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, ArrowLeft, Lock, Eye, EyeOff, AlertCircle, CheckCircle2, ShieldCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
+import Loader from "@/components/ui/Loader";
 
 function PasswordStrength({ password }: { password: string }) {
   const checks = [
@@ -67,6 +68,7 @@ function ResetPasswordForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showLoader, setShowLoader] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
@@ -116,6 +118,7 @@ function ResetPasswordForm() {
     }
 
     setLoading(true);
+    setShowLoader(true);
     try {
       const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword,
@@ -124,11 +127,11 @@ function ResetPasswordForm() {
       if (updateError) throw updateError;
 
       setSuccess(true);
-      setTimeout(() => {
-        router.push("/login");
-      }, 3000);
+      await new Promise(resolve => setTimeout(resolve, 2500));
+      router.push("/login");
     } catch (err: any) {
       setError(err.message || "Error al restablecer la contraseña.");
+      setShowLoader(false);
     } finally {
       setLoading(false);
     }
@@ -186,6 +189,7 @@ function ResetPasswordForm() {
 
   return (
     <div className="w-full max-w-[440px] relative z-10 flex flex-col pt-12">
+      <Loader show={showLoader} />
       <div className="flex flex-col gap-6 mb-10">
         <Link href="/login" className="inline-flex items-center gap-2 text-sm font-semibold transition-colors hover:opacity-70" style={{ color: "var(--accent)" }}>
           <ArrowLeft className="w-4 h-4" />

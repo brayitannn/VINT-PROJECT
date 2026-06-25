@@ -7,6 +7,7 @@ import { OrderSummary } from "@/components/checkout/OrderSummary";
 import { SimulationModal } from "@/components/checkout/SimulationModal";
 import { CheckoutRecommendations } from "@/components/checkout/CheckoutRecommendations";
 import { Check, ArrowLeft, ShieldCheck } from "lucide-react";
+import Loader from "@/components/ui/Loader";
 
 // --- Utilidades de Formateo ---
 const formatPrice = (price: number) => `$${price.toLocaleString('es-CO')} COP`;
@@ -50,11 +51,13 @@ export default function CheckoutPage() {
     handlePseLoginSubmit,
     handlePseOtpSubmit,
     handleSimulatePushApproval,
-    setIsProcessing
+    setIsProcessing,
+    showLoader
   } = useCheckout();
 
   return (
     <div className="min-h-screen pb-32 flex flex-col items-center relative w-full overflow-hidden bg-[var(--bg-primary)]">
+      <Loader show={showLoader} />
       
       {/* Estilos locales para 3D Card Flip y animaciones */}
       <style jsx global>{`

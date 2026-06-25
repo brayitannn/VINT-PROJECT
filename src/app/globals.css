@@ -161,4 +161,77 @@ input, button, select, textarea {
     height: 95vh !important;
     border-radius: 24px 24px 0 0 !important;
   }
+}
+
+/* Loader Animation Styles */
+#loader-overlay {
+  position: fixed;
+  inset: 0;
+  background: #111111;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  gap: 28px;
+}
+
+.tag-wrap {
+  animation: swing 1.4s ease-in-out infinite;
+  transform-origin: 85% 12%;
+  filter: drop-shadow(0 8px 24px rgba(0,0,0,0.55));
+}
+
+@keyframes swing {
+  0%   { transform: rotate(-8deg); }
+  50%  { transform: rotate(8deg); }
+  100% { transform: rotate(-8deg); }
+}
+
+.v-letter {
+  animation: vpulse 1.4s ease-in-out infinite;
+}
+
+@keyframes vpulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.7; transform: scale(0.92); }
+}
+
+.bar-track {
+  width: 160px;
+  height: 4px;
+  background: #2a2a2a;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  width: 0%;
+  background: #8B4513;
+  border-radius: 99px;
+  animation: fill 2.8s cubic-bezier(.4,0,.2,1) forwards;
+}
+
+@keyframes fill {
+  0%   { width: 0%; }
+  60%  { width: 75%; }
+  100% { width: 100%; }
+}
+
+.loader-text {
+  color: #5a5a5a;
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  animation: blink 1.4s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  to { opacity: 0; pointer-events: none; }
 }

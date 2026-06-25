@@ -44,6 +44,7 @@ export function useCheckout() {
   const [simCounter, setSimCounter] = useState(299); // 4m 59s
   const [simOtp, setSimOtp] = useState('');
   const [simBankUser, setSimBankUser] = useState('');
+  const [showLoader, setShowLoader] = useState(false);
 
   // Cálculo del Total sin descuento
   const finalPrice = totalPrice + SHIPPING_COST;
@@ -170,10 +171,12 @@ export function useCheckout() {
     finishOrder();
   };
 
-  const finishOrder = () => {
-    clearCart();
+  const finishOrder = async () => {
     setShowSimModal(false);
     setIsProcessing(false);
+    setShowLoader(true);
+    await new Promise(resolve => setTimeout(resolve, 2500));
+    clearCart();
     router.push('/checkout/exito');
   };
 
@@ -216,6 +219,7 @@ export function useCheckout() {
     handlePseLoginSubmit,
     handlePseOtpSubmit,
     handleSimulatePushApproval,
-    setIsProcessing
+    setIsProcessing,
+    showLoader
   };
 }

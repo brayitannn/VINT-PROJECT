@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext'
 import { UsersTable } from './UsersTable'
 import { RolesManager } from './RolesManager'
 import type { UsuarioAdmin, RolDB, PermisoDB } from '@/types/auth'
+import Loader from '@/components/ui/Loader'
 
 type Tab = 'usuarios' | 'roles' | 'permisos'
 
@@ -229,6 +230,7 @@ export function AdminDashboard() {
 
   return (
     <>
+      <Loader show={usersLoading || rolesLoading} />
       {/* Toast */}
       {toast && (
         <div style={{

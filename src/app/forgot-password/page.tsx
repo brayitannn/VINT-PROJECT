@@ -6,12 +6,14 @@ import { ArrowLeft, Mail, Loader2, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 import { Toast } from "@/components/forgot-password/Toast";
+import Loader from "@/components/ui/Loader";
 
 function ForgotPasswordForm() {
   const supabase = createClient();
 
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showLoader, setShowLoader] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
   const [lastSubmittedEmail, setLastSubmittedEmail] = useState("");
@@ -20,12 +22,14 @@ function ForgotPasswordForm() {
     e.preventDefault();
     setError(null);
     setLoading(true);
+    setShowLoader(true);
     try {
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       if (resetError) throw resetError;
       
+      await new Promise(resolve => setTimeout(resolve, 2500));
       setLastSubmittedEmail(email);
       setShowToast(true);
       setEmail("");
@@ -33,12 +37,14 @@ function ForgotPasswordForm() {
       console.error("Supabase Reset Error:", err);
       setError(err?.message || "No pudimos enviar el enlace. Verifica el correo e intenta de nuevo.");
     } finally {
+      setShowLoader(false);
       setLoading(false);
     }
   };
 
   return (
     <div className="w-full max-w-[440px] relative z-10 flex flex-col pt-12">
+      <Loader show={showLoader} />
       <Toast show={showToast} email={lastSubmittedEmail} onClose={() => setShowToast(false)} />
 
       <div className="flex flex-col gap-6 mb-10">

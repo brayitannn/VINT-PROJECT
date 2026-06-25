@@ -8,6 +8,7 @@ import { Loader2, ArrowLeft, Mail, Lock, Eye, EyeOff, AlertCircle } from "lucide
 
 import { Input } from "@/components/ui/input";
 import { getSupabaseClient } from "@/lib/supabase/client";
+import Loader from "@/components/ui/Loader";
 
 function LoginForm() {
   const router = useRouter();
@@ -19,12 +20,14 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showLoader, setShowLoader] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
+    setShowLoader(true);
     try {
       await signIn(email, password);
       
@@ -33,17 +36,19 @@ function LoginForm() {
       if (role === "buyer") role = "comprador";
       if (role === "seller") role = "vendedor";
 
+      await new Promise((resolve) => setTimeout(resolve, 2500));
       router.push(`/dashboard/${role}`);
       
     } catch (err: any) {
       setError("Credenciales incorrectas. Intenta de nuevo.");
-    } finally {
+      setShowLoader(false);
       setLoading(false);
     }
   };
 
   return (
     <div className="w-full max-w-[440px] relative z-10 flex flex-col pt-12">
+      <Loader show={showLoader} />
       <div className="flex flex-col gap-6 mb-10">
         <Link 
           href="/" 

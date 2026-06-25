@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Loader2 } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabase/client";
+import Loader from "@/components/ui/Loader";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -57,11 +58,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [user, loading, pathname, router, supabase]);
 
   if (loading || (!user && !roleValidated) || !roleValidated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--bg-primary)" }}>
-        <Loader2 className="w-10 h-10 animate-spin" style={{ color: "var(--accent)" }} />
-      </div>
-    );
+    return <Loader show={true} />;
   }
 
   // Aquí el children ya renderiza el page.tsx de comprador, vendedor o admin

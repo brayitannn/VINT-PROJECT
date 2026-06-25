@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { VintSelect } from "@/components/ui/VintSelect";
 import { useRegister } from "@/hooks/useRegister";
+import Loader from "@/components/ui/Loader";
 
 export function RegisterForm() {
   const {
@@ -17,6 +18,7 @@ export function RegisterForm() {
     showConfirmPassword,
     setShowConfirmPassword,
     loading,
+    showLoader,
     error,
     handleSubmit
   } = useRegister();
@@ -25,6 +27,7 @@ export function RegisterForm() {
 
   return (
     <div className="w-full max-w-[480px] relative z-10 flex flex-col pt-24">
+      <Loader show={showLoader} />
       <br /><div className="flex flex-col gap-6 mb-10">
         <Link 
           href="/" 
