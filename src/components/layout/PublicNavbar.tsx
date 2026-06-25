@@ -31,7 +31,7 @@ export function PublicNavbar() {
     <header style={{
       // Al hacer scroll: transparente + desenfoque tipo cristal
       backgroundColor: scrolled
-        ? 'rgba(244,239,230,0.55)'
+        ? 'var(--navbar-glass)'
         : 'var(--bg-card)',
       backdropFilter: scrolled ? 'blur(20px) saturate(180%)' : 'blur(12px)',
       WebkitBackdropFilter: scrolled ? 'blur(20px) saturate(180%)' : 'blur(12px)',
