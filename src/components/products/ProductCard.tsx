@@ -63,7 +63,7 @@ export function ProductCard({ product, onOpen }: ProductCardProps) {
     const rect = card.getBoundingClientRect()
     const cx = (e.clientX - rect.left) / rect.width   // 0–1
     const cy = (e.clientY - rect.top) / rect.height   // 0–1
-    setTilt({ rx: (cy - 0.5) * -14, ry: (cx - 0.5) * 14 })
+    setTilt({ rx: (cy - 0.5) * -5, ry: (cx - 0.5) * 5 })
     setGlowPos({ x: cx * 100, y: cy * 100 })
   }
 
@@ -106,14 +106,15 @@ export function ProductCard({ product, onOpen }: ProductCardProps) {
           : '0 2px 12px var(--shadow)',
         borderRadius: 20,
         overflow: 'hidden',
+        WebkitMaskImage: '-webkit-radial-gradient(white, black)',
         transition: 'box-shadow 0.35s ease, transform 0.15s ease-out',
         cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',
         position: 'relative',
         transform: hovered
-          ? `perspective(700px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg) translateY(-4px)`
-          : 'perspective(700px) rotateX(0deg) rotateY(0deg) translateY(0px)',
+          ? `perspective(700px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg) translateY(-4px) translateZ(0)`
+          : 'perspective(700px) rotateX(0deg) rotateY(0deg) translateY(0px) translateZ(0)',
         transformStyle: 'preserve-3d',
         willChange: 'transform',
       }}
