@@ -1,74 +1,97 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, Children } from 'react'
 
 export function AutoCarousel({ children }: { children: React.ReactNode }) {
-  const carouselRef = useRef<HTMLUListElement>(null)
+  const trackRef = useRef<HTMLDivElement>(null)
   const [isPaused, setIsPaused] = useState(false)
+  const animFrameRef = useRef<number | null>(null)
+  const speedPx = 0.6 // píxeles por frame — ajusta para ir más rápido o lento
 
   useEffect(() => {
-    const el = carouselRef.current
-    if (!el) return
+    const track = trackRef.current
+    if (!track) return
 
-    const interval = setInterval(() => {
-      if (isPaused) return
+    // Esperar a que el layout esté listo
+    const start = () => {
+      const halfWidth = track.scrollWidth / 2
 
-      const maxScroll = el.scrollWidth - el.clientWidth
-      if (maxScroll <= 5) return // No scroll needed if everything fits
+      const tick = () => {
+        if (!isPaused) {
+          track.scrollLeft += speedPx
 
-      const childElements = el.children
-      if (childElements.length <= 1) return
-
-      // Find the child closest to the current scroll position
-      let currentIndex = 0
-      let minDiff = Infinity
-      for (let i = 0; i < childElements.length; i++) {
-        const child = childElements[i] as HTMLElement
-        const diff = Math.abs(child.offsetLeft - el.scrollLeft)
-        if (diff < minDiff) {
-          minDiff = diff
-          currentIndex = i
+          // Cuando llega a la mitad (= ha scrollado el set original completo)
+          // salta silenciosamente al inicio para crear el loop infinito
+          if (track.scrollLeft >= halfWidth) {
+            track.scrollLeft -= halfWidth
+          }
         }
+        animFrameRef.current = requestAnimationFrame(tick)
       }
 
-      let nextIndex = currentIndex + 1
-      if (nextIndex >= childElements.length) {
-        // Reset to start
-        el.scrollTo({ left: 0, behavior: 'smooth' })
-      } else {
-        const nextChild = childElements[nextIndex] as HTMLElement
-        el.scrollTo({ left: nextChild.offsetLeft, behavior: 'smooth' })
-      }
-    }, 3500) // Cambia cada 3.5 segundos
+      animFrameRef.current = requestAnimationFrame(tick)
+    }
 
-    return () => clearInterval(interval)
+    // Pequeño delay para que el DOM esté pintado
+    const timeout = setTimeout(start, 100)
+
+    return () => {
+      clearTimeout(timeout)
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current)
+    }
   }, [isPaused])
 
+  // Duplicamos los children para el loop infinito
+  const items = Children.toArray(children)
+  const doubled = [...items, ...items]
+
   return (
-    <ul 
-      ref={carouselRef}
+    <div
+      style={{ position: 'relative', overflow: 'hidden' }}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
-      style={{ 
-        display: 'flex', 
-        overflowX: 'auto', 
-        gap: 24, 
-        listStyle: 'none', 
-        padding: '16px 4px 32px 4px', 
-        margin: '0 -4px',
-        scrollSnapType: 'x mandatory',
-        scrollbarWidth: 'none',
-        WebkitOverflowScrolling: 'touch',
-        position: 'relative', // Define offset parent for child.offsetLeft
-      }} 
-      className="home-carousel"
     >
-      <style>{`
-        .home-carousel::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
-      {children}
-    </ul>
+      {/* Gradiente izquierdo */}
+      <div style={{
+        position: 'absolute', left: 0, top: 0, bottom: 0, width: 80, zIndex: 2,
+        background: 'linear-gradient(to right, var(--bg-primary) 0%, transparent 100%)',
+        pointerEvents: 'none',
+      }} />
+      {/* Gradiente derecho */}
+      <div style={{
+        position: 'absolute', right: 0, top: 0, bottom: 0, width: 80, zIndex: 2,
+        background: 'linear-gradient(to left, var(--bg-primary) 0%, transparent 100%)',
+        pointerEvents: 'none',
+      }} />
+
+      <div
+        ref={trackRef}
+        style={{
+          display: 'flex',
+          gap: 24,
+          overflowX: 'hidden',      // scroll oculto, lo manejamos por JS
+          padding: '16px 4px 32px 4px',
+          scrollbarWidth: 'none',
+          WebkitOverflowScrolling: 'touch',
+        }}
+        className="home-carousel"
+      >
+        <style>{`
+          .home-carousel::-webkit-scrollbar { display: none; }
+        `}</style>
+
+        {doubled.map((child, i) => (
+          <div
+            key={i}
+            style={{
+              flex: '0 0 300px',
+              minWidth: 280,
+            }}
+          >
+            {child}
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }

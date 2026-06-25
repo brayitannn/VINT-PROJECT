@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 interface FeatureCardProps {
   icon: React.ReactNode;
@@ -16,49 +16,64 @@ export function FeatureCard({
 }: FeatureCardProps) {
   const [hovered, setHovered] = useState(false);
   const [waterCount, setWaterCount] = useState(0);
+  const [visible, setVisible] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
-  // Efecto Contador para Moda Sostenible
+  // ── Detecta cuando la tarjeta aparece en pantalla ──────────────────
   useEffect(() => {
-    if (title === 'Moda Sostenible') {
-      if (hovered) {
-        let current = 0;
-        const target = 2700;
-        const interval = setInterval(() => {
-          current += 100;
-          if (current >= target) {
-            current = target;
-            clearInterval(interval);
-          }
-          setWaterCount(current);
-        }, 20);
-        return () => clearInterval(interval);
-      } else {
-        setWaterCount(0);
+    const el = cardRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.2 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // ── Contador de litros (Moda Sostenible) — se activa al verla en pantalla ──
+  useEffect(() => {
+    if (title !== 'Moda Sostenible') return;
+    if (!visible) return;
+
+    let current = 0;
+    const target = 2700;
+    const interval = setInterval(() => {
+      current += 60;
+      if (current >= target) {
+        current = target;
+        clearInterval(interval);
       }
-    }
-  }, [hovered, title]);
+      setWaterCount(current);
+    }, 16);
+    return () => clearInterval(interval);
+  }, [visible, title]);
 
   return (
     <>
       <div
+        ref={cardRef}
         className="feature-card-wrapper"
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         style={{
           position: "relative",
           overflow: "hidden",
-          // Desenfoque y fondo semi-transparente estilo cristal (Glassmorphism)
           backgroundColor: hovered ? "var(--bg-card-hover)" : "var(--bg-card)",
-          backdropFilter: "blur(16px)", // <- Este es el desenfoque
-          zIndex: hovered ? 50 : 1, // <- ¡ESTO EVITA QUE SE ESCONDA DETRÁS DE LAS OTRAS!
+          backdropFilter: "blur(16px)",
+          zIndex: hovered ? 50 : 1,
           border: "1px solid var(--border)",
           borderRadius: 20,
           height: 320,
           cursor: "pointer",
           transition: "all 0.3s ease",
-          // Aquí combinamos el levantamiento (translate) con el agrande (scale) 
           transform: hovered ? "translateY(-4px) scale(1.05)" : "translateY(0) scale(1)",
-          boxShadow: hovered ? "0 25px 50px -12px var(--shadow-hover)" : "none"
+          boxShadow: hovered ? "0 25px 50px -12px var(--shadow-hover)" : "none",
         }}
       >
         <div
@@ -71,12 +86,11 @@ export function FeatureCard({
             justifyContent: "center",
             padding: "40px 32px",
             textAlign: "center",
-            // Ajustamos el desplazamiento para dar espacio a la info interactiva
             transform: hovered ? "translateY(-28px)" : "translateY(0)",
             transition: "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
         >
-          {/* Contenedor del ícono dinámico */}
+          {/* Ícono */}
           <div style={{
             width: 64,
             height: 64,
@@ -107,25 +121,25 @@ export function FeatureCard({
             {title}
           </h3>
 
-          {/* Dinamismo interactivo (Solo se muestra en Hover) */}
+          {/* Contador de agua — aparece al ver la tarjeta */}
           {title === 'Moda Sostenible' && (
             <div style={{
-              height: hovered ? 24 : 0,
-              opacity: hovered ? 1 : 0,
+              height: visible ? 24 : 0,
+              opacity: visible ? 1 : 0,
               overflow: 'hidden',
-              transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-              color: '#059669', // Verde naturaleza
+              transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+              color: '#059669',
               fontWeight: 800,
               fontSize: 14,
-              marginBottom: hovered ? 8 : 0
+              marginBottom: visible ? 8 : 0
             }}>
-              💧 {waterCount}L de agua ahorrados
+              💧 {waterCount.toLocaleString('es-CO')}L de agua ahorrados
             </div>
           )}
 
           {title === 'Mejores Precios' && (
             <div style={{
-              height: hovered ? 28 : 0, // Un poco más alto para que la escala quepa perfecta
+              height: hovered ? 28 : 0,
               opacity: hovered ? 1 : 0,
               overflow: 'hidden',
               transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -135,7 +149,7 @@ export function FeatureCard({
               gap: 10,
               fontSize: 15,
               marginBottom: hovered ? 8 : 0,
-              padding: "0 10px", // Margen interno de seguridad
+              padding: "0 10px",
             }}>
               <span style={{ textDecoration: 'line-through', color: 'var(--text-muted)' }}>$160.000</span>
               <span style={{
@@ -143,15 +157,14 @@ export function FeatureCard({
                 fontWeight: 800,
                 transform: hovered ? 'scale(1.01)' : 'scale(1)',
                 transition: 'transform 0.5s 0.2s',
-                display: 'inline-block', // Ayuda al navegador a redimensionar sin cortar
-                padding: '0 4px' // Espacio extra para que no golpee el límite oculto
+                display: 'inline-block',
+                padding: '0 4px'
               }}>
                 $45.000
               </span>
             </div>
           )}
 
-          {/* El texto corto principal que se desvanece sutilmente si es necesario */}
           <p style={{
             fontSize: 14,
             color: "var(--text-secondary)",
@@ -164,7 +177,7 @@ export function FeatureCard({
           </p>
         </div>
 
-        {/* Hover de flecha de acción */}
+        {/* Franja de color al hover */}
         <div
           style={{
             position: "absolute",
@@ -179,8 +192,7 @@ export function FeatureCard({
             transform: hovered ? "translateY(0)" : "translateY(100%)",
             transition: "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
-        >
-        </div>
+        />
       </div>
     </>
   );
