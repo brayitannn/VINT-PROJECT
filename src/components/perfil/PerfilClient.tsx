@@ -7,6 +7,7 @@ import { useRole } from '@/context/RoleContext'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import { API_BASE_URL } from '@/lib/api'
 import {
   User, Lock, Bell, Shield, Palette, HelpCircle, Heart,
   AlertTriangle, ChevronRight, Camera, Save, Check,
@@ -457,9 +458,17 @@ function CuentaSection() {
 
     setUpdating(true)
     try {
-      const res = await fetch('/api/auth/change-password', {
+      // Obtener el token de sesión para enviarlo a la API Python
+      const supabase = createClient()
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData?.session?.access_token || ''
+
+      const res = await fetch(`${API_BASE_URL}/api/auth/change-password`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({ currentPassword: currentPass, newPassword: newPass }),
       })
       const json = await res.json()

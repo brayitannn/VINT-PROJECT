@@ -8,6 +8,8 @@ import { UsersTable } from './UsersTable'
 import { RolesManager } from './RolesManager'
 import type { UsuarioAdmin, RolDB, PermisoDB } from '@/types/auth'
 import Loader from '@/components/ui/Loader'
+import { API_BASE_URL } from '@/lib/api'
+import { createClient } from '@/lib/supabase/client'
 
 type Tab = 'usuarios' | 'roles' | 'permisos'
 
@@ -42,6 +44,21 @@ export function AdminDashboard() {
     setTimeout(() => setToast(null), 3000)
   }
 
+  // ── Helper authenticated fetch ──
+  const authFetch = useCallback(async (url: string, options: RequestInit = {}) => {
+    const supabase = createClient()
+    const { data: sessionData } = await supabase.auth.getSession()
+    const token = sessionData?.session?.access_token || ''
+    
+    return fetch(url, {
+      ...options,
+      headers: {
+        ...options.headers,
+        'Authorization': `Bearer ${token}`,
+      }
+    })
+  }, [])
+
   // ── Fetch Users ──
   const fetchUsers = useCallback(async () => {
     setUsersLoading(true)
@@ -53,7 +70,7 @@ export function AdminDashboard() {
       params.set('page', usersPage.toString())
       params.set('limit', '15')
 
-      const res = await fetch(`/api/admin/users?${params}`)
+      const res = await authFetch(`${API_BASE_URL}/api/admin/users?${params}`)
       const json = await res.json()
 
       if (json.success) {
@@ -67,15 +84,15 @@ export function AdminDashboard() {
     } finally {
       setUsersLoading(false)
     }
-  }, [usersSearch, usersRoleFilter, usersStatusFilter, usersPage])
+  }, [usersSearch, usersRoleFilter, usersStatusFilter, usersPage, authFetch])
 
   // ── Fetch Roles ──
   const fetchRoles = useCallback(async () => {
     setRolesLoading(true)
     try {
       const [rolesRes, permisosRes] = await Promise.all([
-        fetch('/api/admin/roles'),
-        fetch('/api/admin/permissions'),
+        authFetch(`${API_BASE_URL}/api/admin/roles`),
+        authFetch(`${API_BASE_URL}/api/admin/permissions`),
       ])
       const [rolesJson, permisosJson] = await Promise.all([rolesRes.json(), permisosRes.json()])
 
@@ -86,7 +103,7 @@ export function AdminDashboard() {
     } finally {
       setRolesLoading(false)
     }
-  }, [])
+  }, [authFetch])
 
   useEffect(() => { fetchUsers() }, [fetchUsers])
   useEffect(() => { fetchRoles() }, [fetchRoles])
@@ -100,7 +117,7 @@ export function AdminDashboard() {
   // ── Actions ──
   const handleToggleStatus = async (userId: number, activo: boolean) => {
     try {
-      const res = await fetch('/api/admin/users', {
+      const res = await authFetch(`${API_BASE_URL}/api/admin/users`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, activo }),
@@ -119,7 +136,7 @@ export function AdminDashboard() {
 
   const handleDeleteUser = async (userId: number) => {
     try {
-      const res = await fetch(`/api/admin/users/${userId}`, {
+      const res = await authFetch(`${API_BASE_URL}/api/admin/users/${userId}`, {
         method: 'DELETE',
         headers: { 'x-confirm-delete': 'true' },
       })
@@ -137,7 +154,7 @@ export function AdminDashboard() {
 
   const handleAssignRole = async (userId: number, roleId: number) => {
     try {
-      const res = await fetch('/api/admin/roles/assign', {
+      const res = await authFetch(`${API_BASE_URL}/api/admin/roles/assign`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, roleId }),
@@ -156,7 +173,7 @@ export function AdminDashboard() {
 
   const handleCreateRole = async (nombre: string) => {
     try {
-      const res = await fetch('/api/admin/roles', {
+      const res = await authFetch(`${API_BASE_URL}/api/admin/roles`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nombre }),
@@ -175,7 +192,7 @@ export function AdminDashboard() {
 
   const handleUpdateRole = async (id_rol: number, nombre: string) => {
     try {
-      const res = await fetch('/api/admin/roles', {
+      const res = await authFetch(`${API_BASE_URL}/api/admin/roles`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id_rol, nombre }),
@@ -194,7 +211,7 @@ export function AdminDashboard() {
 
   const handleUpdatePermissions = async (roleId: number, permissionIds: number[]) => {
     try {
-      const res = await fetch('/api/admin/permissions', {
+      const res = await authFetch(`${API_BASE_URL}/api/admin/permissions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ roleId, permissionIds }),

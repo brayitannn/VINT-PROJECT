@@ -1,5 +1,5 @@
 import React from "react";
-import { User, Phone, Mail, MapPin, ChevronRight } from "lucide-react";
+import { User, Phone, Mail, MapPin, ChevronRight, Loader2 } from "lucide-react";
 import { PremiumInput } from "./PremiumInput";
 
 interface ShippingFormProps {
@@ -14,13 +14,15 @@ interface ShippingFormProps {
   setShipping: (shipping: any) => void;
   shippingErrors: any;
   handleNextStep: (e: React.FormEvent) => void;
+  isProcessing?: boolean;
 }
 
 export const ShippingForm = ({
   shipping,
   setShipping,
   shippingErrors,
-  handleNextStep
+  handleNextStep,
+  isProcessing = false
 }: ShippingFormProps) => {
   return (
     <form 
@@ -112,10 +114,20 @@ export const ShippingForm = ({
 
       <button
         type="submit"
-        className="w-full h-[54px] rounded-xl font-bold text-white bg-[var(--accent)] hover:opacity-95 shadow-md flex items-center justify-center gap-2 transition-transform duration-300 hover:scale-[1.01] mt-6 cursor-pointer"
+        disabled={isProcessing}
+        className="w-full h-[54px] rounded-xl font-bold text-white bg-[var(--accent)] hover:opacity-95 shadow-md flex items-center justify-center gap-2 transition-transform duration-300 hover:scale-[1.01] mt-6 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
       >
-        Continuar al Pago
-        <ChevronRight className="w-4 h-4" />
+        {isProcessing ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Redirigiendo a Mercado Pago...
+          </>
+        ) : (
+          <>
+            Continuar al Pago
+            <ChevronRight className="w-4 h-4" />
+          </>
+        )}
       </button>
     </form>
   );

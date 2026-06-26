@@ -1,24 +1,52 @@
 'use client'
 
 import Link from 'next/link'
-import { Check, ShoppingBag, Copy, Calendar, Truck, Mail, ArrowRight, User } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Check, ShoppingBag, Copy, Calendar, Truck, Mail, ArrowRight, User, Clock, AlertCircle } from 'lucide-react'
+import { useEffect, useState, Suspense } from 'react'
 import { useCart } from '@/context/CartContext'
+import { useSearchParams } from 'next/navigation'
 
-export default function ExitoPage() {
+// Mapa legible de métodos de pago que MP puede devolver
+const PAYMENT_TYPE_LABELS: Record<string, string> = {
+  credit_card: 'Tarjeta de Crédito',
+  debit_card: 'Tarjeta de Débito',
+  bank_transfer: 'Transferencia PSE',
+  ticket: 'Efectivo',
+  digital_wallet: 'Billetera Digital',
+  atm: 'ATM',
+  prepaid_card: 'Tarjeta Prepago',
+}
+
+function ExitoContent() {
   const { clearCart } = useCart()
+  const searchParams = useSearchParams()
   const [orderNumber, setOrderNumber] = useState('')
   const [copied, setCopied] = useState(false)
   const [dateStr, setDateStr] = useState('')
 
+  // Leer parámetros reales que envía Mercado Pago al redirigir
+  const mpStatus = searchParams.get('status') || searchParams.get('collection_status') || 'approved'
+  const mpPaymentId = searchParams.get('payment_id') || searchParams.get('collection_id') || ''
+  const mpPaymentType = searchParams.get('payment_type') || ''
+  const mpMerchantOrderId = searchParams.get('merchant_order_id') || ''
+
+  const isApproved = mpStatus === 'approved'
+  const isPending = mpStatus === 'pending' || mpStatus === 'in_process'
+
   useEffect(() => {
-    // Limpiar el carrito de compras tras el pago exitoso
-    clearCart()
-    
-    setOrderNumber(`VN-${Math.floor(100000 + Math.random() * 900000).toString()}`)
+    // Solo limpiar el carrito si el pago fue aprobado
+    if (isApproved) clearCart()
+
+    // Usar el payment_id real de MP o generar uno de respaldo
+    if (mpPaymentId) {
+      setOrderNumber(`VN-${mpPaymentId}`)
+    } else {
+      setOrderNumber(`VN-${Math.floor(100000 + Math.random() * 900000).toString()}`)
+    }
+
     const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' }
     setDateStr(new Date().toLocaleDateString('es-CO', options))
-  }, [clearCart])
+  }, [clearCart, isApproved, mpPaymentId])
 
   const handleCopy = () => {
     if (typeof window !== 'undefined' && orderNumber) {
@@ -80,32 +108,69 @@ export default function ExitoPage() {
         <div className="absolute top-0 right-0 w-24 h-24 bg-[radial-gradient(circle,rgba(139,94,60,0.06)_0%,transparent_70%)] pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-[radial-gradient(circle,rgba(139,94,60,0.04)_0%,transparent_70%)] pointer-events-none" />
 
+        {/* Banner de estado alternativo (Pendiente / Fallido) */}
+        {!isApproved && (
+          <div
+            style={{
+              backgroundColor: isPending ? 'rgba(245,158,11,0.08)' : 'rgba(239,68,68,0.08)',
+              borderColor: isPending ? 'rgba(245,158,11,0.3)' : 'rgba(239,68,68,0.3)',
+              padding: '14px 16px'
+            }}
+            className="w-full rounded-2xl border flex items-start gap-3 text-left"
+          >
+            {isPending
+              ? <Clock size={18} className="text-amber-500 flex-shrink-0 mt-0.5" />
+              : <AlertCircle size={18} className="text-red-500 flex-shrink-0 mt-0.5" />
+            }
+            <div>
+              <p className="text-sm font-bold" style={{ color: isPending ? '#F59E0B' : '#EF4444' }}>
+                {isPending ? 'Pago en proceso de verificación' : 'Pago no completado'}
+              </p>
+              <p className="text-xs text-[var(--text-secondary)] mt-0.5 leading-relaxed">
+                {isPending
+                  ? 'Tu pago está siendo verificado por MercadoPago. Te notificaremos cuando se confirme.'
+                  : 'Hubo un problema con tu pago. Por favor intenta nuevamente o elige otro método.'
+                }
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Hero Area: Icono y Textos */}
         <div 
           style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', width: '100%' }}
         >
-          {/* Ícono de Éxito Animado */}
+          {/* Ícono de Éxito / Pendiente Animado */}
           <div className="relative animate-ring-scale">
             <div 
-              style={{ borderColor: 'color-mix(in srgb, var(--accent) 20%, transparent)' }}
+              style={{ borderColor: isApproved ? 'color-mix(in srgb, var(--accent) 20%, transparent)' : 'rgba(245,158,11,0.3)' }}
               className="w-20 h-20 rounded-full border-4 flex items-center justify-center bg-white dark:bg-[var(--bg-secondary)] shadow-inner animate-pulse-accent"
             >
-              <svg className="w-10 h-10 text-[var(--accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" className="animate-draw-check" />
-              </svg>
+              {isApproved ? (
+                <svg className="w-10 h-10 text-[var(--accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" className="animate-draw-check" />
+                </svg>
+              ) : (
+                <Clock className="w-10 h-10 text-amber-500" />
+              )}
             </div>
-            {/* Pequeño check flotante de confirmación */}
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center border-2 border-white dark:border-[var(--bg-card)] shadow z-10">
+            {/* Pequeño badge flotante */}
+            <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full text-white flex items-center justify-center border-2 border-white dark:border-[var(--bg-card)] shadow z-10 ${isApproved ? 'bg-green-500' : 'bg-amber-400'}`}>
               <Check size={12} strokeWidth={3} />
             </div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <h1 className="text-3xl sm:text-4xl font-black font-display text-[var(--text-primary)] tracking-tight">
-              ¡Pago Exitoso!
+              {isApproved ? '¡Pago Exitoso!' : isPending ? 'Pago Pendiente' : 'Pago No Completado'}
             </h1>
             <p className="text-sm sm:text-base text-[var(--text-secondary)] leading-relaxed max-w-md mx-auto">
-              Tu compra ha sido procesada de forma segura. El vendedor ya está notificado y preparando todo.
+              {isApproved
+                ? 'Tu compra ha sido procesada de forma segura. El vendedor ya está notificado y preparando todo.'
+                : isPending
+                ? 'Tu pago está en revisión. Una vez aprobado, el vendedor comenzará a preparar tu pedido.'
+                : 'No pudimos procesar tu pago. Por favor regresa al checkout e intenta de nuevo.'
+              }
             </p>
           </div>
         </div>
@@ -254,6 +319,16 @@ export default function ExitoPage() {
                 </p>
                 <p className="text-xs font-bold text-[var(--text-primary)]">2 - 4 días hábiles</p>
               </div>
+              {mpPaymentType && (
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <p className="text-[11px] font-semibold text-[var(--text-muted)] flex items-center gap-1">
+                    <Mail size={13} className="text-[var(--text-secondary)]" /> Método de Pago
+                  </p>
+                  <p className="text-xs font-bold text-[var(--text-primary)]">
+                    {PAYMENT_TYPE_LABELS[mpPaymentType] || mpPaymentType}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Notificación de envío */}
@@ -301,3 +376,15 @@ export default function ExitoPage() {
     </div>
   )
 }
+
+export default function ExitoPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-[90vh] flex items-center justify-center bg-[var(--bg-primary)]">
+        <div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <ExitoContent />
+    </Suspense>
+  )
+}

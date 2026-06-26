@@ -2,6 +2,7 @@
 
 import { useEffect, useCallback, useRef } from 'react'
 import { useAuth } from '@/context/AuthContext'
+import { API_BASE_URL } from '@/lib/api'
 
 type EventoTipo = 'vista' | 'busqueda' | 'favorito' | 'carrito'
 
@@ -29,7 +30,7 @@ export function useTracker() {
       if (!user) return
       // Fire-and-forget: nunca bloquea la UI
       try {
-        fetch('/api/track', {
+        fetch(`${API_BASE_URL}/api/track`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ tipo, ...payload, id_usuario: user.id }),

@@ -176,6 +176,7 @@ export default function CheckoutPage() {
               setShipping={setShipping}
               shippingErrors={shippingErrors}
               handleNextStep={handleNextStep}
+              isProcessing={isProcessing}
             />
           ) : (
             <div className="flex flex-col gap-8 w-full">

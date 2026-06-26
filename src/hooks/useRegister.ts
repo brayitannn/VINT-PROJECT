@@ -77,7 +77,8 @@ export function useRegister() {
             fecha_nacimiento: formData.fechaNacimiento,
             genero: formData.genero,
             telefono: formData.phone,
-            id_rol: formData.userType === 'vendedor' ? 2 : 1
+            id_rol: formData.userType === 'vendedor' ? 2 : 3,
+            role: formData.userType
           },
         },
       });

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { useFavorites } from '@/context/FavoritesContext'
 import { ProductoRecomendado } from '@/types/dashboard'
+import { API_BASE_URL } from '@/lib/api'
 
 const REFRESH_INTERVAL_MS = 5 * 60 * 1000 // 5 minutos
 
@@ -26,7 +27,7 @@ export function useRecomendaciones() {
       const preferencias = user.user_metadata?.preferencias ?? null
       const favoritoIds = Array.from(favoriteIds) // Set → Array para enviarlo a la API
 
-      const res = await fetch('/api/recomendaciones', {
+      const res = await fetch(`${API_BASE_URL}/api/recomendaciones`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useCart, SHIPPING_COST } from "@/context/CartContext";
+import { API_BASE_URL } from "@/lib/api";
 
 export function useCheckout() {
   const { items, totalItems, totalPrice, totalWithShipping, clearCart } = useCart();
@@ -73,11 +74,51 @@ export function useCheckout() {
     return Object.keys(errors).length === 0;
   };
 
-  const handleNextStep = (e: React.FormEvent) => {
+  const handleNextStep = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateShipping()) {
-      setStep(2);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (!validateShipping()) return;
+
+    setIsProcessing(true);
+
+    // Abrir una ventana en blanco de inmediato para evitar que el navegador bloquee el popup
+    const newWindow = typeof window !== 'undefined' ? window.open('about:blank', '_blank') : null;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/checkout/mercadopago`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: items.map(item => ({
+            id: String(item.id),
+            name: item.name,
+            price: Number(item.price),
+            quantity: 1
+          })),
+          email_comprador: shipping.email || "comprador@vint.com"
+        })
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "No se pudo generar la preferencia de pago.");
+      }
+
+      const data = await response.json();
+      if (data.initPoint) {
+        if (newWindow) {
+          newWindow.location.href = data.initPoint;
+        } else if (typeof window !== 'undefined') {
+          window.open(data.initPoint, '_blank');
+        }
+      } else {
+        throw new Error("No se recibió la URL de pago de Mercado Pago.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      if (newWindow) newWindow.close();
+      alert("Error al procesar el pago: " + err.message);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -132,9 +173,9 @@ export function useCheckout() {
       return;
     }
 
-    // Para tarjeta, pse, nequi: llamamos a Mercado Pago
+    // Para tarjeta, pse, nequi: llamamos a la API interna de Next.js
     try {
-      const response = await fetch("http://localhost:8000/api/checkout/mercadopago", {
+      const response = await fetch(`${API_BASE_URL}/api/checkout/mercadopago`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -149,19 +190,20 @@ export function useCheckout() {
       });
 
       if (!response.ok) {
-        throw new Error("No se pudo generar la preferencia de pago.");
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "No se pudo generar la preferencia de pago.");
       }
 
       const data = await response.json();
       if (data.initPoint) {
-        // Redirigir a Mercado Pago
+        // Redirigir al portal de pago de Mercado Pago
         window.location.href = data.initPoint;
       } else {
-        throw new Error("No se recibió la URL de pago.");
+        throw new Error("No se recibió la URL de pago de Mercado Pago.");
       }
     } catch (err: any) {
       console.error(err);
-      alert("Error al procesar el pago con Mercado Pago: " + err.message);
+      alert("Error al procesar el pago: " + err.message);
       setIsProcessing(false);
     }
   };
