@@ -125,27 +125,44 @@ export function useCheckout() {
 
     setIsProcessing(true);
 
-    if (paymentMethod === 'card') {
-      // Simulación de procesamiento de tarjeta instantáneo y seguro
-      await new Promise(resolve => setTimeout(resolve, 2500));
-      finishOrder();
-    } else if (paymentMethod === 'pse') {
-      // Iniciar modal de simulación PSE
-      setShowSimModal(true);
-      setSimState('loading');
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setSimState('pse_login');
-      setIsProcessing(false);
-    } else if (paymentMethod === 'nequi') {
-      // Iniciar modal de simulación push
-      setShowSimModal(true);
-      setSimCounter(299);
-      setSimState('nequi_push');
-      setIsProcessing(false);
-    } else if (paymentMethod === 'delivery') {
+    if (paymentMethod === 'delivery') {
       // Contraentrega simple
       await new Promise(resolve => setTimeout(resolve, 2000));
       finishOrder();
+      return;
+    }
+
+    // Para tarjeta, pse, nequi: llamamos a Mercado Pago
+    try {
+      const response = await fetch("http://localhost:8000/api/checkout/mercadopago", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: items.map(item => ({
+            id: String(item.id),
+            name: item.name,
+            price: Number(item.price),
+            quantity: 1
+          })),
+          email_comprador: shipping.email || "comprador@vint.com"
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("No se pudo generar la preferencia de pago.");
+      }
+
+      const data = await response.json();
+      if (data.initPoint) {
+        // Redirigir a Mercado Pago
+        window.location.href = data.initPoint;
+      } else {
+        throw new Error("No se recibió la URL de pago.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert("Error al procesar el pago con Mercado Pago: " + err.message);
+      setIsProcessing(false);
     }
   };
 

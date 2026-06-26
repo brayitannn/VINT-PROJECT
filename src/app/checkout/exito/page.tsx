@@ -3,17 +3,22 @@
 import Link from 'next/link'
 import { Check, ShoppingBag, Copy, Calendar, Truck, Mail, ArrowRight, User } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useCart } from '@/context/CartContext'
 
 export default function ExitoPage() {
+  const { clearCart } = useCart()
   const [orderNumber, setOrderNumber] = useState('')
   const [copied, setCopied] = useState(false)
   const [dateStr, setDateStr] = useState('')
 
   useEffect(() => {
+    // Limpiar el carrito de compras tras el pago exitoso
+    clearCart()
+    
     setOrderNumber(`VN-${Math.floor(100000 + Math.random() * 900000).toString()}`)
     const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' }
     setDateStr(new Date().toLocaleDateString('es-CO', options))
-  }, [])
+  }, [clearCart])
 
   const handleCopy = () => {
     if (typeof window !== 'undefined' && orderNumber) {
