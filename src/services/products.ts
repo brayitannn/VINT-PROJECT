@@ -45,8 +45,7 @@ export async function getProducts(
     }
     const json = await res.json()
     let products: Product[] = (json.data || []).map((p: any) =>
-      // API already maps the shape, but run through mapFromDB for safety
-      (p.estado_publicacion !== undefined ? mapFromDB(p) : p) as Product
+      mapFromDB(p)
     )
 
     // Client-side filtering (search, status, category)
