@@ -11,7 +11,7 @@ import { API_BASE_URL } from '@/lib/api'
 import {
   User, Lock, Bell, Shield, Palette, HelpCircle, Heart,
   AlertTriangle, ChevronRight, Camera, Save, Check,
-  Sun, Moon, Eye, EyeOff, MessageCircle, FileText, Trash2, Loader2, ArrowLeft
+  Sun, Moon, Eye, EyeOff, MessageCircle, FileText, Trash2, Loader2
 } from 'lucide-react'
 import { VintSelect } from '@/components/ui/VintSelect'
 
@@ -915,23 +915,6 @@ export function PerfilClient() {
         {/* Page header */}
         <div style={{ backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', padding: '28px 2rem' }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <Link
-              href="/dashboard"
-              className="volver-link"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                textDecoration: 'none',
-                fontSize: 14,
-                fontWeight: 500,
-                marginBottom: 16,
-                transition: 'color 0.2s'
-              }}
-            >
-              <ArrowLeft size={16} />
-              Volver
-            </Link>
             <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
               Configuración
             </h1>

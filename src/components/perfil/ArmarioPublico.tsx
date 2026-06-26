@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { ArrowLeft, MapPin, Calendar, Heart, Share2, Award, Info } from 'lucide-react'
+import { MapPin, Calendar, Heart, Share2, Award, Info } from 'lucide-react'
 import Link from 'next/link'
 
 interface ArmarioPublicoProps {
@@ -130,25 +130,6 @@ export function ArmarioPublico({ buyerSlug }: ArmarioPublicoProps) {
         <div style={{ background: 'var(--bg-primary)' }}>
           <div className="armario-banner">
             
-            <div style={{ position: 'absolute', top: 24, left: 24, zIndex: 10 }}>
-              <Link 
-                href="/explorar" 
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 8,
-                  padding: '10px 20px', borderRadius: '999px',
-                  backgroundColor: 'rgba(0, 0, 0, 0.3)', color: 'white',
-                  backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  fontSize: 14, fontWeight: 700, textDecoration: 'none',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                  transition: 'all 0.3s',
-                }}
-                className="hover:scale-105"
-              >
-                <ArrowLeft size={18} /> Volver a Explorar
-              </Link>
-            </div>
-
             <div style={{ position: 'absolute', top: 24, right: 24, zIndex: 10 }}>
               <button 
                 style={{

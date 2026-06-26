@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { ArrowLeft, Settings, MapPin, Calendar, Star, Package, MessageCircle, UserPlus, MessageSquare, Trash2, Send, Check } from 'lucide-react'
+import { Settings, MapPin, Calendar, Star, Package, MessageCircle, UserPlus, MessageSquare, Trash2, Send, Check } from 'lucide-react'
 import Link from 'next/link'
 import { ProductCard, type Product } from '@/components/products/ProductCard'
 import { useAuth } from '@/context/AuthContext'
@@ -572,33 +572,7 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
         <div style={{ background: 'var(--bg-primary)' }}>
           <div className="store-banner">
             
-            {/* Botón Volver Flotante (Glassmorphism) */}
-            <div style={{ position: 'absolute', top: 24, left: 24, zIndex: 10 }}>
-              <Link 
-                href={isOwner ? "/dashboard" : "/explorar"} 
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 8,
-                  padding: '10px 20px', borderRadius: '999px',
-                  backgroundColor: 'rgba(0, 0, 0, 0.3)', color: 'white',
-                  backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  fontSize: 14, fontWeight: 700, textDecoration: 'none',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                  transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                }}
-                className="hover:scale-105"
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.5)'
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.3)'
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'
-                }}
-              >
-                <ArrowLeft size={18} /> {isOwner ? "Volver al Dashboard" : "Volver a Explorar"}
-              </Link>
-            </div>
+
             
             <div className="store-avatar">
               {avatarUrl ? <img src={avatarUrl} alt="Avatar" className="store-avatar-img" /> : firstInitial}

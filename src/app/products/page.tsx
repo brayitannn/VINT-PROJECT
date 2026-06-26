@@ -4,8 +4,6 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useProducts } from '@/hooks/useProducts'
 import { useAuth } from '@/context/AuthContext'
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
 import { ProductTable } from '@/components/products/ProductTable'
 import { ProductModal } from '@/components/products/ProductModal'
 import { ProductDeleteDialog } from '@/components/products/ProductDeleteDialog'
@@ -139,23 +137,6 @@ function ProductsContent() {
         type={toastConfig.type} 
         onClose={() => setToastConfig(prev => ({ ...prev, show: false }))} 
       />
-
-      <div style={{ marginBottom: 24, display: 'flex' }}>
-        <Link 
-          href="/dashboard" 
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            padding: '10px 20px', borderRadius: '999px',
-            backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)',
-            border: '1px solid var(--border)',
-            fontSize: 14, fontWeight: 700, textDecoration: 'none',
-            transition: 'all 0.2s',
-          }}
-          className="hover:scale-105 hover:border-[var(--accent)] hover:text-[var(--accent)]"
-        >
-          <ArrowLeft size={18} /> Volver al Dashboard
-        </Link>
-      </div>
 
       <div className="page-header">
         <div>

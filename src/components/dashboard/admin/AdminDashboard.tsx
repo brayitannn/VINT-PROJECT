@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Users, Shield, Key, ArrowLeft, Loader2 } from 'lucide-react'
-import Link from 'next/link'
+import { Users, Shield, Key, Loader2 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { UsersTable } from './UsersTable'
 import { RolesManager } from './RolesManager'
@@ -271,17 +270,6 @@ export function AdminDashboard() {
         {/* Header */}
         <div style={{ backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', padding: '28px 2rem' }}>
           <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <Link
-              href="/dashboard"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                textDecoration: 'none', fontSize: 14, fontWeight: 500,
-                color: 'var(--text-muted)', marginBottom: 16, transition: 'color 0.2s',
-              }}
-            >
-              <ArrowLeft size={16} />
-              Volver al Dashboard
-            </Link>
             <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
               Panel de Administración
             </h1>

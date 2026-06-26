@@ -1,7 +1,7 @@
 'use client'
 
 import { getSupabaseClient } from '@/lib/supabase/client'
-import { API_BASE_URL } from '@/lib/api'
+import { API_BASE_URL, getAuthHeaders } from '@/lib/api'
 import type { Product, ProductInsert, ProductUpdate, ProductFilters } from '@/types/product'
 
 const VIEW = 'v_catalogo_publico'
@@ -37,7 +37,8 @@ export async function getProducts(
   pageSize = 10
 ): Promise<{ data: Product[]; count: number; error: string | null }> {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/products`, { method: 'GET' })
+    const headers = await getAuthHeaders()
+    const res = await fetch(`${API_BASE_URL}/api/products`, { method: 'GET', headers })
     if (!res.ok) {
       const json = await res.json().catch(() => ({}))
       return { data: [], count: 0, error: json.error ?? 'Error al cargar productos' }
@@ -106,9 +107,10 @@ export async function createProduct(
   payload: ProductInsert
 ): Promise<{ data: Product | null; error: string | null }> {
   try {
+    const headers = await getAuthHeaders()
     const res = await fetch(`${API_BASE_URL}/api/products`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         name: payload.name,
         description: payload.description,
@@ -133,9 +135,10 @@ export async function updateProduct(
   payload: ProductUpdate
 ): Promise<{ data: Product | null; error: string | null }> {
   try {
+    const headers = await getAuthHeaders()
     const res = await fetch(`${API_BASE_URL}/api/products`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ id, ...payload }),
     })
 
@@ -151,9 +154,10 @@ export async function deleteProduct(
   id: string
 ): Promise<{ error: string | null }> {
   try {
+    const headers = await getAuthHeaders()
     const res = await fetch(`${API_BASE_URL}/api/products`, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ ids: [id] }),
     })
     const json = await res.json()
@@ -168,9 +172,10 @@ export async function deleteProducts(
   ids: string[]
 ): Promise<{ error: string | null }> {
   try {
+    const headers = await getAuthHeaders()
     const res = await fetch(`${API_BASE_URL}/api/products`, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ ids }),
     })
     const json = await res.json()
