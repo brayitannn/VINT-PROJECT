@@ -1,5 +1,14 @@
 export type ProductStatus = 'draft' | 'published' | 'archived'
 
+/** Tallas de prendas */
+export type ProductSize = 'XS' | 'S' | 'M' | 'L' | 'XL' | 'XXL' | 'Única'
+
+/** Estado/condición física de la prenda */
+export type ProductCondition = 'nuevo' | 'como_nuevo' | 'buen_estado' | 'regular'
+
+/** Género objetivo de la prenda */
+export type ProductGender = 'HOMBRE' | 'MUJER' | 'UNISEX' | 'NIÑOS'
+
 export interface Product {
   id: string
   name: string
@@ -13,8 +22,12 @@ export interface Product {
   image_url: string | null
   created_at: string
   updated_at: string
-  // If we have joined tables (like a seller), add them here:
-  // seller?: any
+  // Campos físicos de la prenda (opcionales para compatibilidad con respuestas antiguas)
+  size?: ProductSize | null
+  color?: string | null
+  gender?: ProductGender | null
+  condition?: ProductCondition | null
+  brand?: string | null
 }
 
 export type ProductInsert = Omit<Product, 'id' | 'created_at' | 'updated_at'>
