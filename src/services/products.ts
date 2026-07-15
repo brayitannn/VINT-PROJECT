@@ -37,7 +37,16 @@ export async function getProducts(
   pageSize = 10
 ): Promise<{ data: Product[]; count: number; error: string | null }> {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/products`, { method: 'GET' })
+    const supabase = getSupabaseClient()
+    const { data: sessionData } = await supabase.auth.getSession()
+    const token = sessionData?.session?.access_token || ''
+
+    const res = await fetch(`${API_BASE_URL}/api/products`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
     if (!res.ok) {
       const json = await res.json().catch(() => ({}))
       return { data: [], count: 0, error: json.error ?? 'Error al cargar productos' }
@@ -106,9 +115,16 @@ export async function createProduct(
   payload: ProductInsert
 ): Promise<{ data: Product | null; error: string | null }> {
   try {
+    const supabase = getSupabaseClient()
+    const { data: sessionData } = await supabase.auth.getSession()
+    const token = sessionData?.session?.access_token || ''
+
     const res = await fetch(`${API_BASE_URL}/api/products`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({
         name: payload.name,
         description: payload.description,
@@ -133,9 +149,16 @@ export async function updateProduct(
   payload: ProductUpdate
 ): Promise<{ data: Product | null; error: string | null }> {
   try {
+    const supabase = getSupabaseClient()
+    const { data: sessionData } = await supabase.auth.getSession()
+    const token = sessionData?.session?.access_token || ''
+
     const res = await fetch(`${API_BASE_URL}/api/products`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({ id, ...payload }),
     })
 
@@ -151,9 +174,16 @@ export async function deleteProduct(
   id: string
 ): Promise<{ error: string | null }> {
   try {
+    const supabase = getSupabaseClient()
+    const { data: sessionData } = await supabase.auth.getSession()
+    const token = sessionData?.session?.access_token || ''
+
     const res = await fetch(`${API_BASE_URL}/api/products`, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({ ids: [id] }),
     })
     const json = await res.json()
@@ -168,9 +198,16 @@ export async function deleteProducts(
   ids: string[]
 ): Promise<{ error: string | null }> {
   try {
+    const supabase = getSupabaseClient()
+    const { data: sessionData } = await supabase.auth.getSession()
+    const token = sessionData?.session?.access_token || ''
+
     const res = await fetch(`${API_BASE_URL}/api/products`, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({ ids }),
     })
     const json = await res.json()
@@ -181,23 +218,74 @@ export async function deleteProducts(
   }
 }
 
-// ── Mock data for categories (hasta que se sincronice con BD) ─────────────
-export async function getCategories(): Promise<{ id: string; nombre: string }[]> {
-  return [
-    { id: '1', nombre: 'HOMBRE' },
-    { id: '2', nombre: 'MUJER' },
-    { id: '3', nombre: 'UNISEX' },
-    { id: '4', nombre: 'ACCESORIOS' },
-    { id: '5', nombre: 'CALZADO' },
-  ]
+// ── Categories & Brands fetched dynamically from API ────────────────────────
+export async function getCategories(): Promise<{ id: string; nombre: string; descripcion?: string }[]> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/products/categories`)
+    if (!res.ok) {
+      console.warn('API returned non-ok status for categories, using fallback.')
+      return [
+        { id: '1', nombre: 'Camisetas' },
+        { id: '2', nombre: 'Pantalones' },
+        { id: '3', nombre: 'Chaquetas' },
+        { id: '4', nombre: 'Vestidos' },
+        { id: '5', nombre: 'Calzado' },
+        { id: '6', nombre: 'Accesorios' },
+        { id: '8', nombre: 'Deportiva' },
+        { id: '10', nombre: 'Faldas' },
+        { id: '22', nombre: 'Shorts' },
+      ]
+    }
+    const json = await res.json()
+    return (json.data || []).map((c: any) => ({
+      id: String(c.id_categoria),
+      nombre: c.nombre,
+      descripcion: c.descripcion || '',
+    }))
+  } catch (err) {
+    console.warn('Error fetching categories from API, using fallback:', err)
+    return [
+      { id: '1', nombre: 'Camisetas' },
+      { id: '2', nombre: 'Pantalones' },
+      { id: '3', nombre: 'Chaquetas' },
+      { id: '4', nombre: 'Vestidos' },
+      { id: '5', nombre: 'Calzado' },
+      { id: '6', nombre: 'Accesorios' },
+      { id: '8', nombre: 'Deportiva' },
+      { id: '10', nombre: 'Faldas' },
+      { id: '22', nombre: 'Shorts' },
+    ]
+  }
 }
 
 export async function getMarcas(): Promise<{ id_marca: string; nombre: string }[]> {
-  return [
-    { id_marca: 'Nike', nombre: 'Nike' },
-    { id_marca: 'Adidas', nombre: 'Adidas' },
-    { id_marca: 'Zara', nombre: 'Zara' },
-    { id_marca: 'H&M', nombre: 'H&M' },
-    { id_marca: 'Otro', nombre: 'Otro' },
-  ]
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/products/brands`)
+    if (!res.ok) {
+      console.warn('API returned non-ok status for brands, using fallback.')
+      return [
+        { id_marca: '1', nombre: 'Nike' },
+        { id_marca: '2', nombre: 'Adidas' },
+        { id_marca: '3', nombre: 'Zara' },
+        { id_marca: '4', nombre: 'H&M' },
+        { id_marca: '5', nombre: "Levi's" },
+        { id_marca: '9', nombre: 'Sin marca' },
+      ]
+    }
+    const json = await res.json()
+    return (json.data || []).map((m: any) => ({
+      id_marca: String(m.id_marca),
+      nombre: m.nombre,
+    }))
+  } catch (err) {
+    console.warn('Error fetching brands from API, using fallback:', err)
+    return [
+      { id_marca: '1', nombre: 'Nike' },
+      { id_marca: '2', nombre: 'Adidas' },
+      { id_marca: '3', nombre: 'Zara' },
+      { id_marca: '4', nombre: 'H&M' },
+      { id_marca: '5', nombre: "Levi's" },
+      { id_marca: '9', nombre: 'Sin marca' },
+    ]
+  }
 }

@@ -17,6 +17,7 @@ export interface Product {
   seller: string
   image: string
   rating: number
+  sellerEmail?: string
 }
 
 interface ProductCardProps {

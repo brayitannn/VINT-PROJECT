@@ -1,21 +1,24 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Users, Shield, Key, ArrowLeft, Loader2 } from 'lucide-react'
+import { Users, Shield, Key, ArrowLeft, Loader2, Tag } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
 import { UsersTable } from './UsersTable'
 import { RolesManager } from './RolesManager'
+import { CatalogManager } from './CatalogManager'
+import type { CatalogCategory, CatalogBrand } from './CatalogManager'
 import type { UsuarioAdmin, RolDB, PermisoDB } from '@/types/auth'
 import Loader from '@/components/ui/Loader'
 import { API_BASE_URL } from '@/lib/api'
 import { createClient } from '@/lib/supabase/client'
 
-type Tab = 'usuarios' | 'roles' | 'permisos'
+type Tab = 'usuarios' | 'roles' | 'permisos' | 'catalogo'
 
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: 'usuarios', label: 'Usuarios', icon: Users },
   { id: 'roles', label: 'Roles y Permisos', icon: Shield },
+  { id: 'catalogo', label: 'Categorías y Marcas', icon: Tag },
 ]
 
 export function AdminDashboard() {
@@ -35,6 +38,11 @@ export function AdminDashboard() {
   const [roles, setRoles] = useState<RolDB[]>([])
   const [allPermisos, setAllPermisos] = useState<PermisoDB[]>([])
   const [rolesLoading, setRolesLoading] = useState(true)
+
+  // Catalog state
+  const [categories, setCategories] = useState<CatalogCategory[]>([])
+  const [brands, setBrands] = useState<CatalogBrand[]>([])
+  const [catalogLoading, setCatalogLoading] = useState(true)
 
   // Toast
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
@@ -105,8 +113,150 @@ export function AdminDashboard() {
     }
   }, [authFetch])
 
+  // ── Fetch Catalog ──
+  const fetchCatalog = useCallback(async () => {
+    setCatalogLoading(true)
+    try {
+      const [catRes, brandRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/products/categories`),
+        fetch(`${API_BASE_URL}/api/products/brands`),
+      ])
+      const [catJson, brandJson] = await Promise.all([catRes.json(), brandRes.json()])
+
+      if (catJson.success) {
+        setCategories((catJson.data || []).map((c: any) => ({
+          id: String(c.id_categoria),
+          nombre: c.nombre,
+          descripcion: c.descripcion || '',
+        })))
+      }
+      if (brandJson.success) {
+        setBrands((brandJson.data || []).map((b: any) => ({
+          id_marca: String(b.id_marca),
+          nombre: b.nombre,
+        })))
+      }
+    } catch {
+      showToast('Error al cargar catálogo.', 'error')
+    } finally {
+      setCatalogLoading(false)
+    }
+  }, [])
+
+  // ── Catalog Actions ──
+  const handleCreateCategory = async (nombre: string, descripcion?: string) => {
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/admin/categories`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre, descripcion }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        showToast(json.message)
+        fetchCatalog()
+      } else {
+        showToast(json.detail || json.message || 'Error al crear categoría.', 'error')
+      }
+    } catch {
+      showToast('Error al crear categoría.', 'error')
+    }
+  }
+
+  const handleUpdateCategory = async (id: string, nombre: string, descripcion?: string) => {
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/admin/categories/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre, descripcion }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        showToast(json.message)
+        fetchCatalog()
+      } else {
+        showToast(json.detail || json.message || 'Error al actualizar categoría.', 'error')
+      }
+    } catch {
+      showToast('Error al actualizar categoría.', 'error')
+    }
+  }
+
+  const handleDeleteCategory = async (id: string) => {
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/admin/categories/${id}`, {
+        method: 'DELETE',
+      })
+      const json = await res.json()
+      if (res.ok) {
+        showToast(json.message || 'Categoría eliminada correctamente.')
+        fetchCatalog()
+      } else {
+        showToast(json.detail || json.message || 'Error al eliminar categoría.', 'error')
+      }
+    } catch {
+      showToast('Error al eliminar categoría.', 'error')
+    }
+  }
+
+  const handleCreateBrand = async (nombre: string) => {
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/admin/brands`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        showToast(json.message)
+        fetchCatalog()
+      } else {
+        showToast(json.detail || json.message || 'Error al crear marca.', 'error')
+      }
+    } catch {
+      showToast('Error al crear marca.', 'error')
+    }
+  }
+
+  const handleUpdateBrand = async (id: string, nombre: string) => {
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/admin/brands/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        showToast(json.message)
+        fetchCatalog()
+      } else {
+        showToast(json.detail || json.message || 'Error al actualizar marca.', 'error')
+      }
+    } catch {
+      showToast('Error al actualizar marca.', 'error')
+    }
+  }
+
+  const handleDeleteBrand = async (id: string) => {
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/admin/brands/${id}`, {
+        method: 'DELETE',
+      })
+      const json = await res.json()
+      if (res.ok) {
+        showToast(json.message || 'Marca eliminada correctamente.')
+        fetchCatalog()
+      } else {
+        showToast(json.detail || json.message || 'Error al eliminar marca.', 'error')
+      }
+    } catch {
+      showToast('Error al eliminar marca.', 'error')
+    }
+  }
+
   useEffect(() => { fetchUsers() }, [fetchUsers])
   useEffect(() => { fetchRoles() }, [fetchRoles])
+  useEffect(() => { fetchCatalog() }, [fetchCatalog])
 
   // Debounce search
   useEffect(() => {
@@ -228,6 +378,24 @@ export function AdminDashboard() {
     }
   }
 
+  const handleDeleteRole = async (roleId: number) => {
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/admin/roles/${roleId}`, {
+        method: 'DELETE',
+      })
+      const json = await res.json()
+      if (json.success) {
+        showToast(json.message)
+        fetchRoles()
+        fetchUsers() // Re-fetch users just in case
+      } else {
+        showToast(json.message || 'Error al eliminar rol.', 'error')
+      }
+    } catch {
+      showToast('Error al eliminar rol.', 'error')
+    }
+  }
+
   if (authLoading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-primary)' }}>
@@ -247,7 +415,7 @@ export function AdminDashboard() {
 
   return (
     <>
-      <Loader show={usersLoading || rolesLoading} />
+      <Loader show={usersLoading || rolesLoading || catalogLoading} />
       {/* Toast */}
       {toast && (
         <div style={{
@@ -350,7 +518,22 @@ export function AdminDashboard() {
               onCreateRole={handleCreateRole}
               onUpdateRole={handleUpdateRole}
               onUpdatePermissions={handleUpdatePermissions}
+              onDeleteRole={handleDeleteRole}
               loading={rolesLoading}
+            />
+          )}
+
+          {activeTab === 'catalogo' && (
+            <CatalogManager
+              categories={categories}
+              brands={brands}
+              onCreateCategory={handleCreateCategory}
+              onUpdateCategory={handleUpdateCategory}
+              onDeleteCategory={handleDeleteCategory}
+              onCreateBrand={handleCreateBrand}
+              onUpdateBrand={handleUpdateBrand}
+              onDeleteBrand={handleDeleteBrand}
+              loading={catalogLoading}
             />
           )}
         </div>

@@ -295,7 +295,8 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
         size: p.talla || 'M',
         condition: mapConditionDBtoUI(p.condicion || p.estado_publicacion),
         seller: p.vendedor || nombreLimpio,
-        rating: 4.8
+        rating: 4.8,
+        sellerEmail: p.correo_vendedor,
       }))
 
       setProductos(mapped)

@@ -17,9 +17,10 @@ interface FilterSidebarProps {
   filters: Filters
   onChange: (filters: Filters) => void
   totalResults: number
+  availableCategorias?: string[]
 }
 
-const CATEGORIAS = ['Camisetas', 'Pantalones', 'Chaquetas', 'Vestidos', 'Calzado', 'Suéteres', 'Faldas', 'Shorts', 'Accesorios']
+const DEFAULT_CATEGORIAS = ['Camisetas', 'Pantalones', 'Chaquetas', 'Vestidos', 'Calzado', 'Suéteres', 'Faldas', 'Shorts', 'Accesorios']
 const TALLAS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '36', '37', '38', '39', '40', '41', '42', '43', '44']
 const CONDICIONES = ['Como Nuevo', 'Excelente', 'Muy Bueno', 'Bueno']
 const GENEROS = ['Todos', 'Mujer', 'Hombre', 'Unisex']
@@ -68,7 +69,8 @@ function Chip({
   )
 }
 
-export function FilterSidebar({ filters, onChange, totalResults }: FilterSidebarProps) {
+export function FilterSidebar({ filters, onChange, totalResults, availableCategorias }: FilterSidebarProps) {
+  const listCategorias = availableCategorias && availableCategorias.length > 0 ? availableCategorias : DEFAULT_CATEGORIAS
   const hasActiveFilters =
     filters.categorias.length > 0 ||
     filters.tallas.length > 0 ||
@@ -161,7 +163,7 @@ export function FilterSidebar({ filters, onChange, totalResults }: FilterSidebar
       {/* Categoría */}
       <Section title="Categoría">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {CATEGORIAS.map(cat => {
+          {listCategorias.map(cat => {
             const active = filters.categorias.includes(cat)
             return (
               <label key={cat} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '5px 4px', borderRadius: 8 }}>

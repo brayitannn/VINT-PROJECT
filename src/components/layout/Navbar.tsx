@@ -1,7 +1,7 @@
 'use client'
 
 import { useTheme } from 'next-themes'
-import { Sun, Moon, Bell, ShoppingCart, ChevronDown, ChevronRight, LogOut, Settings, Package, Heart, LayoutDashboard, User, Menu } from 'lucide-react'
+import { Sun, Moon, Bell, ShoppingCart, ChevronDown, ChevronRight, LogOut, Settings, Package, Heart, LayoutDashboard, User, Menu, MessageSquare } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -11,21 +11,30 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { useCart } from '@/context/CartContext'
 import { CartDrawer } from '@/components/cart/CartDrawer'
+import { ChatModal } from '@/components/chat/ChatModal'
+import { ChatInboxPanel } from '@/components/chat/ChatInboxPanel'
+import { createClient } from '@/lib/supabase/client'
 
 export function Navbar() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
+  const [chatInboxOpen, setChatInboxOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const notifRef = useRef<HTMLDivElement>(null)
+  const chatInboxRef = useRef<HTMLDivElement>(null)
+
+  const supabase = createClient()
+  const [unreadChats, setUnreadChats] = useState(0)
 
   const { unreadCount, notifications, markAllRead, dismiss, loading: notifLoading } = useNotificationsContext()
   const pathname = usePathname()
   const router = useRouter()
   const { user, signOut, loading } = useAuth()
   const { totalItems, openCart } = useCart()
+  const [activeChat, setActiveChat] = useState<{ id?: string, email: string, name: string } | null>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -36,10 +45,44 @@ export function Navbar() {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setMenuOpen(false)
       }
+      if (chatInboxRef.current && !chatInboxRef.current.contains(e.target as Node)) {
+        setChatInboxOpen(false)
+      }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  useEffect(() => {
+    if (!user) return
+
+    const fetchUnreadChats = async () => {
+      const { count, error } = await supabase
+        .from('mensajes')
+        .select('*', { count: 'exact', head: true })
+        .eq('destinatario_id', user.id)
+        .eq('leido', false)
+      
+      if (!error) setUnreadChats(count || 0)
+    }
+
+    fetchUnreadChats()
+
+    const channel = supabase
+      .channel(`unread-chats-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'mensajes' },
+        () => {
+          fetchUnreadChats()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [user, supabase])
 
   const handleLogout = async () => {
     await signOut();
@@ -207,6 +250,51 @@ export function Navbar() {
                     markAllRead={markAllRead}
                     dismiss={dismiss}
                     loading={notifLoading}
+                    onOpenChat={(email, name) => {
+                      setActiveChat({ email, name })
+                      setNotifOpen(false)
+                    }}
+                  />
+                </div>
+
+                {/* MENÚ DE CHAT GLOBAL */}
+                <div ref={chatInboxRef} className="relative">
+                  <button
+                    onClick={() => { setChatInboxOpen(!chatInboxOpen); setNotifOpen(false); setMenuOpen(false); }}
+                    className="relative flex h-[38px] w-[38px] items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-secondary)] transition-all hover:scale-105 hover:border-[var(--accent)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)]"
+                    style={{ background: 'transparent', cursor: 'pointer' }}
+                  >
+                    <MessageSquare size={18} />
+                    {unreadChats > 0 && (
+                      <span
+                        style={{
+                          position: 'absolute',
+                          top: -4,
+                          right: -4,
+                          minWidth: 16,
+                          height: 16,
+                          borderRadius: 8,
+                          backgroundColor: 'var(--accent)',
+                          color: 'var(--bg-card)',
+                          fontSize: 10,
+                          fontWeight: 600,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '0 4px',
+                          border: '1.5px solid var(--bg-primary)',
+                        }}
+                      >
+                        {unreadChats}
+                      </span>
+                    )}
+                  </button>
+                  <ChatInboxPanel
+                    isOpen={chatInboxOpen}
+                    onClose={() => setChatInboxOpen(false)}
+                    onSelectConversation={(email, name, id) => {
+                      setActiveChat({ id, email, name })
+                    }}
                   />
                 </div>
 
@@ -466,6 +554,17 @@ export function Navbar() {
 
         <CartDrawer />
       </header>
+
+      {activeChat && (
+        <ChatModal
+          isOpen={true}
+          onClose={() => setActiveChat(null)}
+          sellerId={activeChat.id}
+          sellerName={activeChat.name}
+          sellerEmail={activeChat.email}
+          sellerSlug={activeChat.name.toLowerCase().replace(/\s+/g, '-')}
+        />
+      )}
     </>
   )
 }

@@ -38,17 +38,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }
       }
 
-      // Validation
+      const expectedPrefix = `/dashboard/${role}`;
+
       if (pathname === "/dashboard") {
-        router.push(`/dashboard/${role}`);
-      } else if (pathname.includes("/dashboard/admin") && role !== "admin") {
-        router.push(`/dashboard/${role}`);
-      } else if (pathname.includes("/dashboard/comprador") && role !== "comprador") {
-        if (role === "admin") router.push("/dashboard/admin");
-        else router.push("/dashboard/vendedor");
-      } else if (pathname.includes("/dashboard/vendedor") && role !== "vendedor") {
-        if (role === "admin") router.push("/dashboard/admin");
-        else router.push("/dashboard/comprador");
+        router.push(expectedPrefix);
+      } else if (pathname.startsWith("/dashboard/") && !pathname.startsWith(expectedPrefix)) {
+        router.push(expectedPrefix);
       } else {
         setRoleValidated(true);
       }

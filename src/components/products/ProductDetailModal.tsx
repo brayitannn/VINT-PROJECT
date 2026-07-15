@@ -42,6 +42,7 @@ export function ProductDetailModal({ product, onClose, addToCartOptions }: Props
   const isOpen = product !== null
   const inCart = product ? isInCart(product.id) : false
   const isLiked = product ? isFavorito(product.id.toString()) : false
+  const isMyProduct = user?.email && product?.sellerEmail && user.email === product.sellerEmail
 
   useEffect(() => {
     setMounted(true)
@@ -199,13 +200,15 @@ export function ProductDetailModal({ product, onClose, addToCartOptions }: Props
                 </button>
               )}
 
-              <button
-                onClick={() => setChatOpen(true)}
-                className="detail-contact-btn vint-btn-secondary product-detail-contact-btn"
-              >
-                <MessageCircle size={15} />
-                Contactar
-              </button>
+              {!isMyProduct && (
+                <button
+                  onClick={() => setChatOpen(true)}
+                  className="detail-contact-btn vint-btn-secondary product-detail-contact-btn"
+                >
+                  <MessageCircle size={15} />
+                  Contactar
+                </button>
+              )}
             </div>
 
             <div className="product-detail-trust">
@@ -572,6 +575,7 @@ export function ProductDetailModal({ product, onClose, addToCartOptions }: Props
         onClose={() => setChatOpen(false)}
         sellerName={product.seller}
         sellerSlug={product.seller.toLowerCase().replace(/\s+/g, '-')}
+        sellerEmail={product.sellerEmail}
       />
     </>
   )

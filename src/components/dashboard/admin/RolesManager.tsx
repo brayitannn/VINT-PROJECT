@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Edit3, Save, X, Shield, Check, Loader2 } from 'lucide-react'
+import { Plus, Edit3, Save, X, Shield, Check, Loader2, Trash2 } from 'lucide-react'
 import type { RolDB, PermisoDB } from '@/types/auth'
 
 interface RolesManagerProps {
@@ -10,16 +10,18 @@ interface RolesManagerProps {
   onCreateRole: (nombre: string) => Promise<void>
   onUpdateRole: (id_rol: number, nombre: string) => Promise<void>
   onUpdatePermissions: (roleId: number, permissionIds: number[]) => Promise<void>
+  onDeleteRole: (roleId: number) => Promise<void>
   loading: boolean
 }
 
-export function RolesManager({ roles, allPermisos, onCreateRole, onUpdateRole, onUpdatePermissions, loading }: RolesManagerProps) {
+export function RolesManager({ roles, allPermisos, onCreateRole, onUpdateRole, onUpdatePermissions, onDeleteRole, loading }: RolesManagerProps) {
   const [newRoleName, setNewRoleName] = useState('')
   const [creating, setCreating] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editName, setEditName] = useState('')
   const [savingRole, setSavingRole] = useState(false)
   const [savingPerms, setSavingPerms] = useState<number | null>(null)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
 
   const handleCreate = async () => {
     if (!newRoleName.trim() || newRoleName.trim().length < 3) return
@@ -35,6 +37,14 @@ export function RolesManager({ roles, allPermisos, onCreateRole, onUpdateRole, o
     await onUpdateRole(id_rol, editName.trim())
     setEditingId(null)
     setSavingRole(false)
+  }
+
+  const handleDelete = async (id_rol: number, nombre: string) => {
+    if (confirm(`¿Estás seguro de que deseas eliminar el rol "${nombre}"? Esta acción no se puede deshacer.`)) {
+      setDeletingId(id_rol)
+      await onDeleteRole(id_rol)
+      setDeletingId(null)
+    }
   }
 
   const handlePermissionToggle = async (roleId: number, permisoId: number, currentPermisos: PermisoDB[]) => {
@@ -115,6 +125,7 @@ export function RolesManager({ roles, allPermisos, onCreateRole, onUpdateRole, o
           {roles.map(rol => {
             const isEditing = editingId === rol.id_rol
             const rolPermisoIds = (rol.permisos || []).map(p => p.id_permiso)
+            const isBaseRole = ['ADMIN', 'VENDEDOR', 'COMPRADOR'].includes(rol.nombre.toUpperCase())
 
             return (
               <div key={rol.id_rol} style={{
@@ -156,7 +167,7 @@ export function RolesManager({ roles, allPermisos, onCreateRole, onUpdateRole, o
                     </span>
                   </div>
 
-                  <div style={{ display: 'flex', gap: 6 }}>
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                     {isEditing ? (
                       <>
                         <button onClick={() => handleSaveEdit(rol.id_rol)} disabled={savingRole} style={{ padding: 6, borderRadius: 8, border: 'none', cursor: 'pointer', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10B981', display: 'flex' }}>
@@ -167,12 +178,27 @@ export function RolesManager({ roles, allPermisos, onCreateRole, onUpdateRole, o
                         </button>
                       </>
                     ) : (
-                      <button
-                        onClick={() => { setEditingId(rol.id_rol); setEditName(rol.nombre) }}
-                        style={{ padding: 6, borderRadius: 8, border: 'none', cursor: 'pointer', backgroundColor: 'transparent', color: 'var(--text-muted)', display: 'flex' }}
-                      >
-                        <Edit3 size={14} />
-                      </button>
+                      <>
+                        <button
+                          onClick={() => { setEditingId(rol.id_rol); setEditName(rol.nombre) }}
+                          style={{ padding: 6, borderRadius: 8, border: 'none', cursor: 'pointer', backgroundColor: 'transparent', color: 'var(--text-muted)', display: 'flex' }}
+                        >
+                          <Edit3 size={14} />
+                        </button>
+                        {!isBaseRole && (
+                          <button
+                            onClick={() => handleDelete(rol.id_rol, rol.nombre)}
+                            disabled={deletingId === rol.id_rol}
+                            style={{
+                              padding: 6, borderRadius: 8, border: 'none', cursor: 'pointer',
+                              backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#EF4444',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}
+                          >
+                            {deletingId === rol.id_rol ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>

@@ -55,7 +55,7 @@ export function FavoritosClient() {
         // IMPORTANTE: Usamos v_catalogo_publico igual que en el explorador funcional
         const { data, error } = await supabase
           .from('v_catalogo_publico')
-          .select('id_prenda, titulo, precio, imagen_principal, talla, condicion, vendedor')
+          .select('id_prenda, titulo, precio, imagen_principal, talla, condicion, vendedor, correo_vendedor')
           .in('id_prenda', ids)
 
         if (error) throw error
@@ -68,7 +68,8 @@ export function FavoritosClient() {
           condition: mapCondicion(item.condicion),
           seller: item.vendedor ?? 'Vendedor',
           image: item.imagen_principal ?? 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&h=500&fit=crop',
-          rating: 4.5
+          rating: 4.5,
+          sellerEmail: item.correo_vendedor,
         }))
         setFavoritos(mapped)
       } catch (error: any) {

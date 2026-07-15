@@ -8,6 +8,7 @@ import { ProductCard, type Product } from '@/components/products/ProductCard'
 import { FilterSidebar, type Filters } from '@/components/explorar/FilterSidebar'
 import { ProductDetailModal } from '@/components/products/ProductDetailModal'
 import { useTracker } from '@/hooks/useTracker'
+import { getCategories } from '@/services/products'
 
 type SortOption = 'reciente' | 'precio_asc' | 'precio_desc'
 
@@ -82,6 +83,7 @@ export function ExplorarClient() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [searchInput, setSearchInput] = useState(filters.search)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [availableCategories, setAvailableCategories] = useState<string[]>([])
   const { track, trackVistaDebounced, cancelTrackVista } = useTracker()
 
   const [currentPage, setCurrentPage] = useState<number>(() => {
@@ -102,6 +104,13 @@ export function ExplorarClient() {
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  // Load categories dynamically
+  useEffect(() => {
+    getCategories().then((cats) => {
+      setAvailableCategories(cats.map((c) => c.nombre))
+    })
   }, [])
 
   // Effect to load product from query param if provided
@@ -129,6 +138,7 @@ export function ExplorarClient() {
             seller: data.vendedor ?? 'Vendedor',
             image: data.imagen_principal ?? 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&h=500&fit=crop',
             rating: 4.5,
+            sellerEmail: data.correo_vendedor,
           }
           setSelectedProduct(mapped)
         }
@@ -202,6 +212,7 @@ export function ExplorarClient() {
         seller: item.vendedor ?? 'Vendedor',
         image: item.imagen_principal ?? 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&h=500&fit=crop',
         rating: 4.5,
+        sellerEmail: item.correo_vendedor,
       }))
       setProducts(mapped)
       setTotalCount(count ?? 0)
@@ -329,6 +340,7 @@ export function ExplorarClient() {
           filters={filters}
           onChange={setFilters}
           totalResults={totalCount}
+          availableCategorias={availableCategories}
         />
 
         {/* Content */}

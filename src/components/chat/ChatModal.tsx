@@ -1,10 +1,11 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { X, Send, MessageCircle, Loader2 } from 'lucide-react'
+import { X, Send, MessageCircle, Loader2, Trash2 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import { createPortal } from 'react-dom'
 
 interface ChatModalProps {
   isOpen: boolean
@@ -12,9 +13,10 @@ interface ChatModalProps {
   sellerName: string
   sellerSlug?: string
   sellerId?: string
+  sellerEmail?: string
 }
 
-export function ChatModal({ isOpen, onClose, sellerName, sellerSlug, sellerId }: ChatModalProps) {
+export function ChatModal({ isOpen, onClose, sellerName, sellerSlug, sellerId, sellerEmail }: ChatModalProps) {
   const { user, loading: authLoading } = useAuth()
   const supabase = createClient()
   
@@ -23,43 +25,165 @@ export function ChatModal({ isOpen, onClose, sellerName, sellerSlug, sellerId }:
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
   const [isOnline, setIsOnline] = useState(true)
+  const [resolvedSellerId, setResolvedSellerId] = useState<string | null>(null)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
-  const chatId = sellerId || sellerSlug || 'general_seller'
   const userId = user?.id || 'guest_user'
+  const chatId = resolvedSellerId || sellerSlug || 'general_seller'
+  
+  const myEmail = user?.email || ''
+  const mySlug = user?.user_metadata?.name 
+    ? user.user_metadata.name.toLowerCase().replace(/\s+/g, '-')
+    : (user?.email ? user.email.split('@')[0] : '')
+
+  const myIdentifiers = [userId, myEmail, mySlug].filter(Boolean)
+  const partnerIdentifiers = [chatId, sellerSlug, sellerEmail].filter(Boolean)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  // Resolve Seller's real Supabase UUID from email
   useEffect(() => {
-    if (isOpen) {
-      fetchMessages()
-      // Simular que el vendedor está activo (online)
-      setIsOnline(Math.random() > 0.3)
+    if (isOpen && sellerId && sellerId.length === 36 && sellerId.includes('-')) {
+      setResolvedSellerId(sellerId)
+    } else if (isOpen && sellerEmail) {
+      const resolveSeller = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('v_usuarios_publico')
+            .select('id_auth_supabase')
+            .eq('correo', sellerEmail)
+            .single()
+          
+          if (!error && data?.id_auth_supabase) {
+            setResolvedSellerId(data.id_auth_supabase)
+          } else {
+            setResolvedSellerId(sellerId || sellerSlug || null)
+          }
+        } catch {
+          setResolvedSellerId(sellerId || sellerSlug || null)
+        }
+      }
+      resolveSeller()
+    } else if (isOpen) {
+      setResolvedSellerId(sellerId || sellerSlug || null)
     }
-  }, [isOpen, chatId, userId])
+  }, [isOpen, sellerEmail, sellerId, sellerSlug, supabase])
+
+  const markMessagesAsRead = async () => {
+    if (!user || !resolvedSellerId) return
+    try {
+      // 1. Mark messages as read
+      await supabase
+        .from('mensajes')
+        .update({ leido: true })
+        .in('remitente_id', partnerIdentifiers)
+        .in('destinatario_id', myIdentifiers)
+        .eq('leido', false)
+
+      // 2. Mark corresponding notifications in the bell as read
+      if (sellerEmail) {
+        await supabase
+          .from('notificaciones')
+          .update({ leida: true })
+          .eq('usuario_id', userId)
+          .eq('tipo', 'mensaje')
+          .ilike('titulo', `%${sellerEmail}%`)
+          .eq('leida', false)
+      }
+    } catch (e) {
+      console.error('Error marking messages/notifications as read:', e)
+    }
+  }
+
+  // Reset confirmation state when modal is closed or conversation changes
+  useEffect(() => {
+    if (!isOpen) {
+      setDeleteConfirmOpen(false)
+    }
+  }, [isOpen])
+
+  // Fetch messages & subscribe to Supabase Realtime
+  useEffect(() => {
+    if (!isOpen || !user || !resolvedSellerId) return
+
+    fetchMessages()
+    setIsOnline(Math.random() > 0.3)
+
+    // Subscribe to realtime database changes for the 'mensajes' table
+    const channel = supabase
+      .channel(`chat_${userId}_${chatId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'mensajes',
+        },
+        (payload: any) => {
+          const newMsg = payload.new
+          
+          // Verify if the inserted message belongs to this specific conversation
+          const isFromPartner = partnerIdentifiers.includes(newMsg.remitente_id) && myIdentifiers.includes(newMsg.destinatario_id)
+          const isFromMe = myIdentifiers.includes(newMsg.remitente_id) && partnerIdentifiers.includes(newMsg.destinatario_id)
+
+          if (isFromPartner || isFromMe) {
+            setMessages((prev) => {
+              const exists = prev.some((m) => 
+                m.id === newMsg.id || 
+                (m.remitente_id === newMsg.remitente_id && 
+                 m.contenido === newMsg.contenido && 
+                 Math.abs(new Date(m.fecha).getTime() - new Date(newMsg.fecha).getTime()) < 10000)
+              )
+              if (exists) {
+                return prev.map((m) => 
+                  (m.remitente_id === newMsg.remitente_id && 
+                   m.contenido === newMsg.contenido && 
+                   String(m.id).startsWith('user-')) ? newMsg : m
+                )
+              }
+              return [...prev, newMsg]
+            })
+
+            if (isFromPartner) {
+              markMessagesAsRead()
+            }
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [isOpen, resolvedSellerId, userId, chatId, supabase])
 
   useEffect(() => {
     scrollToBottom()
   }, [messages])
 
   const fetchMessages = async () => {
-    if (!user) return
+    if (!user || !resolvedSellerId) return
     setLoading(true)
     try {
-      // Intentar cargar de Supabase
+      const filter1 = `and(remitente_id.in.(${myIdentifiers.join(',')}),destinatario_id.in.(${partnerIdentifiers.join(',')}))`
+      const filter2 = `and(remitente_id.in.(${partnerIdentifiers.join(',')}),destinatario_id.in.(${myIdentifiers.join(',')}))`
+      const combinedFilter = `${filter1},${filter2}`
+
       const { data, error } = await supabase
         .from('mensajes')
         .select('*')
-        .or(`and(remitente_id.eq.${userId},destinatario_id.eq.${chatId}),and(remitente_id.eq.${chatId},destinatario_id.eq.${userId})`)
+        .or(combinedFilter)
         .order('fecha', { ascending: true })
 
       if (error) throw error
 
       if (data && data.length > 0) {
         setMessages(data)
+        markMessagesAsRead()
       } else {
         loadFromLocalStorage()
       }
@@ -77,7 +201,6 @@ export function ChatModal({ isOpen, onClose, sellerName, sellerSlug, sellerId }:
     if (local) {
       setMessages(JSON.parse(local))
     } else {
-      // Mensaje de bienvenida del vendedor
       const welcomeMessage = {
         id: 'welcome-' + Date.now(),
         remitente_id: chatId,
@@ -92,7 +215,7 @@ export function ChatModal({ isOpen, onClose, sellerName, sellerSlug, sellerId }:
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newMessage.trim() || !user) return
+    if (!newMessage.trim() || !user || !resolvedSellerId) return
 
     const messageText = newMessage.trim()
     setNewMessage('')
@@ -105,16 +228,18 @@ export function ChatModal({ isOpen, onClose, sellerName, sellerSlug, sellerId }:
       fecha: new Date().toISOString()
     }
 
-    // Guardar localmente de inmediato para respuesta rápida
+    const messageWithId = { ...userMessage, id: 'user-' + Date.now(), leido: false }
+    setMessages((prev) => [...prev, messageWithId])
+
     const key = `vint_chat_${userId}_${chatId}`
-    const localList = localStorage.getItem(key) ? JSON.parse(localStorage.getItem(key)!) : []
-    const messageWithId = { ...userMessage, id: 'user-' + Date.now() }
-    const updatedList = [...localList, messageWithId]
-    localStorage.setItem(key, JSON.stringify(updatedList))
-    setMessages(updatedList)
+    try {
+      const localList = localStorage.getItem(key) ? JSON.parse(localStorage.getItem(key)!) : []
+      localStorage.setItem(key, JSON.stringify([...localList, messageWithId]))
+    } catch (err) {
+      console.error('Error saving message to local storage:', err)
+    }
 
     try {
-      // Intentar insertar en Supabase
       const { error } = await supabase
         .from('mensajes')
         .insert([userMessage])
@@ -126,40 +251,11 @@ export function ChatModal({ isOpen, onClose, sellerName, sellerSlug, sellerId }:
       setSending(false)
     }
 
-    // Simular respuesta del vendedor tras 1.5 segundos
-    setTimeout(() => {
-      const respuestsVendedor = [
-        "¡Hola! Sí, claro. Esa prenda está disponible y en perfecto estado. Hago el envío hoy mismo si compras antes de las 3 PM.",
-        "Hola, un gusto saludarte. Te puedo dejar el precio mínimo publicado. Si te interesa me avisas para despachar.",
-        "Hola. Las medidas aproximadas son de hombro a hombro 42cm y largo de manga 60cm. Avísame si tienes otra pregunta.",
-        "Hola, ¡sí claro! Está en excelente estado, casi nueva. ¿En qué ciudad te encuentras para calcular el envío?",
-        "¡Hola! Hago envíos a todo el país por Servientrega. El envío suele tardar de 1 a 2 días hábiles."
-      ]
-      
-      const randomResponse = respuestsVendedor[Math.floor(Math.random() * respuestsVendedor.length)]
-      
-      const sellerReply = {
-        id: 'reply-' + Date.now(),
-        remitente_id: chatId,
-        destinatario_id: userId,
-        contenido: randomResponse,
-        fecha: new Date().toISOString()
-      }
-
-      const currentList = localStorage.getItem(key) ? JSON.parse(localStorage.getItem(key)!) : []
-      const finalUpdatedList = [...currentList, sellerReply]
-      localStorage.setItem(key, JSON.stringify(finalUpdatedList))
-      setMessages(finalUpdatedList)
-
-      // Guardar respuesta también en la DB si es posible
-      try {
-        supabase
-          .from('mensajes')
-          .insert([{ remitente_id: chatId, destinatario_id: userId, contenido: randomResponse }])
-          .then(({ error }: { error: any }) => { if (error) console.log(error) })
-      } catch (err) {}
-    }, 1500)
   }
+
+  const displayName = sellerName && sellerName.length === 36 && sellerName.includes('-')
+    ? 'Usuario Vint'
+    : sellerName;
 
   if (!isOpen) return null
 
@@ -221,7 +317,7 @@ export function ChatModal({ isOpen, onClose, sellerName, sellerSlug, sellerId }:
                 fontWeight: 800,
                 fontSize: 16
               }}>
-                {sellerName.charAt(0).toUpperCase()}
+                {displayName.charAt(0).toUpperCase()}
               </div>
               <div style={{
                 position: 'absolute',
@@ -235,31 +331,53 @@ export function ChatModal({ isOpen, onClose, sellerName, sellerSlug, sellerId }:
               }} />
             </div>
             <div>
-              <h4 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>{sellerName}</h4>
+              <h4 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>{displayName}</h4>
               <p style={{ margin: 0, fontSize: 11, opacity: 0.8, fontWeight: 500 }}>
                 {isOnline ? 'En línea' : 'Desconectado'}
               </p>
             </div>
           </div>
-          <button 
-            onClick={onClose}
-            style={{
-              background: 'rgba(255,255,255,0.15)',
-              border: 'none',
-              borderRadius: '50%',
-              width: 32,
-              height: 32,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-            className="hover:scale-105"
-          >
-            <X size={16} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              onClick={() => setDeleteConfirmOpen(true)}
+              title="Borrar historial de chat"
+              style={{
+                background: 'rgba(255,255,255,0.15)',
+                border: 'none',
+                borderRadius: '50%',
+                width: 32,
+                height: 32,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+              className="hover:scale-105 hover:bg-red-600/30"
+            >
+              <Trash2 size={15} />
+            </button>
+            <button 
+              onClick={onClose}
+              style={{
+                background: 'rgba(255,255,255,0.15)',
+                border: 'none',
+                borderRadius: '50%',
+                width: 32,
+                height: 32,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+              className="hover:scale-105"
+            >
+              <X size={16} />
+            </button>
+          </div>
         </div>
 
         {/* Cuerpo del Chat */}
@@ -318,7 +436,10 @@ export function ChatModal({ isOpen, onClose, sellerName, sellerSlug, sellerId }:
           ) : (
             <>
               {messages.map((msg) => {
-                const isSentByMe = msg.remitente_id === userId
+                const isSentByMe = 
+                  msg.remitente_id === userId || 
+                  msg.remitente_id === myEmail || 
+                  (mySlug && msg.remitente_id === mySlug)
                 const msgTime = new Date(msg.fecha).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
                 
                 return (
@@ -430,6 +551,132 @@ export function ChatModal({ isOpen, onClose, sellerName, sellerSlug, sellerId }:
           to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
+
+      {/* Custom Delete Confirmation Modal */}
+      {deleteConfirmOpen && typeof window !== 'undefined' && createPortal(
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0,0,0,0.6)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: 24,
+          animation: 'fadeOverlay 0.2s ease forwards'
+        }}>
+          <div style={{
+            backgroundColor: '#1E1B18', // Sleek dark card matching the Vint theme palette
+            borderRadius: 24,
+            border: '1px solid rgba(255,255,255,0.08)',
+            padding: 28,
+            maxWidth: 360,
+            width: '100%',
+            boxShadow: '0 25px 60px rgba(0,0,0,0.45)',
+            textAlign: 'center',
+            animation: 'modalSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards'
+          }}>
+            <style>{`
+              @keyframes fadeOverlay { from { opacity: 0; } to { opacity: 1; } }
+              @keyframes modalSlideUp { from { opacity: 0; transform: scale(0.9) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+              .vint-cancel-btn:hover { background-color: rgba(255,255,255,0.06) !important; border-color: rgba(255,255,255,0.2) !important; }
+              .vint-delete-btn:hover { background-color: #DC2626 !important; transform: scale(1.02); }
+              .vint-delete-btn:active { transform: scale(0.98); }
+            `}</style>
+            <div style={{
+              width: 56,
+              height: 56,
+              borderRadius: '50%',
+              backgroundColor: 'rgba(239, 68, 68, 0.12)',
+              color: '#EF4444',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 18px',
+            }}>
+              <Trash2 size={26} />
+            </div>
+            <h4 style={{ margin: '0 0 10px', fontSize: 18, fontWeight: 800, color: 'white', fontFamily: 'var(--font-serif)' }}>
+              ¿Borrar conversación?
+            </h4>
+            <p style={{ margin: '0 0 24px', fontSize: 13.5, color: '#A39E99', lineHeight: 1.5 }}>
+              ¿Estás seguro de que deseas borrar toda la conversación con <strong>{displayName}</strong>? Esta acción no se puede deshacer.
+            </p>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button
+                className="vint-cancel-btn"
+                onClick={() => setDeleteConfirmOpen(false)}
+                style={{
+                  flex: 1,
+                  padding: '12px 16px',
+                  borderRadius: 12,
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  backgroundColor: 'transparent',
+                  color: 'white',
+                  fontSize: 13.5,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                className="vint-delete-btn"
+                onClick={async () => {
+                  setDeleteConfirmOpen(false)
+                  try {
+                    // 1. Delete messages sent by me to partner
+                    await supabase
+                      .from('mensajes')
+                      .delete()
+                      .in('remitente_id', myIdentifiers)
+                      .in('destinatario_id', partnerIdentifiers)
+
+                    // 2. Delete messages sent by partner to me
+                    await supabase
+                      .from('mensajes')
+                      .delete()
+                      .in('remitente_id', partnerIdentifiers)
+                      .in('destinatario_id', myIdentifiers)
+
+                    // 3. Delete notifications about messages from this partner
+                    if (sellerEmail) {
+                      await supabase
+                        .from('notificaciones')
+                        .delete()
+                        .eq('usuario_id', userId)
+                        .eq('tipo', 'mensaje')
+                        .ilike('titulo', `%${sellerEmail}%`)
+                    }
+
+                    onClose()
+                  } catch (e) {
+                    console.error('Error clearing chat history:', e)
+                  }
+                }}
+                style={{
+                  flex: 1,
+                  padding: '12px 16px',
+                  borderRadius: 12,
+                  border: 'none',
+                  backgroundColor: '#EF4444',
+                  color: 'white',
+                  fontSize: 13.5,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  boxShadow: '0 4px 14px rgba(239, 68, 68, 0.3)'
+                }}
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </>
   )
 }

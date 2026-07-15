@@ -46,9 +46,10 @@ interface Props {
   loading: boolean
   markAllRead: () => Promise<void>
   dismiss: (id: number) => Promise<void>
+  onOpenChat?: (email: string, name: string) => void
 }
 
-export function NotificationsPanel({ isOpen, onClose, notifications, unreadCount, loading, markAllRead, dismiss }: Props) {
+export function NotificationsPanel({ isOpen, onClose, notifications, unreadCount, loading, markAllRead, dismiss, onOpenChat }: Props) {
   const panelRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
@@ -150,6 +151,12 @@ export function NotificationsPanel({ isOpen, onClose, notifications, unreadCount
                   if (notif.tipo === 'favorito') {
                     router.push('/favoritos')
                     onClose()
+                  } else if (notif.tipo === 'mensaje' && onOpenChat) {
+                    const email = notif.titulo.replace('Nuevo mensaje de ', '').trim()
+                    if (email && email.includes('@')) {
+                      const name = email.split('@')[0]
+                      onOpenChat(email, name)
+                    }
                   }
                 }}
                 style={{
