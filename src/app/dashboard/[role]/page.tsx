@@ -113,9 +113,9 @@ export default function CustomRoleDashboard() {
 
       if (uError) throw uError
 
-      const userMap = new Map((usersData || []).map(u => [u.id_usuario, u.correo]))
+      const userMap = new Map((usersData || []).map((u: any) => [u.id_usuario, u.correo]))
 
-      const mapped: PrendaAdmin[] = (garments || []).map(g => ({
+      const mapped: PrendaAdmin[] = (garments || []).map((g: any) => ({
         ...g,
         vendedor_email: userMap.get(g.id_usuario) || 'Desconocido',
       }))
