@@ -6,6 +6,21 @@ import type { Product, ProductInsert, ProductUpdate, ProductFilters } from '@/ty
 
 const VIEW = 'v_catalogo_publico'
 
+// ── Auth helper ─────────────────────────────────────────────────────────────
+/**
+ * Obtiene el access_token JWT de la sesión activa de Supabase.
+ * Es necesario para autenticarse con la API FastAPI de VINT.
+ * Lanza un error si el usuario no está autenticado.
+ */
+async function getAccessToken(): Promise<string> {
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase.auth.getSession()
+  if (error || !data?.session?.access_token) {
+    throw new Error('No hay sesión activa. Por favor, inicia sesión nuevamente.')
+  }
+  return data.session.access_token
+}
+
 // ── Mapper ─────────────────────────────────────────────────────────────────
 function mapFromDB(item: any): Product {
   const dbStatus = (item.estado_publicacion || '').toUpperCase()
@@ -27,29 +42,34 @@ function mapFromDB(item: any): Product {
     image_url: item.imagen_principal ?? item.image_url ?? null,
     created_at: item.fecha_publicacion || item.created_at || new Date().toISOString(),
     updated_at: item.fecha_publicacion || item.updated_at || new Date().toISOString(),
+    // Campos físicos de la prenda
+    size: item.talla ?? item.size ?? null,
+    color: item.color ?? null,
+    gender: item.genero ?? item.gender ?? null,
+    condition: item.estado_prenda ?? item.condition ?? null,
+    brand: item.marca ?? item.brand ?? null,
   }
 }
 
-// ── READ: Uses authenticated API to get seller's own products ──────────────
+// ── READ: Obtener prendas del vendedor autenticado ──────────────────────────
 export async function getProducts(
   filters: ProductFilters = {},
   page = 1,
   pageSize = 10
 ): Promise<{ data: Product[]; count: number; error: string | null }> {
   try {
-    const supabase = getSupabaseClient()
-    const { data: sessionData } = await supabase.auth.getSession()
-    const token = sessionData?.session?.access_token || ''
+    const token = await getAccessToken()
 
     const res = await fetch(`${API_BASE_URL}/api/products`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${token}`
-      }
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
     })
     if (!res.ok) {
       const json = await res.json().catch(() => ({}))
-      return { data: [], count: 0, error: json.error ?? 'Error al cargar productos' }
+      return { data: [], count: 0, error: json.detail ?? json.error ?? 'Error al cargar productos' }
     }
     const json = await res.json()
     let products: Product[] = (json.data || []).map((p: any) =>
@@ -110,20 +130,18 @@ export async function getProductById(
   return { data: mapFromDB(data), error: null }
 }
 
-// ── WRITE: Use secure API Route ────────────────────────────────────────────
+// ── WRITE: Crear producto ───────────────────────────────────────────────────
 export async function createProduct(
   payload: ProductInsert
 ): Promise<{ data: Product | null; error: string | null }> {
   try {
-    const supabase = getSupabaseClient()
-    const { data: sessionData } = await supabase.auth.getSession()
-    const token = sessionData?.session?.access_token || ''
+    const token = await getAccessToken()
 
     const res = await fetch(`${API_BASE_URL}/api/products`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({
         name: payload.name,
@@ -132,11 +150,17 @@ export async function createProduct(
         category: payload.category,
         image_url: payload.image_url,
         status: payload.status || 'draft',
+        // Campos físicos de la prenda (con defaults sensatos)
+        size: payload.size ?? 'Única',
+        color: payload.color ?? 'Combinado',
+        gender: payload.gender ?? 'UNISEX',
+        condition: payload.condition ?? 'buen_estado',
+        brand: payload.brand ?? null,
       }),
     })
 
     const json = await res.json()
-    if (!res.ok) return { data: null, error: json.error ?? 'Error al crear el producto' }
+    if (!res.ok) return { data: null, error: json.detail ?? json.error ?? 'Error al crear el producto' }
 
     return { data: json.data ? mapFromDB(json.data) : null, error: null }
   } catch (err: any) {
@@ -144,74 +168,74 @@ export async function createProduct(
   }
 }
 
+// ── WRITE: Actualizar producto ──────────────────────────────────────────────
 export async function updateProduct(
   id: string,
   payload: ProductUpdate
 ): Promise<{ data: Product | null; error: string | null }> {
   try {
-    const supabase = getSupabaseClient()
-    const { data: sessionData } = await supabase.auth.getSession()
-    const token = sessionData?.session?.access_token || ''
+    const token = await getAccessToken()
 
     const res = await fetch(`${API_BASE_URL}/api/products`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${token}`,
       },
-      body: JSON.stringify({ id, ...payload }),
+      body: JSON.stringify({
+        id,
+        ...payload,
+      }),
     })
 
     const json = await res.json()
-    if (!res.ok) return { data: null, error: json.error ?? 'Error al actualizar' }
+    if (!res.ok) return { data: null, error: json.detail ?? json.error ?? 'Error al actualizar' }
     return { data: json.data ? mapFromDB(json.data) : null, error: null }
   } catch (err: any) {
     return { data: null, error: err.message }
   }
 }
 
+// ── WRITE: Eliminar un producto ─────────────────────────────────────────────
 export async function deleteProduct(
   id: string
 ): Promise<{ error: string | null }> {
   try {
-    const supabase = getSupabaseClient()
-    const { data: sessionData } = await supabase.auth.getSession()
-    const token = sessionData?.session?.access_token || ''
+    const token = await getAccessToken()
 
     const res = await fetch(`${API_BASE_URL}/api/products`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({ ids: [id] }),
     })
     const json = await res.json()
-    if (!res.ok) return { error: json.error ?? 'Error al eliminar' }
+    if (!res.ok) return { error: json.detail ?? json.error ?? 'Error al eliminar' }
     return { error: null }
   } catch (err: any) {
     return { error: err.message }
   }
 }
 
+// ── WRITE: Eliminar múltiples productos ─────────────────────────────────────
 export async function deleteProducts(
   ids: string[]
 ): Promise<{ error: string | null }> {
   try {
-    const supabase = getSupabaseClient()
-    const { data: sessionData } = await supabase.auth.getSession()
-    const token = sessionData?.session?.access_token || ''
+    const token = await getAccessToken()
 
     const res = await fetch(`${API_BASE_URL}/api/products`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({ ids }),
     })
     const json = await res.json()
-    if (!res.ok) return { error: json.error ?? 'Error al eliminar' }
+    if (!res.ok) return { error: json.detail ?? json.error ?? 'Error al eliminar' }
     return { error: null }
   } catch (err: any) {
     return { error: err.message }
