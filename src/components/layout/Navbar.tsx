@@ -101,9 +101,10 @@ export function Navbar() {
   const initials = userName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
 
   const navLinks = role === 'vendedor' ? [
-    { label: 'Mi Tienda', href: '/dashboard/vendedor/mi-tienda' },
-    { label: 'Mis Productos', href: '/products' },
     { label: 'Dashboard', href: '/dashboard' },
+    { label: 'Explorar', href: '/explorar' },
+    { label: 'Mis Productos', href: '/products' },
+    { label: 'Mi Perfil', href: '/dashboard/vendedor/mi-tienda' },
   ] : [
     { label: 'Dashboard', href: '/dashboard' },
     { label: 'Explorar', href: '/explorar' },
@@ -299,40 +300,38 @@ export function Navbar() {
                 </div>
 
                 {/* CARRITO */}
-                {role !== 'vendedor' && (
-                  <div className="relative">
-                    <button
-                      onClick={openCart}
-                      className="relative flex h-[38px] w-[38px] items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-secondary)] transition-all hover:scale-105 hover:border-[var(--accent)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)]"
-                      style={{ background: 'transparent', cursor: 'pointer' }}
-                    >
-                      <ShoppingCart size={18} />
-                      {totalItems > 0 && (
-                        <span 
-                          style={{
-                            position: 'absolute',
-                            top: -4,
-                            right: -4,
-                            minWidth: 16,
-                            height: 16,
-                            borderRadius: 8,
-                            background: 'var(--accent)',
-                            color: 'var(--bg-card)',
-                            fontSize: 10,
-                            fontWeight: 600,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: '0 4px',
-                            border: '1.5px solid var(--bg-primary)',
-                          }}
-                        >
-                          {totalItems > 99 ? '99+' : totalItems}
-                        </span>
-                      )}
-                    </button>
-                  </div>
-                )}
+                <div className="relative">
+                  <button
+                    onClick={openCart}
+                    className="relative flex h-[38px] w-[38px] items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-secondary)] transition-all hover:scale-105 hover:border-[var(--accent)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)]"
+                    style={{ background: 'transparent', cursor: 'pointer' }}
+                  >
+                    <ShoppingCart size={18} />
+                    {totalItems > 0 && (
+                      <span 
+                        style={{
+                          position: 'absolute',
+                          top: -4,
+                          right: -4,
+                          minWidth: 16,
+                          height: 16,
+                          borderRadius: 8,
+                          background: 'var(--accent)',
+                          color: 'var(--bg-card)',
+                          fontSize: 10,
+                          fontWeight: 600,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '0 4px',
+                          border: '1.5px solid var(--bg-primary)',
+                        }}
+                      >
+                        {totalItems > 99 ? '99+' : totalItems}
+                      </span>
+                    )}
+                  </button>
+                </div>
 
                 {/* SEPARADOR VERTICAL */}
                 <div style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 4px' }} />

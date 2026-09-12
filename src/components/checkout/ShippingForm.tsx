@@ -1,5 +1,5 @@
 import React from "react";
-import { User, Phone, Mail, MapPin, ChevronRight, Loader2 } from "lucide-react";
+import { User, Phone, Mail, MapPin, Loader2, Lock, ShieldCheck } from "lucide-react";
 import { PremiumInput } from "./PremiumInput";
 
 interface ShippingFormProps {
@@ -34,12 +34,14 @@ export const ShippingForm = ({
       }}
       className="bg-[var(--bg-card)] border rounded-3xl shadow-md flex flex-col"
     >
-      <h3 
-        style={{ borderBottomColor: "color-mix(in srgb, var(--border) 60%, transparent)" }}
-        className="text-sm font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2 border-b pb-4"
-      >
-        <MapPin className="w-4 h-4 text-[var(--accent)]" /> 1. Dirección de entrega
-      </h3>
+      <div className="flex items-center justify-between border-b pb-4" style={{ borderBottomColor: "color-mix(in srgb, var(--border) 60%, transparent)" }}>
+        <h3 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
+          <MapPin className="w-4 h-4 text-[var(--accent)]" /> Datos de Envío y Entrega
+        </h3>
+        <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20 flex items-center gap-1">
+          <ShieldCheck className="w-3.5 h-3.5" /> Pago Seguro
+        </span>
+      </div>
       
       <div className="flex flex-col" style={{ gap: "40px" }}>
         <PremiumInput 
@@ -112,23 +114,28 @@ export const ShippingForm = ({
         </div>
       </div>
 
-      <button
-        type="submit"
-        disabled={isProcessing}
-        className="w-full h-[54px] rounded-xl font-bold text-white bg-[var(--accent)] hover:opacity-95 shadow-md flex items-center justify-center gap-2 transition-transform duration-300 hover:scale-[1.01] mt-6 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
-      >
-        {isProcessing ? (
-          <>
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Redirigiendo a Mercado Pago...
-          </>
-        ) : (
-          <>
-            Continuar al Pago
-            <ChevronRight className="w-4 h-4" />
-          </>
-        )}
-      </button>
+      <div className="flex flex-col gap-3 mt-2">
+        <button
+          type="submit"
+          disabled={isProcessing}
+          className="w-full h-[54px] rounded-xl font-bold text-white bg-[var(--accent)] hover:opacity-95 shadow-md flex items-center justify-center gap-2 transition-transform duration-300 hover:scale-[1.01] cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+        >
+          {isProcessing ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Procesando pago...
+            </>
+          ) : (
+            <>
+              <Lock className="w-4 h-4" />
+              Pagar
+            </>
+          )}
+        </button>
+        <p className="text-[11px] text-center text-[var(--text-secondary)]">
+          Al hacer clic en &quot;Pagar&quot;, confirmas tu pedido y la prenda será reservada para ti.
+        </p>
+      </div>
     </form>
   );
 };

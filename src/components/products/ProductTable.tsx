@@ -12,13 +12,16 @@ interface Props {
   onEdit: (product: Product) => void
   onDelete: (product: Product) => void
   onSort: (key: keyof Product) => void
+  onViewProduct?: (product: Product) => void
 }
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   published: { label: 'Publicado', className: 'badge-active' },
   draft: { label: 'Borrador', className: 'badge-draft' },
   archived: { label: 'Oculto', className: 'badge-inactive' },
+  sold: { label: 'Vendida', className: 'badge-sold' },
 }
+
 
 function SortIcon({ field, filters }: { field: keyof Product; filters: ProductFilters }) {
   const active = filters.sortBy === field
@@ -53,6 +56,7 @@ export function ProductTable({
   onEdit,
   onDelete,
   onSort,
+  onViewProduct,
 }: Props) {
   const allSelected = products.length > 0 && selected.size === products.length
   const someSelected = selected.size > 0 && !allSelected
@@ -119,8 +123,14 @@ export function ProductTable({
               const status = STATUS_CONFIG[product.status] || STATUS_CONFIG.draft
 
               return (
-                <tr key={product.id} className={`tr ${isSelected ? 'tr-selected' : ''}`}>
-                  <td className="td td-check">
+                <tr
+                  key={product.id}
+                  className={`tr ${isSelected ? 'tr-selected' : ''}`}
+                  onClick={() => onViewProduct?.(product)}
+                  style={{ cursor: 'pointer' }}
+                  title="Haz clic para ver el detalle en grande"
+                >
+                  <td className="td td-check" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
                       className="checkbox"
@@ -170,7 +180,7 @@ export function ProductTable({
                   <td className="td">
                     <span className={`badge ${status.className}`}>{status.label}</span>
                   </td>
-                  <td className="td">
+                  <td className="td" onClick={(e) => e.stopPropagation()}>
                     <div className="action-group">
                       <button
                         className="action-btn action-edit"

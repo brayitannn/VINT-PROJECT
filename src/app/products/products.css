@@ -359,11 +359,13 @@
 .badge-active  { background: #dcfce7; color: #15803d; }
 .badge-inactive { background: #f1f5f9; color: #64748b; }
 .badge-draft   { background: #fef9c3; color: #a16207; }
+.badge-sold    { background: #ede9fe; color: #6d28d9; }
 
 /* Dark theme badges */
 :root[data-theme='dark'] .badge-active  { background: rgba(21,128,61,0.2);  color: #4ade80; }
 :root[data-theme='dark'] .badge-inactive { background: rgba(100,116,139,0.15); color: #94a3b8; }
 :root[data-theme='dark'] .badge-draft   { background: rgba(161,98,7,0.2);   color: #fbbf24; }
+:root[data-theme='dark'] .badge-sold    { background: rgba(109,40,217,0.2);  color: #c4b5fd; }
 
 /* Stock */
 .stock-value { display: inline-flex; align-items: center; gap: 0.3rem; font-weight: 500; }

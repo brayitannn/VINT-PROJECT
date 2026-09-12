@@ -55,6 +55,18 @@ export function useProducts() {
 
   useEffect(() => {
     fetchProducts()
+
+    const handleSync = () => {
+      fetchProducts()
+    }
+
+    window.addEventListener('vint:pedido-cancelado', handleSync)
+    window.addEventListener('vint:producto-actualizado', handleSync)
+
+    return () => {
+      window.removeEventListener('vint:pedido-cancelado', handleSync)
+      window.removeEventListener('vint:producto-actualizado', handleSync)
+    }
   }, [fetchProducts])
 
   useEffect(() => {

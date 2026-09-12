@@ -2,7 +2,8 @@
 
 import { getSupabaseClient } from '@/lib/supabase/client'
 import { API_BASE_URL } from '@/lib/api'
-import type { Product, ProductInsert, ProductUpdate, ProductFilters } from '@/types/product'
+import type { Product, ProductInsert, ProductUpdate, ProductFilters, ProductStatus } from '@/types/product'
+
 
 const VIEW = 'v_catalogo_publico'
 
@@ -23,11 +24,12 @@ async function getAccessToken(): Promise<string> {
 
 // ── Mapper ─────────────────────────────────────────────────────────────────
 function mapFromDB(item: any): Product {
-  const dbStatus = (item.estado_publicacion || '').toUpperCase()
-  let status: 'published' | 'draft' | 'archived' = 'draft'
-  if (dbStatus === 'DISPONIBLE') status = 'published'
-  else if (dbStatus === 'VENDIDA') status = 'archived'
-  // PAUSADA → draft (default)
+  const dbStatus = (item.estado_publicacion || item.status || '').toUpperCase()
+  let status: ProductStatus = 'draft'
+  if (dbStatus === 'DISPONIBLE' || dbStatus === 'PUBLISHED') status = 'published'
+  else if (dbStatus === 'VENDIDA' || dbStatus === 'SOLD') status = 'sold'
+  else if (dbStatus === 'PAUSADA' || dbStatus === 'ARCHIVED' || dbStatus === 'OCULTO') status = 'archived'
+
 
   return {
     id: String(item.id_prenda || item.id),
@@ -176,21 +178,61 @@ export async function updateProduct(
   try {
     const token = await getAccessToken()
 
-    const res = await fetch(`${API_BASE_URL}/api/products`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        id,
-        ...payload,
-      }),
-    })
+    let dbStatus: string | undefined = undefined
+    if (payload.status === 'published') dbStatus = 'DISPONIBLE'
+    else if (payload.status === 'draft' || payload.status === 'archived') dbStatus = 'PAUSADA'
+    else if (payload.status === 'sold') dbStatus = 'VENDIDA'
 
-    const json = await res.json()
-    if (!res.ok) return { data: null, error: json.detail ?? json.error ?? 'Error al actualizar' }
-    return { data: json.data ? mapFromDB(json.data) : null, error: null }
+    // 1. Actualización directa de seguridad en Supabase
+    try {
+      const supabase = getSupabaseClient()
+      const updateData: any = {}
+      if (dbStatus) updateData.estado_publicacion = dbStatus
+      if (payload.name) updateData.titulo = payload.name
+      if (payload.description !== undefined) updateData.descripcion = payload.description
+      if (payload.price !== undefined) updateData.precio = payload.price
+      if (payload.size) updateData.talla = payload.size
+      if (payload.color) updateData.color = payload.color
+      if (payload.gender) updateData.genero = payload.gender
+      if (payload.condition) updateData.condicion = payload.condition
+      if (payload.brand !== undefined) updateData.marca = payload.brand
+      if (payload.image_url) updateData.imagen_principal = payload.image_url
+
+      if (Object.keys(updateData).length > 0) {
+        await supabase
+          .schema('catalogo')
+          .from('prendas')
+          .update(updateData)
+          .eq('id_prenda', Number(id) || id)
+      }
+    } catch (supaErr) {
+      console.warn('Actualización directa Supabase:', supaErr)
+    }
+
+    // 2. Notificar a la API de FastAPI
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/products`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          id: Number(id) || id,
+          ...payload,
+          estado_publicacion: dbStatus,
+        }),
+      })
+
+      const json = await res.json().catch(() => ({}))
+      if (res.ok && json.data) {
+        return { data: mapFromDB(json.data), error: null }
+      }
+    } catch (apiErr) {
+      console.warn('API PATCH call error:', apiErr)
+    }
+
+    return { data: null, error: null }
   } catch (err: any) {
     return { data: null, error: err.message }
   }

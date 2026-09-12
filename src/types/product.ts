@@ -1,4 +1,5 @@
-export type ProductStatus = 'draft' | 'published' | 'archived'
+export type ProductStatus = 'draft' | 'published' | 'archived' | 'sold'
+
 
 /** Tallas de prendas */
 export type ProductSize = 'XS' | 'S' | 'M' | 'L' | 'XL' | 'XXL' | 'Única'

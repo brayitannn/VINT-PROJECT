@@ -57,7 +57,7 @@ export function VendedorDashboard({ user }: VendedorDashboardProps) {
   const tagline = authUser?.user_metadata?.descripcion || 'Impulsando la moda circular'
 
   const ACCESOS_RAPIDOS: AccesoRapido[] = [
-    { id: 'mi-tienda', icon: Store, label: 'Mi Tienda', href: '/dashboard/vendedor/mi-tienda', accent: '#8B5E3C' },
+    { id: 'mi-tienda', icon: Store, label: 'Mi Perfil', href: '/dashboard/vendedor/mi-tienda', accent: '#8B5E3C' },
     { id: 'mis-productos', icon: Package, label: 'Mis Productos', href: '/products', accent: '#8B5E3C' },
     { id: 'mis-ventas', icon: TrendingUp, label: 'Mis Ventas', onClick: () => setModalVentas(true), accent: '#8B5E3C' },
     { id: 'ver-comprador', icon: Tag, label: 'Comprar', href: '/explorar', accent: '#8B5E3C' },

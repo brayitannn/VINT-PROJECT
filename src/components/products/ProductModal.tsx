@@ -26,9 +26,10 @@ const EMPTY: ProductInsert = {
 };
 
 const STATUS_OPTIONS: { value: ProductStatus; label: string }[] = [
-  { value: 'published', label: 'Publicado' },
+  { value: 'published', label: 'Publicado (En Venta)' },
   { value: 'draft', label: 'Borrador' },
-  { value: 'archived', label: 'Oculto' },
+  { value: 'archived', label: 'Oculto / Pausada' },
+  { value: 'sold', label: 'Vendida' },
 ]
 
 export function ProductModal({ open, product, onClose, onSubmit, categories = [] }: Props) {

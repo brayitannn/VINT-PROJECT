@@ -1,21 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { Check, ShoppingBag, Copy, Calendar, Truck, Mail, ArrowRight, User, Clock, AlertCircle } from 'lucide-react'
+import { Check, ShoppingBag, Copy, Calendar, Truck, Mail, ArrowRight, User, ShieldCheck } from 'lucide-react'
 import { useEffect, useState, Suspense } from 'react'
 import { useCart } from '@/context/CartContext'
 import { useSearchParams } from 'next/navigation'
-
-// Mapa legible de métodos de pago que MP puede devolver
-const PAYMENT_TYPE_LABELS: Record<string, string> = {
-  credit_card: 'Tarjeta de Crédito',
-  debit_card: 'Tarjeta de Débito',
-  bank_transfer: 'Transferencia PSE',
-  ticket: 'Efectivo',
-  digital_wallet: 'Billetera Digital',
-  atm: 'ATM',
-  prepaid_card: 'Tarjeta Prepago',
-}
 
 function ExitoContent() {
   const { clearCart } = useCart()
@@ -24,29 +13,20 @@ function ExitoContent() {
   const [copied, setCopied] = useState(false)
   const [dateStr, setDateStr] = useState('')
 
-  // Leer parámetros reales que envía Mercado Pago al redirigir
-  const mpStatus = searchParams.get('status') || searchParams.get('collection_status') || 'approved'
-  const mpPaymentId = searchParams.get('payment_id') || searchParams.get('collection_id') || ''
-  const mpPaymentType = searchParams.get('payment_type') || ''
-  const mpMerchantOrderId = searchParams.get('merchant_order_id') || ''
-
-  const isApproved = mpStatus === 'approved'
-  const isPending = mpStatus === 'pending' || mpStatus === 'in_process'
+  const orderIdParam = searchParams.get('order_id')
 
   useEffect(() => {
-    // Solo limpiar el carrito si el pago fue aprobado
-    if (isApproved) clearCart()
+    clearCart()
 
-    // Usar el payment_id real de MP o generar uno de respaldo
-    if (mpPaymentId) {
-      setOrderNumber(`VN-${mpPaymentId}`)
+    if (orderIdParam) {
+      setOrderNumber(orderIdParam.startsWith('VN-') ? orderIdParam : `VN-${orderIdParam.slice(0, 8).toUpperCase()}`)
     } else {
       setOrderNumber(`VN-${Math.floor(100000 + Math.random() * 900000).toString()}`)
     }
 
     const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' }
     setDateStr(new Date().toLocaleDateString('es-CO', options))
-  }, [clearCart, isApproved, mpPaymentId])
+  }, [clearCart, orderIdParam])
 
   const handleCopy = () => {
     if (typeof window !== 'undefined' && orderNumber) {
@@ -58,11 +38,10 @@ function ExitoContent() {
 
   return (
     <div 
-      style={{ padding: '24px 16px' }}
+      style={{ padding: '40px 16px' }}
       className="min-h-[90vh] flex flex-col items-center justify-center text-center bg-[var(--bg-primary)]"
     >
-      
-      {/* Estilos locales para las animaciones del check y el ticket */}
+      {/* Estilos locales */}
       <style>{`
         @keyframes drawCheck {
           0% { stroke-dashoffset: 24; }
@@ -105,72 +84,35 @@ function ExitoContent() {
         className="border shadow-xl rounded-[32px] max-w-xl w-full relative overflow-hidden animate-fade-in-up"
       >
         {/* Adornos de Fondo Decorativo */}
-        <div className="absolute top-0 right-0 w-24 h-24 bg-[radial-gradient(circle,rgba(139,94,60,0.06)_0%,transparent_70%)] pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-[radial-gradient(circle,rgba(139,94,60,0.04)_0%,transparent_70%)] pointer-events-none" />
-
-        {/* Banner de estado alternativo (Pendiente / Fallido) */}
-        {!isApproved && (
-          <div
-            style={{
-              backgroundColor: isPending ? 'rgba(245,158,11,0.08)' : 'rgba(239,68,68,0.08)',
-              borderColor: isPending ? 'rgba(245,158,11,0.3)' : 'rgba(239,68,68,0.3)',
-              padding: '14px 16px'
-            }}
-            className="w-full rounded-2xl border flex items-start gap-3 text-left"
-          >
-            {isPending
-              ? <Clock size={18} className="text-amber-500 flex-shrink-0 mt-0.5" />
-              : <AlertCircle size={18} className="text-red-500 flex-shrink-0 mt-0.5" />
-            }
-            <div>
-              <p className="text-sm font-bold" style={{ color: isPending ? '#F59E0B' : '#EF4444' }}>
-                {isPending ? 'Pago en proceso de verificación' : 'Pago no completado'}
-              </p>
-              <p className="text-xs text-[var(--text-secondary)] mt-0.5 leading-relaxed">
-                {isPending
-                  ? 'Tu pago está siendo verificado por MercadoPago. Te notificaremos cuando se confirme.'
-                  : 'Hubo un problema con tu pago. Por favor intenta nuevamente o elige otro método.'
-                }
-              </p>
-            </div>
-          </div>
-        )}
+        <div className="absolute top-0 right-0 w-28 h-28 bg-[radial-gradient(circle,rgba(139,94,60,0.08)_0%,transparent_70%)] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-36 h-36 bg-[radial-gradient(circle,rgba(139,94,60,0.05)_0%,transparent_70%)] pointer-events-none" />
 
         {/* Hero Area: Icono y Textos */}
         <div 
           style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', width: '100%' }}
         >
-          {/* Ícono de Éxito / Pendiente Animado */}
+          {/* Ícono de Éxito Animado */}
           <div className="relative animate-ring-scale">
             <div 
-              style={{ borderColor: isApproved ? 'color-mix(in srgb, var(--accent) 20%, transparent)' : 'rgba(245,158,11,0.3)' }}
+              style={{ borderColor: 'color-mix(in srgb, var(--accent) 20%, transparent)' }}
               className="w-20 h-20 rounded-full border-4 flex items-center justify-center bg-white dark:bg-[var(--bg-secondary)] shadow-inner animate-pulse-accent"
             >
-              {isApproved ? (
-                <svg className="w-10 h-10 text-[var(--accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12" className="animate-draw-check" />
-                </svg>
-              ) : (
-                <Clock className="w-10 h-10 text-amber-500" />
-              )}
+              <svg className="w-10 h-10 text-[var(--accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" className="animate-draw-check" />
+              </svg>
             </div>
-            {/* Pequeño badge flotante */}
-            <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full text-white flex items-center justify-center border-2 border-white dark:border-[var(--bg-card)] shadow z-10 ${isApproved ? 'bg-green-500' : 'bg-amber-400'}`}>
+            {/* Badge flotante */}
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full text-white flex items-center justify-center border-2 border-white dark:border-[var(--bg-card)] shadow z-10 bg-emerald-500">
               <Check size={12} strokeWidth={3} />
             </div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <h1 className="text-3xl sm:text-4xl font-black font-display text-[var(--text-primary)] tracking-tight">
-              {isApproved ? '¡Pago Exitoso!' : isPending ? 'Pago Pendiente' : 'Pago No Completado'}
+              ¡Compra Confirmada!
             </h1>
             <p className="text-sm sm:text-base text-[var(--text-secondary)] leading-relaxed max-w-md mx-auto">
-              {isApproved
-                ? 'Tu compra ha sido procesada de forma segura. El vendedor ya está notificado y preparando todo.'
-                : isPending
-                ? 'Tu pago está en revisión. Una vez aprobado, el vendedor comenzará a preparar tu pedido.'
-                : 'No pudimos procesar tu pago. Por favor regresa al checkout e intenta de nuevo.'
-              }
+              Tu pedido ha sido registrado con éxito en la base de datos. La prenda ha pasado a estado <strong className="text-emerald-600 font-semibold">Vendida</strong> y ya aparece en tu historial.
             </p>
           </div>
         </div>
@@ -188,19 +130,19 @@ function ExitoContent() {
             style={{ marginBottom: '20px' }}
             className="text-xs font-extrabold uppercase tracking-widest text-[var(--text-secondary)]"
           >
-            Estado de tu pedido
+            Estado del pedido
           </h3>
           
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 sm:gap-2">
             
             {/* Paso 1: Completado */}
             <div className="flex sm:flex-col items-center sm:text-center gap-3 sm:gap-2 flex-1">
-              <div className="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center shadow-md flex-shrink-0">
+              <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-md flex-shrink-0">
                 <Check size={14} strokeWidth={3} />
               </div>
               <div className="min-w-0">
-                <h4 className="text-xs font-bold text-[var(--text-primary)] leading-tight">Pago Recibido</h4>
-                <p className="text-[10px] text-green-600 font-semibold mt-0.5">Completado</p>
+                <h4 className="text-xs font-bold text-[var(--text-primary)] leading-tight">Pago Simulado</h4>
+                <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">Aprobado</p>
               </div>
             </div>
 
@@ -246,7 +188,7 @@ function ExitoContent() {
           </div>
         </div>
 
-        {/* Recibo Digital Estilizado con Muescas Laterales */}
+        {/* Recibo Digital Estilizado */}
         <div 
           style={{ 
             backgroundColor: 'color-mix(in srgb, var(--bg-secondary) 25%, transparent)',
@@ -255,7 +197,7 @@ function ExitoContent() {
           }}
           className="border border-dashed rounded-2xl w-full text-left relative overflow-hidden"
         >
-          {/* Muescas del Ticket (Efecto físico de boleto) */}
+          {/* Muescas de Boleto */}
           <div 
             style={{ 
               backgroundColor: 'var(--bg-card)', 
@@ -271,7 +213,6 @@ function ExitoContent() {
             className="absolute top-1/2 -right-3.5 w-7 h-7 rounded-full border-l -translate-y-1/2 hidden sm:block z-10" 
           />
 
-          {/* Contenedor aislado para evitar colapsos */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
             {/* Cabecera del ticket */}
             <div 
@@ -280,10 +221,10 @@ function ExitoContent() {
             >
               <div>
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--text-secondary)]">
-                  Número de Orden
+                  ID de Pedido
                 </span>
                 <h3 className="text-lg font-mono font-bold text-[var(--accent)] mt-0.5">
-                  {orderNumber || 'VN-......'}
+                  {orderNumber}
                 </h3>
               </div>
               <button 
@@ -293,7 +234,7 @@ function ExitoContent() {
                 className="py-1.5 px-3 rounded-xl bg-white dark:bg-[var(--bg-card)] hover:bg-[var(--bg-secondary)] transition-colors border text-[var(--text-secondary)] cursor-pointer shadow-sm active:scale-95 flex items-center justify-center gap-1.5"
               >
                 {copied ? (
-                  <span className="text-xs font-bold text-green-600 flex items-center gap-1">
+                  <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
                     <Check size={14} /> ¡Copiado!
                   </span>
                 ) : (
@@ -309,29 +250,25 @@ function ExitoContent() {
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', width: '100%' }}>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <p className="text-[11px] font-semibold text-[var(--text-muted)] flex items-center gap-1">
-                  <Calendar size={13} className="text-[var(--text-secondary)]" /> Fecha de Pago
+                  <Calendar size={13} className="text-[var(--text-secondary)]" /> Fecha
                 </p>
-                <p className="text-xs font-bold text-[var(--text-primary)]">{dateStr || 'Cargando...'}</p>
+                <p className="text-xs font-bold text-[var(--text-primary)]">{dateStr || 'Hoy'}</p>
               </div>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <p className="text-[11px] font-semibold text-[var(--text-muted)] flex items-center gap-1">
-                  <Truck size={13} className="text-[var(--text-secondary)]" /> Envío Estimado
+                  <Truck size={13} className="text-[var(--text-secondary)]" /> Entrega Estimada
                 </p>
                 <p className="text-xs font-bold text-[var(--text-primary)]">2 - 4 días hábiles</p>
               </div>
-              {mpPaymentType && (
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <p className="text-[11px] font-semibold text-[var(--text-muted)] flex items-center gap-1">
-                    <Mail size={13} className="text-[var(--text-secondary)]" /> Método de Pago
-                  </p>
-                  <p className="text-xs font-bold text-[var(--text-primary)]">
-                    {PAYMENT_TYPE_LABELS[mpPaymentType] || mpPaymentType}
-                  </p>
-                </div>
-              )}
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <p className="text-[11px] font-semibold text-[var(--text-muted)] flex items-center gap-1">
+                  <ShieldCheck size={13} className="text-[var(--text-secondary)]" /> Método
+                </p>
+                <p className="text-xs font-bold text-emerald-600">Simulado</p>
+              </div>
             </div>
 
-            {/* Notificación de envío */}
+            {/* Notificación */}
             <div 
               style={{ 
                 backgroundColor: 'color-mix(in srgb, var(--accent) 5%, transparent)',
@@ -344,13 +281,13 @@ function ExitoContent() {
             >
               <Mail size={16} className="text-[var(--accent)] flex-shrink-0 mt-0.5" />
               <div>
-                Te hemos enviado un correo de confirmación con el resumen y pronto recibirás el número de guía para el rastreo.
+                Tu compra ha sido guardada en la base de datos y ya puedes verla en tu historial de <strong className="text-[var(--accent)]">Mis Compras</strong>.
               </div>
             </div>
           </div>
         </div>
 
-        {/* Acciones del Checkout */}
+        {/* Acciones */}
         <div 
           style={{ display: 'flex', gap: '12px', width: '100%', marginTop: '8px' }}
           className="flex-col sm:flex-row"
@@ -363,11 +300,11 @@ function ExitoContent() {
             Seguir Comprando
           </Link>
           <Link 
-            href="/perfil" 
+            href="/dashboard/comprador" 
             className="vint-btn-secondary flex-1 py-3.5 px-6 rounded-xl font-bold flex items-center justify-center gap-2 border text-sm cursor-pointer"
           >
             <User size={16} />
-            Ir a mi Perfil
+            Ver Mis Compras
             <ArrowRight size={14} />
           </Link>
         </div>
@@ -387,4 +324,4 @@ export default function ExitoPage() {
       <ExitoContent />
     </Suspense>
   )
-}
+}

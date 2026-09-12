@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { ProductTable } from '@/components/products/ProductTable'
 import { ProductModal } from '@/components/products/ProductModal'
+import { ProductViewModal } from '@/components/products/ProductViewModal'
 import { ProductDeleteDialog } from '@/components/products/ProductDeleteDialog'
 import { ProductToast, type ToastType } from '@/components/products/ProductToast'
 import type { Product, ProductInsert, ProductUpdate, ProductStatus } from '@/types/product'
@@ -46,6 +47,7 @@ function ProductsContent() {
   // Modal state
   const [modalOpen, setModalOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [viewingProduct, setViewingProduct] = useState<Product | null>(null)
 
   // Delete state
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -202,6 +204,7 @@ function ProductsContent() {
             <option value="published">Publicado</option>
             <option value="draft">Borrador</option>
             <option value="archived">Oculto</option>
+            <option value="sold">Vendida</option>
           </select>
 
           {categories.length > 0 && (
@@ -247,6 +250,7 @@ function ProductsContent() {
         onEdit={openEdit}
         onDelete={openDelete}
         onSort={handleSort}
+        onViewProduct={(product) => setViewingProduct(product)}
       />
 
       {totalPages > 1 && (
@@ -278,6 +282,25 @@ function ProductsContent() {
           </div>
         </div>
       )}
+
+      {/* Modal de Vista Detallada en Grande */}
+      <ProductViewModal
+        product={viewingProduct}
+        onClose={() => setViewingProduct(null)}
+        onEdit={(prod) => {
+          setViewingProduct(null)
+          openEdit(prod)
+        }}
+        onReactivar={async (prod) => {
+          const res = await update(prod.id, { status: 'published' })
+          if (!res.error) {
+            showToast("Prenda en venta", "La prenda vuelve a estar disponible para la venta.")
+            setViewingProduct(prev => prev ? { ...prev, status: 'published' } : null)
+          } else {
+            showToast("Error", res.error || "No se pudo reactivar la prenda", "delete")
+          }
+        }}
+      />
 
       <ProductModal
         open={modalOpen}

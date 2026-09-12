@@ -207,24 +207,22 @@ export function ProductCard({ product, onOpen }: ProductCardProps) {
             </span>
           </Link>
 
-          {role !== 'vendedor' && (
-            <button
-              onClick={handleAddToCart}
-              style={{
-                backgroundColor: inCart ? '#10B981' : 'var(--accent)',
-                color: 'white',
-                border: 'none', borderRadius: 12,
-                width: 36, height: 36,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', transition: 'all 0.2s',
-                transform: 'scale(1)',
-              }}
-              title={inCart ? 'Ya en el carrito — agregar otro' : 'Añadir al carrito'}
-              className="vint-btn-primary"
-            >
-              <ShoppingCart size={18} />
-            </button>
-          )}
+          <button
+            onClick={handleAddToCart}
+            style={{
+              backgroundColor: inCart ? '#10B981' : 'var(--accent)',
+              color: 'white',
+              border: 'none', borderRadius: 12,
+              width: 36, height: 36,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', transition: 'all 0.2s',
+              transform: 'scale(1)',
+            }}
+            title={inCart ? 'Ya en el carrito — agregar otro' : 'Añadir al carrito'}
+            className="vint-btn-primary"
+          >
+            <ShoppingCart size={18} />
+          </button>
         </div>
       </div>
     </article>

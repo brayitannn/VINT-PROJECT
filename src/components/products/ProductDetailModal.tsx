@@ -190,15 +190,13 @@ export function ProductDetailModal({ product, onClose, addToCartOptions }: Props
             </Link>
 
             <div className="product-detail-actions">
-              {role !== 'vendedor' && (
-                <button
-                  onClick={handleAddToCart}
-                  className="detail-cart-btn vint-btn-primary product-detail-cart-btn"
-                >
-                  <ShoppingCart size={16} />
-                  {inCart ? 'Agregar otro' : 'Agregar al Carrito'}
-                </button>
-              )}
+              <button
+                onClick={handleAddToCart}
+                className="detail-cart-btn vint-btn-primary product-detail-cart-btn"
+              >
+                <ShoppingCart size={16} />
+                {inCart ? 'Agregar otro' : 'Agregar al Carrito'}
+              </button>
 
               {!isMyProduct && (
                 <button
