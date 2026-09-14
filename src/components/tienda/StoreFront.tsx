@@ -8,6 +8,7 @@ import { ProductCard, type Product } from '@/components/products/ProductCard'
 import { useAuth } from '@/context/AuthContext'
 import { ChatModal } from '@/components/chat/ChatModal'
 import { getMisVentas } from '@/services/pedidos'
+import { API_BASE_URL } from '@/lib/api'
 
 interface StoreFrontProps {
   isOwner: boolean;
@@ -22,9 +23,11 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
   const [loading, setLoading] = useState(true)
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [username, setUsername] = useState<string>('')
+  const [descripcion, setDescripcion] = useState<string>('')
   const [location, setLocation] = useState<string>('Colombia')
   const [joinYear, setJoinYear] = useState<number>(new Date().getFullYear())
   const [ventasExitosas, setVentasExitosas] = useState<number>(0)
+  const [sellerAuthId, setSellerAuthId] = useState<string | null>(sellerId || null)
 
   const supabase = createClient()
   const { user } = useAuth()
@@ -216,119 +219,148 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
 
       let fetchedProducts: any[] = []
       let nombreLimpio = ''
+      const targetIdentifier = sellerId || sellerSlug || (isOwner && user ? (user.user_metadata?.username || user.id) : '')
 
-      if (isOwner && sellerId) {
-        // --- VISTA DE DUEÑO ---
-        let perfil: any = null
+      let apiLoaded = false
+
+      // 1. Intentar cargar el perfil público desde la API oficial de FastAPI
+      if (targetIdentifier) {
         try {
-          const res = await supabase
-            .from('usuarios')
-            .select('primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, fecha_nacimiento')
-            .eq('id_auth_supabase', sellerId)
-            .maybeSingle()
-          if (res.data) perfil = res.data
-        } catch {}
+          const res = await fetch(`${API_BASE_URL}/api/vendedor/${encodeURIComponent(targetIdentifier)}/publico`)
+          if (res.ok) {
+            const json = await res.json()
+            if (json?.success && json?.data) {
+              const d = json.data
+              nombreLimpio = d.nombre || ''
+              setUsername(d.username || targetIdentifier.replace(/^@+/, ''))
+              setAvatarUrl(d.avatar_url || null)
+              setDescripcion(d.descripcion || '')
+              setLocation(d.ciudad || 'Colombia')
+              if (d.fecha_registro) {
+                setJoinYear(new Date(d.fecha_registro).getFullYear())
+              }
+              let ventasReales = d.ventas_exitosas ?? 0
+              try {
+                let vQuery = supabase.from('v_usuarios_publico').select('ventas_exitosas')
+                if (d.id_auth_supabase) {
+                  vQuery = vQuery.eq('id_auth_supabase', d.id_auth_supabase)
+                } else if (d.email) {
+                  vQuery = vQuery.eq('correo', d.email)
+                } else if (d.username) {
+                  vQuery = vQuery.eq('username', d.username)
+                }
+                const { data: vUser } = await vQuery.maybeSingle()
+                if (vUser && typeof vUser.ventas_exitosas === 'number') {
+                  ventasReales = vUser.ventas_exitosas
+                }
+              } catch {}
+              setVentasExitosas(ventasReales)
+              if (d.id_auth_supabase) {
+                setSellerAuthId(d.id_auth_supabase)
+              }
+              const parts = (d.nombre || '').split(' ')
+              setPerfilData({
+                primer_nombre: parts[0] || '',
+                primer_apellido: parts.slice(1).join(' ') || ''
+              })
+              apiLoaded = true
 
-        if (!perfil) {
-          try {
-            const res = await supabase.schema('seguridad').from('usuarios')
-              .select('primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, fecha_nacimiento')
-              .eq('id_auth_supabase', sellerId).maybeSingle()
-            if (res.data) perfil = res.data
-          } catch {}
+              // Cargar prendas del vendedor en el catálogo
+              let pQuery = supabase.from('v_catalogo_publico').select('*')
+              if (d.email) {
+                pQuery = pQuery.eq('correo_vendedor', d.email)
+              } else if (d.username) {
+                pQuery = pQuery.eq('username_vendedor', d.username)
+              } else {
+                pQuery = pQuery.ilike('vendedor', `%${parts[0]}%`)
+              }
+              const { data: prods } = await pQuery.order('fecha_publicacion', { ascending: false })
+              fetchedProducts = prods || []
+            }
+          }
+        } catch (e) {
+          console.warn("Fallo carga desde API vendedor/publico, intentando fallback:", e)
         }
+      }
 
-        if (!perfil) {
-          try {
-            const resPub = await supabase
-              .from('v_usuarios_publico')
-              .select('primer_nombre, primer_apellido, correo')
-              .eq('id_auth_supabase', sellerId)
-              .maybeSingle()
-            if (resPub.data) perfil = resPub.data
-          } catch {}
+      // 2. Fallback a la vista v_usuarios_publico en Supabase
+      if (!apiLoaded) {
+        try {
+          let uQuery = supabase.from('v_usuarios_publico').select('*')
+          if (sellerId) {
+            uQuery = uQuery.eq('id_auth_supabase', sellerId)
+          } else if (sellerSlug) {
+            const cleanSlug = sellerSlug.replace(/^@+/, '')
+            uQuery = uQuery.or(`username.ilike.${cleanSlug},correo.ilike.${cleanSlug},correo.ilike.${cleanSlug}@%,primer_nombre.ilike.${cleanSlug}`)
+          }
+          const { data: uData } = await uQuery.maybeSingle()
+          if (uData) {
+            nombreLimpio = uData.nombre_completo || `${uData.primer_nombre} ${uData.primer_apellido || ''}`.trim()
+            setUsername(uData.username || sellerSlug?.replace(/^@+/, '') || '')
+            setAvatarUrl(uData.avatar_url || null)
+            setDescripcion(uData.descripcion || '')
+            setLocation(uData.ciudad || 'Colombia')
+            if (uData.fecha_registro) setJoinYear(new Date(uData.fecha_registro).getFullYear())
+            
+            let ventasReales = uData.ventas_exitosas ?? 0
+            if (uData.id_auth_supabase) {
+              const { count: pedidosCount } = await supabase
+                .from('pedidos')
+                .select('*', { count: 'exact', head: true })
+                .eq('vendedor_id', uData.id_auth_supabase)
+                .eq('estado', 'completado')
+              if (typeof pedidosCount === 'number' && pedidosCount > 0) {
+                ventasReales = pedidosCount
+              }
+            }
+            setVentasExitosas(ventasReales)
+            if (uData.id_auth_supabase) setSellerAuthId(uData.id_auth_supabase)
+            setPerfilData({
+              primer_nombre: uData.primer_nombre,
+              primer_apellido: uData.primer_apellido
+            })
+
+            const { data: prods } = await supabase
+              .from('v_catalogo_publico')
+              .select('*')
+              .eq('correo_vendedor', uData.correo)
+              .order('fecha_publicacion', { ascending: false })
+            fetchedProducts = prods || []
+            apiLoaded = true
+          }
+        } catch (e) {
+          console.warn("Fallo carga desde v_usuarios_publico:", e)
         }
+      }
 
-        // Obtener info de auth para avatar/ubicación
+      // 3. Fallback adicional si es el dueño con sesión activa
+      if (!apiLoaded && (isOwner || !sellerSlug)) {
         const { data: { user: authUser } } = await supabase.auth.getUser()
         if (authUser) {
           const meta = authUser.user_metadata || {}
-          if (!perfil) {
-            const fullName = meta.full_name || meta.name || ''
-            const parts = fullName.split(' ').filter(Boolean)
-            perfil = {
-              primer_nombre: meta.first_name || parts[0] || 'Vendedor',
-              primer_apellido: meta.last_name || parts.slice(1).join(' ') || '',
-            }
-          }
+          nombreLimpio = meta.name || meta.full_name || authUser.email?.split('@')[0] || 'Vendedor'
+          setUsername(meta.username || authUser.email?.split('@')[0] || 'vendedor')
           setAvatarUrl(meta.avatar_url || null)
-          setLocation(meta.location || meta.ciudad || meta.city || 'Colombia')
+          setDescripcion(meta.descripcion || '')
+          setLocation(meta.location || meta.ciudad || 'Colombia')
           setJoinYear(new Date(authUser.created_at || new Date()).getFullYear())
-          if (meta.username) {
-            setUsername(meta.username)
-          } else {
-            const genName = `${perfil.primer_nombre || ''}${perfil.primer_apellido || ''}`.replace(/\s+/g, '').toLowerCase()
-            setUsername(genName || 'vendedor')
-          }
-        }
-        setPerfilData(perfil)
-        nombreLimpio = perfil ? `${perfil.primer_nombre || ''} ${perfil.primer_apellido || ''}`.replace(/\s+/g, ' ').trim() : 'Vendedor'
 
-        // Obtener conteo real de ventas exitosas
-        try {
-          const misVentas = await getMisVentas()
-          const exitosas = misVentas.filter((v: any) => v.estado === 'completado').length
-          setVentasExitosas(exitosas)
-        } catch {
           const { count } = await supabase
             .from('pedidos')
             .select('*', { count: 'exact', head: true })
-            .eq('vendedor_id', sellerId)
+            .eq('vendedor_id', authUser.id)
             .eq('estado', 'completado')
           setVentasExitosas(count || 0)
-        }
 
-        // Cargar prendas usando el email del vendedor (prop o auth)
-        const emailToUse = sellerEmail || authUser?.email
-        if (emailToUse) {
-          const { data: prods } = await supabase
-            .from('v_catalogo_publico')
-            .select('*')
-            .eq('correo_vendedor', emailToUse)
-            .order('fecha_publicacion', { ascending: false })
-          fetchedProducts = prods || []
-        } else if (nombreLimpio) {
-          // Fallback por nombre
-          const { data: prods } = await supabase
-            .from('v_catalogo_publico')
-            .select('*')
-            .ilike('vendedor', `%${nombreLimpio.split(' ')[0]}%`)
-            .order('fecha_publicacion', { ascending: false })
-          fetchedProducts = prods || []
-        }
-      } else if (!isOwner && sellerSlug) {
-        // --- VISTA PÚBLICA ---
-        nombreLimpio = sellerSlug.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())
-        setUsername(sellerSlug.replace(/-/g, ''))
-        
-        // Buscar por nombre del vendedor en la vista pública
-        const { data: prods } = await supabase
-          .from('v_catalogo_publico')
-          .select('*')
-          .ilike('vendedor', `%${nombreLimpio.split(' ')[0]}%`)
-          .order('fecha_publicacion', { ascending: false })
-        
-        fetchedProducts = prods || []
-
-        if (fetchedProducts.length > 0) {
-          const exactSellerName = fetchedProducts[0].vendedor || nombreLimpio
-          const parts = exactSellerName.split(' ')
-          setPerfilData({ 
-            primer_nombre: parts[0] || '', 
-            primer_apellido: parts.slice(1).join(' ') || '' 
-          })
-        } else {
-          setPerfilData({ primer_nombre: nombreLimpio.split(' ')[0], primer_apellido: nombreLimpio.split(' ').slice(1).join(' ') })
+          const emailToUse = sellerEmail || authUser.email
+          if (emailToUse) {
+            const { data: prods } = await supabase
+              .from('v_catalogo_publico')
+              .select('*')
+              .eq('correo_vendedor', emailToUse)
+              .order('fecha_publicacion', { ascending: false })
+            fetchedProducts = prods || []
+          }
         }
       }
 
@@ -340,8 +372,15 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
         size: p.talla || 'M',
         condition: mapConditionDBtoUI(p.condicion || p.estado_publicacion),
         seller: p.vendedor || nombreLimpio,
-        rating: 4.8,
+        rating: 5.0,
         sellerEmail: p.correo_vendedor,
+        description: p.descripcion || null,
+        brand: p.marca || null,
+        category: p.categoria || null,
+        color: p.color || null,
+        gender: p.genero || null,
+        sellerAvatar: p.avatar_vendedor || null,
+        sellerUsername: p.username_vendedor || null,
       }))
 
       setProductos(mapped)
@@ -349,7 +388,7 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
     }
 
     fetchData()
-  }, [isOwner, sellerId, sellerSlug])
+  }, [isOwner, sellerId, sellerSlug, user])
 
   const mapConditionDBtoUI = (condicion: string) => {
     switch(condicion?.toUpperCase()) {
@@ -375,6 +414,15 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
   
   const initials = nombreCompleto.split(' ').filter(Boolean).map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) || 'US'
   const firstInitial = (username ? username[0] : (nombreCompleto ? nombreCompleto[0] : 'V')).toUpperCase()
+
+  const isEffectiveOwner = isOwner || Boolean(
+    user && (
+      (sellerAuthId && user.id === sellerAuthId) ||
+      (user.user_metadata?.username && username && user.user_metadata.username.toLowerCase() === username.toLowerCase()) ||
+      (sellerSlug && user.user_metadata?.username && sellerSlug.toLowerCase() === user.user_metadata.username.toLowerCase()) ||
+      (user.email && sellerEmail && user.email.toLowerCase() === sellerEmail.toLowerCase())
+    )
+  )
 
   return (
     <>
@@ -671,15 +719,21 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
                 marginBottom: 8,
                 border: '1px solid var(--border)'
               }}>
-                {isOwner ? 'Mi Perfil' : 'Vendedor'}
+                {isEffectiveOwner ? 'Mi Perfil' : 'Vendedor'}
               </div>
 
               <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 36, fontWeight: 700, color: 'var(--text-primary)', margin: 0, lineHeight: 1.1 }}>
                 {nombreCompleto}
               </h1>
-              <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '2px 0 16px', fontWeight: 500 }}>
+              <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '2px 0 10px', fontWeight: 500 }}>
                 @{username}
               </p>
+
+              {descripcion && (
+                <p style={{ fontSize: 14, color: 'var(--text-primary)', margin: '0 0 16px', lineHeight: 1.6, maxWidth: 620, opacity: 0.9 }}>
+                  {descripcion}
+                </p>
+              )}
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 16, color: 'var(--text-secondary)', fontSize: 14 }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -736,7 +790,7 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
             </div>
 
             <div className="store-actions">
-              {isOwner ? (
+              {isEffectiveOwner ? (
                 <div style={{ display: 'flex', gap: 12 }}>
                   <Link
                     href="/perfil"

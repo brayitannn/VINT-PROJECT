@@ -4,24 +4,74 @@ import React, { useEffect, useState } from 'react'
 import { ArrowLeft, MapPin, Calendar, Heart, Share2, Award, Info } from 'lucide-react'
 import Link from 'next/link'
 
+import { createClient } from '@/lib/supabase/client'
+import { API_BASE_URL } from '@/lib/api'
+
 interface ArmarioPublicoProps {
   buyerSlug: string;
 }
 
 export function ArmarioPublico({ buyerSlug }: ArmarioPublicoProps) {
   const [loading, setLoading] = useState(true)
+  const [nombreLimpio, setNombreLimpio] = useState(buyerSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()))
+  const [username, setUsername] = useState(buyerSlug.replace(/^@+/, '').replace(/-/g, ''))
+  const [location, setLocation] = useState('Colombia')
+  const [joinYear, setJoinYear] = useState(new Date().getFullYear())
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [bio, setBio] = useState<string>('')
 
-  // Datos simulados (pueden venir de BD en un futuro)
-  const nombreLimpio = buyerSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-  const username = buyerSlug.replace(/-/g, '')
-  const location = 'Medellín, Colombia'
-  const joinYear = 2024
-  const initials = nombreLimpio.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()
+  const supabase = createClient()
 
   useEffect(() => {
-    // Simular carga de datos
-    const timer = setTimeout(() => setLoading(false), 800)
-    return () => clearTimeout(timer)
+    let active = true
+    const cleanSlug = buyerSlug.replace(/^@+/, '')
+
+    const fetchBuyerData = async () => {
+      setLoading(true)
+      try {
+        // 1. Intentar API
+        const res = await fetch(`${API_BASE_URL}/api/vendedor/${encodeURIComponent(cleanSlug)}/publico`)
+        if (res.ok) {
+          const json = await res.json()
+          if (active && json?.success && json?.data) {
+            const d = json.data
+            setNombreLimpio(d.nombre || cleanSlug)
+            setUsername(d.username || cleanSlug)
+            setLocation(d.ciudad || 'Colombia')
+            setAvatarUrl(d.avatar_url || null)
+            setBio(d.descripcion || '')
+            if (d.fecha_registro) setJoinYear(new Date(d.fecha_registro).getFullYear())
+            setLoading(false)
+            return
+          }
+        }
+      } catch {}
+
+      // 2. Fallback Supabase v_usuarios_publico
+      try {
+        const { data: uData } = await supabase
+          .from('v_usuarios_publico')
+          .select('*')
+          .or(`username.ilike.${cleanSlug},correo.ilike.${cleanSlug},primer_nombre.ilike.${cleanSlug}`)
+          .maybeSingle()
+
+        if (active && uData) {
+          setNombreLimpio(uData.nombre_completo || `${uData.primer_nombre} ${uData.primer_apellido || ''}`.trim())
+          setUsername(uData.username || cleanSlug)
+          setLocation(uData.ciudad || 'Colombia')
+          setAvatarUrl(uData.avatar_url || null)
+          setBio(uData.descripcion || '')
+          if (uData.fecha_registro) setJoinYear(new Date(uData.fecha_registro).getFullYear())
+        }
+      } catch (e) {
+        console.warn("Error cargando perfil de comprador:", e)
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
+
+    fetchBuyerData()
+    return () => { active = false }
   }, [buyerSlug])
 
   if (loading) {
@@ -31,6 +81,8 @@ export function ArmarioPublico({ buyerSlug }: ArmarioPublicoProps) {
       </div>
     )
   }
+
+  const initials = nombreLimpio.split(' ').filter(Boolean).map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() || 'US'
 
   // Colecciones de ejemplo
   const colecciones = [
@@ -167,7 +219,11 @@ export function ArmarioPublico({ buyerSlug }: ArmarioPublicoProps) {
             </div>
             
             <div className="armario-avatar">
-              {initials}
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={nombreLimpio} />
+              ) : (
+                initials
+              )}
             </div>
           </div>
           
@@ -195,7 +251,7 @@ export function ArmarioPublico({ buyerSlug }: ArmarioPublicoProps) {
               </div>
 
               <p className="armario-bio">
-                Amante de la moda sostenible y de encontrar piezas únicas que cuenten una historia. Explorando tesoros vintage desde {joinYear}.
+                {bio || `Amante de la moda sostenible y de encontrar piezas únicas que cuenten una historia. Explorando tesoros vintage desde ${joinYear}.`}
               </p>
             </div>
           </div>

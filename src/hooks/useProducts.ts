@@ -6,6 +6,7 @@ import {
   deleteProduct,
   deleteProducts,
   getCategories,
+  getMarcas,
 } from '@/services/products'
 import type {
   Product,
@@ -18,6 +19,7 @@ import type {
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<{id: string, nombre: string}[]>([])
+  const [marcas, setMarcas] = useState<{id_marca: string, nombre: string}[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -71,6 +73,7 @@ export function useProducts() {
 
   useEffect(() => {
     getCategories().then(setCategories)
+    getMarcas().then(setMarcas)
   }, [])
 
   // ── Filters ────────────────────────────────────────────────────────────────
@@ -85,7 +88,10 @@ export function useProducts() {
       setLoading(true)
       const { error } = await createProduct(payload)
       setLoading(false)
-      if (!error) await fetchProducts()
+      if (!error) {
+        await new Promise((r) => setTimeout(r, 400))
+        await fetchProducts()
+      }
       return { error }
     },
     [fetchProducts]
@@ -160,6 +166,7 @@ export function useProducts() {
   return {
     products,
     categories,
+    marcas,
     loading,
     error,
     filters,

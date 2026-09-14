@@ -10,6 +10,8 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '@/context/AuthContext'
 import { ChatModal } from '@/components/chat/ChatModal'
+import { API_BASE_URL } from '@/lib/api'
+import { createClient } from '@/lib/supabase/client'
 
 interface Props {
   product: Product | null
@@ -35,6 +37,13 @@ export function ProductDetailModal({ product, onClose, addToCartOptions }: Props
   const { user } = useAuth()
   const [chatOpen, setChatOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [sellerData, setSellerData] = useState<{
+    avatarUrl: string | null
+    sales: number
+    rating: number
+    username: string
+  } | null>(null)
+
   let role = user?.user_metadata?.role || 'comprador'
   if (role === 'buyer') role = 'comprador'
   if (role === 'seller') role = 'vendedor'
@@ -65,6 +74,68 @@ export function ProductDetailModal({ product, onClose, addToCartOptions }: Props
     return () => window.removeEventListener('keydown', handler)
   }, [onClose])
 
+  useEffect(() => {
+    if (!product) return
+    let active = true
+
+    const loadSellerInfo = async () => {
+      const identifier = product.sellerUsername || product.sellerEmail || product.seller
+      let avatar = product.sellerAvatar || null
+      let sales = product.salesCount ?? 0
+      let rating = 5.0
+      let uname = product.sellerUsername || identifier
+
+      // 1. Intentar obtener datos desde la vista pública de Supabase
+      try {
+        const supabase = createClient()
+        let q = supabase.from('v_usuarios_publico').select('avatar_url, username, ventas_exitosas')
+        if (product.sellerEmail) {
+          q = q.eq('correo', product.sellerEmail)
+        } else if (product.sellerUsername) {
+          const cleanU = product.sellerUsername.replace(/^@+/, '')
+          q = q.or(`username.ilike.${cleanU},correo.ilike.${cleanU}@%`)
+        } else {
+          q = q.ilike('nombre_completo', `%${product.seller}%`)
+        }
+        const { data: vData } = await q.maybeSingle()
+        if (vData) {
+          if (vData.avatar_url) avatar = vData.avatar_url
+          if (vData.username) uname = vData.username
+          if (typeof vData.ventas_exitosas === 'number') sales = vData.ventas_exitosas
+        }
+      } catch {}
+
+      // 2. Intentar completar con API oficial
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/vendedor/${encodeURIComponent(identifier)}/publico`)
+        if (res.ok) {
+          const json = await res.json()
+          if (json?.success && json?.data) {
+            if (json.data.avatar_url) avatar = json.data.avatar_url
+            if (json.data.username) uname = json.data.username
+            if (json.data.calificacion) rating = json.data.calificacion
+            if (sales === 0 && json.data.ventas_exitosas) {
+              sales = json.data.ventas_exitosas
+            }
+          }
+        }
+      } catch {}
+
+      if (active) {
+        setSellerData({
+          avatarUrl: avatar,
+          sales,
+          rating,
+          username: uname,
+        })
+      }
+    }
+
+    loadSellerInfo()
+
+    return () => { active = false }
+  }, [product])
+
   if (!product || !mounted) return null
 
   const handleAddToCart = () => {
@@ -74,8 +145,10 @@ export function ProductDetailModal({ product, onClose, addToCartOptions }: Props
 
   const handleToggleFav = () => toggleFavorito(product.id.toString())
 
-  const rating = (4 + (product.id % 10) / 10).toFixed(1)
-  const sales = 10 + (product.id % 90)
+  const finalRating = sellerData ? sellerData.rating.toFixed(1) : '5.0'
+  const finalSales = sellerData ? sellerData.sales : (product.salesCount ?? 0)
+  const finalAvatar = sellerData?.avatarUrl || product.sellerAvatar || null
+  const finalUsername = sellerData?.username || product.sellerUsername || product.seller.toLowerCase().replace(/\s+/g, '-')
 
   const modalContent = (
     <>
@@ -139,6 +212,11 @@ export function ProductDetailModal({ product, onClose, addToCartOptions }: Props
                 <span className="product-detail-tag">
                   <Ruler size={11} /> Talla {product.size}
                 </span>
+                {product.brand && (
+                  <span className="product-detail-tag">
+                    🏷️ {product.brand}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -147,43 +225,72 @@ export function ProductDetailModal({ product, onClose, addToCartOptions }: Props
 
             <div className="product-detail-section">
               <h3>Descripción</h3>
-              <p>
-                Prenda en estado <strong>{product.condition}</strong>, talla <strong>{product.size}</strong>.
-                Ideal para cualquier ocasión. Publicada por {product.seller}.
+              <p style={{ whiteSpace: 'pre-line', lineHeight: 1.6 }}>
+                {product.description || `Prenda en estado ${product.condition}, talla ${product.size}. Publicada por ${product.seller}.`}
               </p>
             </div>
 
             <div className="product-detail-section">
               <h3>Detalles del Producto</h3>
               <div className="product-detail-list">
-                {[
-                  { icon: '🏷️', label: `Condición: ${product.condition}` },
-                  { icon: '✅', label: 'Estado: Disponible' },
-                  { icon: '📦', label: 'Envío disponible a toda Colombia' },
-                ].map(d => (
-                  <div key={d.label} className="product-detail-list-item">
-                    <span>{d.icon}</span>
-                    <span>{d.label}</span>
+                {product.brand && (
+                  <div className="product-detail-list-item">
+                    <span>🏷️</span>
+                    <span><strong>Marca:</strong> {product.brand}</span>
                   </div>
-                ))}
+                )}
+                {product.category && (
+                  <div className="product-detail-list-item">
+                    <span>👗</span>
+                    <span><strong>Categoría:</strong> {product.category}</span>
+                  </div>
+                )}
+                <div className="product-detail-list-item">
+                  <span>✨</span>
+                  <span><strong>Condición:</strong> {product.condition}</span>
+                </div>
+                <div className="product-detail-list-item">
+                  <span>📏</span>
+                  <span><strong>Talla:</strong> {product.size}</span>
+                </div>
+                {product.color && (
+                  <div className="product-detail-list-item">
+                    <span>🎨</span>
+                    <span><strong>Color:</strong> {product.color}</span>
+                  </div>
+                )}
+                {product.gender && (
+                  <div className="product-detail-list-item">
+                    <span>👤</span>
+                    <span><strong>Género:</strong> {product.gender}</span>
+                  </div>
+                )}
+                <div className="product-detail-list-item">
+                  <span>📦</span>
+                  <span>Envío disponible a toda Colombia</span>
+                </div>
               </div>
             </div>
 
             <Link
-              href={`/tienda/${encodeURIComponent(product.seller.toLowerCase().replace(/\s+/g, '-'))}`}
+              href={`/tienda/${encodeURIComponent(finalUsername)}`}
               onClick={onClose}
               className="product-detail-seller"
             >
               <p className="product-detail-seller-label">Vendedor</p>
               <div className="product-detail-seller-row">
-                <div className="product-detail-seller-avatar">
-                  {product.seller.charAt(0)}
+                <div className="product-detail-seller-avatar" style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {finalAvatar ? (
+                    <img src={finalAvatar} alt={product.seller} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    product.seller.charAt(0).toUpperCase()
+                  )}
                 </div>
                 <div>
                   <p className="product-detail-seller-name">{product.seller}</p>
                   <div className="product-detail-seller-meta">
                     <Star size={12} fill="#F59E0B" color="#F59E0B" />
-                    <span>{rating} · {sales} ventas</span>
+                    <span>{finalRating} · {finalSales} {finalSales === 1 ? 'venta' : 'ventas'}</span>
                   </div>
                 </div>
               </div>

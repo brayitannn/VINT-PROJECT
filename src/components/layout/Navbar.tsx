@@ -35,6 +35,30 @@ export function Navbar() {
   const { user, signOut, loading } = useAuth()
   const { totalItems, openCart } = useCart()
   const [activeChat, setActiveChat] = useState<{ id?: string, email: string, name: string } | null>(null)
+  const [userAvatar, setUserAvatar] = useState<string | null>(user?.user_metadata?.avatar_url || null)
+
+  useEffect(() => {
+    if (!user) return
+    setUserAvatar(user.user_metadata?.avatar_url || null)
+
+    const fetchAvatar = async () => {
+      try {
+        const { data } = await supabase
+          .from('v_usuarios_publico')
+          .select('avatar_url')
+          .eq('id_auth_supabase', user.id)
+          .maybeSingle()
+        if (data?.avatar_url) {
+          setUserAvatar(data.avatar_url)
+        } else if (user.user_metadata?.avatar_url) {
+          setUserAvatar(user.user_metadata.avatar_url)
+        }
+      } catch {}
+    }
+    fetchAvatar()
+    window.addEventListener('updatePerfil', fetchAvatar)
+    return () => window.removeEventListener('updatePerfil', fetchAvatar)
+  }, [user, supabase])
 
   useEffect(() => {
     setMounted(true)
@@ -351,7 +375,7 @@ export function Navbar() {
                     }}
                   >
                     <div 
-                      className="flex items-center justify-center rounded-full uppercase"
+                      className="flex items-center justify-center rounded-full uppercase overflow-hidden"
                       style={{
                         width: 28,
                         height: 28,
@@ -362,7 +386,11 @@ export function Navbar() {
                         fontFamily: 'var(--font-serif)'
                       }}
                     >
-                      {initials}
+                      {userAvatar ? (
+                        <img src={userAvatar} alt={userName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        initials
+                      )}
                     </div>
                     <span className="hidden sm:inline-block tracking-tight capitalize" style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
                       {userName.split(' ')[0]}
@@ -387,8 +415,12 @@ export function Navbar() {
                           className="flex items-center transition-colors hover:opacity-80"
                           style={{ gap: '12px', textDecoration: 'none' }}
                         >
-                          <div className="w-10 h-10 rounded-full bg-[var(--accent)] shadow-sm flex-shrink-0 flex items-center justify-center text-[15px] font-bold text-white uppercase">
-                            {initials}
+                          <div className="w-10 h-10 rounded-full bg-[var(--accent)] shadow-sm flex-shrink-0 flex items-center justify-center text-[15px] font-bold text-white uppercase overflow-hidden">
+                            {userAvatar ? (
+                              <img src={userAvatar} alt={userName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                              initials
+                            )}
                           </div>
                           <span className="text-[17px] font-bold text-[var(--text-primary)] leading-tight truncate capitalize">
                             {userName}

@@ -1,7 +1,7 @@
 'use client'
 
 import { Search, Heart, ShoppingBag } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { type MockUser } from '@/lib/supabase/mock-user'
 import { useAuth } from '@/context/AuthContext'
 import { useRecomendaciones } from '@/hooks/useRecomendaciones'
@@ -9,6 +9,7 @@ import { useCompradorStats } from '@/hooks/useCompradorStats'
 import { RecomendacionesGrid } from './RecomendacionesGrid'
 import { MisTransaccionesModal } from './MisTransaccionesModal'
 import { ProfileCoverHeader, type AccesoRapido } from './ProfileCoverHeader'
+import { createClient } from '@/lib/supabase/client'
 
 interface CompradorDashboardProps {
   user: MockUser
@@ -19,6 +20,35 @@ export function CompradorDashboard({ user }: CompradorDashboardProps) {
   const { recomendaciones, loading, error, lastUpdated, refetch } = useRecomendaciones()
   const { stats: compradorStats } = useCompradorStats()
   const [modalOpen, setModalOpen] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(user.avatar || authUser?.user_metadata?.avatar_url || null)
+  const [currentUsername, setCurrentUsername] = useState<string>(user.username || authUser?.user_metadata?.username || '')
+
+  useEffect(() => {
+    const supabase = createClient()
+    const fetchUserData = async () => {
+      try {
+        const { data } = await supabase
+          .from('v_usuarios_publico')
+          .select('avatar_url, username')
+          .eq('id_auth_supabase', user.id)
+          .maybeSingle()
+        if (data?.avatar_url) {
+          setAvatarUrl(data.avatar_url)
+        } else if (authUser?.user_metadata?.avatar_url) {
+          setAvatarUrl(authUser.user_metadata.avatar_url)
+        }
+        if (data?.username) {
+          setCurrentUsername(data.username)
+        } else if (authUser?.user_metadata?.username) {
+          setCurrentUsername(authUser.user_metadata.username)
+        }
+      } catch {}
+    }
+
+    fetchUserData()
+    window.addEventListener('updatePerfil', fetchUserData)
+    return () => window.removeEventListener('updatePerfil', fetchUserData)
+  }, [user.id, authUser])
 
   const tagline = authUser?.user_metadata?.descripcion || 'Tu estilo, sostenible y único'
 
@@ -177,7 +207,8 @@ export function CompradorDashboard({ user }: CompradorDashboardProps) {
         <ProfileCoverHeader
           name={user.name}
           email={user.email}
-          avatarUrl={user.avatar || null}
+          username={currentUsername}
+          avatarUrl={avatarUrl}
           stats={[
             { value: compradorStats.compras, label: 'compras' },
             { value: compradorStats.seguidos, label: 'seguidos' },

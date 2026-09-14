@@ -211,8 +211,15 @@ export function ExplorarClient() {
         condition: mapCondicion(item.condicion),
         seller: item.vendedor ?? 'Vendedor',
         image: item.imagen_principal ?? 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&h=500&fit=crop',
-        rating: 4.5,
+        rating: 5.0,
         sellerEmail: item.correo_vendedor,
+        description: item.descripcion || null,
+        brand: item.marca || null,
+        category: item.categoria || null,
+        color: item.color || null,
+        gender: item.genero || null,
+        sellerAvatar: item.avatar_vendedor || null,
+        sellerUsername: item.username_vendedor || null,
       }))
       setProducts(mapped)
       setTotalCount(count ?? 0)

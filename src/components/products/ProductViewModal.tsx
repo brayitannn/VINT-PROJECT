@@ -188,14 +188,9 @@ export function ProductViewModal({ product, onClose, onEdit, onReactivar }: Prod
             background: 'var(--bg-primary)'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Vista Previa de Prenda
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Detalle de Prenda
               </span>
-              {product.sku && (
-                <span style={{ fontSize: 12, fontFamily: 'monospace', padding: '2px 8px', borderRadius: 6, background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
-                  SKU: {product.sku}
-                </span>
-              )}
             </div>
             <button
               onClick={onClose}
@@ -244,26 +239,23 @@ export function ProductViewModal({ product, onClose, onEdit, onReactivar }: Prod
                 letterSpacing: '0.04em',
                 boxShadow: '0 4px 12px rgba(0,0,0,0.12)'
               }} className={isSold ? 'pv-badge-sold' : isPublished ? 'pv-badge-published' : 'pv-badge-draft'}>
-                {isSold ? '● Vendida' : isPublished ? '● Publicada / En Venta' : '● ' + product.status}
+                {isSold ? '● Vendida' : isPublished ? '● Publicada / En Venta' : '● Pausada / Oculto'}
               </div>
             </div>
 
             {/* Column 2: Information & Specs */}
             <div className="pv-info-col">
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
                   {product.category && (
-                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.04em', background: 'rgba(139,94,60,0.08)', padding: '3px 8px', borderRadius: 6 }}>
                       {product.category}
                     </span>
                   )}
                   {product.brand && (
-                    <>
-                      <span style={{ color: 'var(--text-muted)' }}>•</span>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>
-                        {product.brand}
-                      </span>
-                    </>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', background: 'var(--bg-secondary)', padding: '3px 8px', borderRadius: 6 }}>
+                      {product.brand}
+                    </span>
                   )}
                 </div>
 
@@ -297,7 +289,7 @@ export function ProductViewModal({ product, onClose, onEdit, onReactivar }: Prod
                 }}>
                   <AlertCircle size={20} style={{ flexShrink: 0 }} />
                   <div style={{ fontSize: 13 }}>
-                    <strong>Esta prenda figura como Vendida.</strong> Si la compra fue anulada o deseas volver a ofrecerla, puedes reactivarla directamente aquí.
+                    <strong>Esta prenda figura como Vendida.</strong> Si la compra fue cancelada o deseas volver a comercializarla, puedes reactivarla directamente aquí.
                   </div>
                 </div>
               )}
@@ -311,7 +303,12 @@ export function ProductViewModal({ product, onClose, onEdit, onReactivar }: Prod
 
                 <div className="pv-chip">
                   <span className="pv-chip-lbl">Condición</span>
-                  <span className="pv-chip-val capitalize">{product.condition?.replace('_', ' ') || 'Buen estado'}</span>
+                  <span className="pv-chip-val capitalize">{product.condition?.toUpperCase() === 'NUEVO' ? 'Nuevo' : product.condition?.toUpperCase() === 'USADO' ? 'Usado' : (product.condition?.replace('_', ' ') || 'Buen estado')}</span>
+                </div>
+
+                <div className="pv-chip">
+                  <span className="pv-chip-lbl">Marca</span>
+                  <span className="pv-chip-val">{product.brand || 'Sin marca'}</span>
                 </div>
 
                 <div className="pv-chip">
@@ -321,17 +318,29 @@ export function ProductViewModal({ product, onClose, onEdit, onReactivar }: Prod
 
                 <div className="pv-chip">
                   <span className="pv-chip-lbl">Género</span>
-                  <span className="pv-chip-val">{product.gender || 'UNISEX'}</span>
+                  <span className="pv-chip-val">{product.gender || 'Unisex'}</span>
                 </div>
 
                 <div className="pv-chip">
-                  <span className="pv-chip-lbl">Stock</span>
-                  <span className="pv-chip-val">{product.stock} un.</span>
+                  <span className="pv-chip-lbl">Estado</span>
+                  <span className="pv-chip-val" style={{ color: isSold ? '#6d28d9' : isPublished ? '#15803d' : 'inherit' }}>
+                    {isSold ? 'Vendida' : isPublished ? 'Disponible' : 'Pausada'}
+                  </span>
+                </div>
+
+                <div className="pv-chip">
+                  <span className="pv-chip-lbl">Categoría</span>
+                  <span className="pv-chip-val">{product.category || 'General'}</span>
                 </div>
 
                 <div className="pv-chip">
                   <span className="pv-chip-lbl">Publicado</span>
                   <span className="pv-chip-val" style={{ fontSize: 12 }}>{formatDate(product.created_at)}</span>
+                </div>
+
+                <div className="pv-chip">
+                  <span className="pv-chip-lbl">Stock</span>
+                  <span className="pv-chip-val">{product.stock} un.</span>
                 </div>
               </div>
 

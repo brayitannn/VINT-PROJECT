@@ -19,6 +19,7 @@ function ProductsContent() {
   const {
     products,
     categories,
+    marcas,
     loading,
     error,
     filters,
@@ -181,7 +182,7 @@ function ProductsContent() {
           </svg>
           <input
             className="search-input"
-            placeholder="Buscar por nombre, SKU o descripción…"
+            placeholder="Buscar por nombre o descripción…"
             value={filters.search ?? ''}
             onChange={(e) => updateFilters({ search: e.target.value })}
           />
@@ -203,7 +204,7 @@ function ProductsContent() {
             <option value="all">Todos los estados</option>
             <option value="published">Publicado</option>
             <option value="draft">Borrador</option>
-            <option value="archived">Oculto</option>
+            <option value="archived">Oculto / Pausado</option>
             <option value="sold">Vendida</option>
           </select>
 
@@ -306,6 +307,7 @@ function ProductsContent() {
         open={modalOpen}
         product={editingProduct}
         categories={categories}
+        marcas={marcas}
         onClose={() => setModalOpen(false)}
         onSubmit={handleModalSubmit}
       />

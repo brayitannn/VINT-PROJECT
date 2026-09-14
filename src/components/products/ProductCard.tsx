@@ -18,6 +18,14 @@ export interface Product {
   image: string
   rating: number
   sellerEmail?: string
+  description?: string | null
+  brand?: string | null
+  category?: string | null
+  color?: string | null
+  gender?: string | null
+  sellerAvatar?: string | null
+  sellerUsername?: string | null
+  salesCount?: number
 }
 
 interface ProductCardProps {

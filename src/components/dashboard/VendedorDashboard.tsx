@@ -10,6 +10,7 @@ import { MisVentasModal } from './MisVentasModal'
 import { EstadisticasDetalleModal, type DetalleTipo } from './EstadisticasDetalleModal'
 import { fetchEstadisticasVendedor, type EstadisticasVendedor } from '@/services/estadisticas'
 import { ProfileCoverHeader, type AccesoRapido } from './ProfileCoverHeader'
+import { createClient } from '@/lib/supabase/client'
 
 interface VendedorDashboardProps {
   user: MockUser
@@ -53,6 +54,8 @@ export function VendedorDashboard({ user }: VendedorDashboardProps) {
   const [detalleActivo, setDetalleActivo] = useState<DetalleTipo | null>(null)
   const [stats, setStats] = useState<EstadisticasVendedor | null>(null)
   const [loadingStats, setLoadingStats] = useState(true)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(user.avatar || authUser?.user_metadata?.avatar_url || null)
+  const [currentUsername, setCurrentUsername] = useState<string>(user.username || authUser?.user_metadata?.username || '')
 
   const tagline = authUser?.user_metadata?.descripcion || 'Impulsando la moda circular'
 
@@ -62,6 +65,33 @@ export function VendedorDashboard({ user }: VendedorDashboardProps) {
     { id: 'mis-ventas', icon: TrendingUp, label: 'Mis Ventas', onClick: () => setModalVentas(true), accent: '#8B5E3C' },
     { id: 'ver-comprador', icon: Tag, label: 'Comprar', href: '/explorar', accent: '#8B5E3C' },
   ]
+
+  useEffect(() => {
+    const supabase = createClient()
+    const fetchUserData = async () => {
+      try {
+        const { data } = await supabase
+          .from('v_usuarios_publico')
+          .select('avatar_url, username')
+          .eq('id_auth_supabase', user.id)
+          .maybeSingle()
+        if (data?.avatar_url) {
+          setAvatarUrl(data.avatar_url)
+        } else if (authUser?.user_metadata?.avatar_url) {
+          setAvatarUrl(authUser.user_metadata.avatar_url)
+        }
+        if (data?.username) {
+          setCurrentUsername(data.username)
+        } else if (authUser?.user_metadata?.username) {
+          setCurrentUsername(authUser.user_metadata.username)
+        }
+      } catch {}
+    }
+
+    fetchUserData()
+    window.addEventListener('updatePerfil', fetchUserData)
+    return () => window.removeEventListener('updatePerfil', fetchUserData)
+  }, [user.id, authUser])
 
   useEffect(() => {
     // =========================================================================
@@ -223,7 +253,8 @@ export function VendedorDashboard({ user }: VendedorDashboardProps) {
         <ProfileCoverHeader
           name={user.name}
           email={user.email}
-          avatarUrl={user.avatar || null}
+          username={currentUsername}
+          avatarUrl={avatarUrl}
           stats={[
             { value: stats?.prendasVendidas || 0, label: 'ventas' },
             { value: userStats.seguidos, label: 'seguidos' },

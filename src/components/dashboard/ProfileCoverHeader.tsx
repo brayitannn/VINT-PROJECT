@@ -17,6 +17,7 @@ export interface AccesoRapido {
 interface ProfileCoverHeaderProps {
   name: string
   email?: string
+  username?: string
   stats?: { value: string | number; label: string }[]
   avatarUrl?: string | null
   tagline?: string
@@ -26,12 +27,15 @@ interface ProfileCoverHeaderProps {
 export function ProfileCoverHeader({
   name,
   email,
+  username,
   stats = [],
   avatarUrl,
   tagline = 'Tu estilo, sostenible y único',
   accesos = [],
 }: ProfileCoverHeaderProps) {
   const [hoveredNav, setHoveredNav] = useState<string | null>(null)
+
+  const handle = (username || email?.split('@')[0] || '').replace(/^@+/, '')
 
   const initials = name
     .trim()
@@ -344,7 +348,7 @@ export function ProfileCoverHeader({
 
           {/* Nombre, @usuario, tagline */}
           <p className="pch-name">{name}</p>
-          {email && <p className="pch-handle">@{email.split('@')[0]}</p>}
+          {handle && <p className="pch-handle">@{handle}</p>}
           <p className="pch-tagline">{tagline}</p>
 
           {/* Stats compactos — entre info y botones */}

@@ -21,7 +21,9 @@ export default function CompradorPage() {
     ...MOCK_USER,
     id: user.id,
     name: user.user_metadata?.name || user.email?.split("@")[0] || "Comprador",
+    username: user.user_metadata?.username || user.email?.split("@")[0] || "",
     email: user.email || "",
+    avatar: user.user_metadata?.avatar_url || "",
     role: "comprador" as const,
   };
 

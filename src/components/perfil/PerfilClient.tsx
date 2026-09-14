@@ -186,30 +186,6 @@ function PerfilSection() {
   const realDescripcion = user?.user_metadata?.descripcion || ''
 
   const [name, setName] = useState('')
-  const [perfilData, setPerfilData] = useState<any>(null)
-
-  useEffect(() => {
-    if (user) {
-      const fetchPerfil = async () => {
-        let res = await supabase.from('usuarios').select('primer_nombre, segundo_nombre, primer_apellido, segundo_apellido').eq('id_auth_supabase', user.id).maybeSingle()
-        if (res.error) {
-          res = await supabase.schema('seguridad').from('usuarios').select('primer_nombre, segundo_nombre, primer_apellido, segundo_apellido').eq('id_auth_supabase', user.id).maybeSingle()
-        }
-        if (res.data) {
-          setPerfilData(res.data)
-          const nombreCompleto = `${res.data.primer_nombre} ${res.data.segundo_nombre || ''} ${res.data.primer_apellido} ${res.data.segundo_apellido || ''}`.replace(/\s+/g, ' ').trim()
-          setName(nombreCompleto)
-        } else {
-          const fallbackName = user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuario'
-          setName(fallbackName)
-        }
-      }
-      fetchPerfil()
-      
-      window.addEventListener('updatePerfil', fetchPerfil)
-      return () => window.removeEventListener('updatePerfil', fetchPerfil)
-    }
-  }, [user, supabase])
   const [username, setUsername] = useState(realUsername)
   const [email] = useState(realEmail)
   const [location, setLocation] = useState(realLocation)
@@ -222,6 +198,49 @@ function PerfilSection() {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  useEffect(() => {
+    if (user) {
+      const fetchPerfil = async () => {
+        let res = await supabase
+          .schema('seguridad')
+          .from('usuarios')
+          .select('primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, username, descripcion, avatar_url, ciudad, genero, fecha_nacimiento')
+          .eq('id_auth_supabase', user.id)
+          .maybeSingle()
+
+        if (res.error || !res.data) {
+          res = await supabase
+            .from('usuarios')
+            .select('primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, username, descripcion, avatar_url, ciudad, genero, fecha_nacimiento')
+            .eq('id_auth_supabase', user.id)
+            .maybeSingle()
+        }
+
+        if (res.data) {
+          const dbData = res.data
+          const nombreCompleto = `${dbData.primer_nombre || ''} ${dbData.segundo_nombre || ''} ${dbData.primer_apellido || ''} ${dbData.segundo_apellido || ''}`.replace(/\s+/g, ' ').trim()
+          setName(nombreCompleto || user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || '')
+          if (dbData.username) setUsername(dbData.username)
+          if (dbData.descripcion !== undefined && dbData.descripcion !== null) setDescripcion(dbData.descripcion)
+          if (dbData.avatar_url) setAvatarPreview(dbData.avatar_url)
+          if (dbData.ciudad) setLocation(dbData.ciudad)
+          if (dbData.genero) setGender(dbData.genero)
+          if (dbData.fecha_nacimiento) setBirthday(dbData.fecha_nacimiento)
+        } else {
+          const fallbackName = user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuario'
+          setName(fallbackName)
+          if (user?.user_metadata?.username) setUsername(user.user_metadata.username)
+          if (user?.user_metadata?.descripcion) setDescripcion(user.user_metadata.descripcion)
+          if (user?.user_metadata?.avatar_url) setAvatarPreview(user.user_metadata.avatar_url)
+        }
+      }
+      fetchPerfil()
+      
+      window.addEventListener('updatePerfil', fetchPerfil)
+      return () => window.removeEventListener('updatePerfil', fetchPerfil)
+    }
+  }, [user, supabase])
+
   const edad = calcularEdad(birthday)
   const hoyStr = new Date().toISOString().split('T')[0]
 
@@ -232,7 +251,7 @@ function PerfilSection() {
     setUpdating(true)
     setError(null)
     try {
-      // Separar nombre completo en partes para la base de datos
+      const cleanUsername = username.replace(/^@+/, '').trim().toLowerCase()
       const parts = name.trim().split(/\s+/)
       let primer_nombre = parts[0] || ''
       let segundo_nombre = ''
@@ -250,31 +269,83 @@ function PerfilSection() {
         segundo_apellido = parts.slice(3).join(' ')
       }
 
-      const updatePayload = {
+      // 1. Intentar actualizar a través del nuevo endpoint de FastAPI
+      try {
+        const { data: sessionData } = await supabase.auth.getSession()
+        const token = sessionData?.session?.access_token
+        if (token) {
+          const apiRes = await fetch(`${API_BASE_URL}/api/perfil/me`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              nombre: name.trim(),
+              username: cleanUsername,
+              descripcion: descripcion.trim(),
+              avatar_url: avatarPreview,
+              ciudad: location.trim()
+            })
+          })
+          if (!apiRes.ok) {
+            const errJson = await apiRes.json().catch(() => ({}))
+            if (errJson.detail) console.warn("API perfil/me retorno detalle:", errJson.detail)
+          }
+        }
+      } catch (apiErr) {
+        console.warn("Fallo llamada a API perfil/me, usando fallback Supabase:", apiErr)
+      }
+
+      // 2. Actualizar Auth Metadata
+      const { error: authError } = await supabase.auth.updateUser({
+        data: {
+          name: name.trim(),
+          full_name: name.trim(),
+          primer_nombre,
+          primer_apellido,
+          username: cleanUsername,
+          location: location.trim(),
+          fecha_nacimiento: birthday,
+          genero: gender,
+          descripcion: descripcion.trim(),
+          avatar_url: avatarPreview
+        }
+      })
+      if (authError) throw authError
+
+      // 3. Actualizar función RPC con SECURITY DEFINER
+      try {
+        await supabase.rpc('actualizar_mi_perfil_vint', {
+          p_nombre: name.trim(),
+          p_username: cleanUsername,
+          p_descripcion: descripcion.trim(),
+          p_avatar_url: avatarPreview,
+          p_ciudad: location.trim()
+        })
+      } catch (rpcErr) {
+        console.warn("Fallo RPC actualizar_mi_perfil_vint:", rpcErr)
+      }
+
+      // 4. Actualizar base de datos Supabase
+      const updatePayload: Record<string, any> = {
         primer_nombre,
         segundo_nombre,
         primer_apellido,
         segundo_apellido,
+        username: cleanUsername,
+        descripcion: descripcion.trim(),
+        avatar_url: avatarPreview,
+        ciudad: location.trim(),
         genero: gender,
-        fecha_nacimiento: birthday
+        fecha_nacimiento: birthday || null
       }
 
-      // 1. Actualizar Auth Metadata
-      const { error: authError } = await supabase.auth.updateUser({
-        data: { name, username, location, fecha_nacimiento: birthday, genero: gender, descripcion }
-      })
-      if (authError) throw authError
-
-      // 2. Actualizar base de datos
-      let { error: dbError } = await supabase.from('usuarios').update(updatePayload).eq('id_auth_supabase', user.id)
-      if (dbError) console.log("Error en update usuarios (sin esquema):", dbError)
-
+      let { error: dbError } = await supabase.schema('seguridad').from('usuarios').update(updatePayload).eq('id_auth_supabase', user.id)
       if (dbError) {
-        const fall = await supabase.schema('seguridad').from('usuarios').update(updatePayload).eq('id_auth_supabase', user.id)
-        if (fall.error) console.log("Error en update usuarios (esquema seguridad):", fall.error)
-        dbError = fall.error
+        const fallbackDb = await supabase.from('usuarios').update(updatePayload).eq('id_auth_supabase', user.id)
+        dbError = fallbackDb.error
       }
-      if (dbError) throw dbError
 
       setSaved(true)
       window.dispatchEvent(new Event('updatePerfil'))
@@ -289,22 +360,67 @@ function PerfilSection() {
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !user) return
+
+    // 1. Vista previa local inmediata para retroalimentación instantánea
+    const localUrl = URL.createObjectURL(file)
+    setAvatarPreview(localUrl)
     setUploading(true)
     setError(null)
+
     try {
-      const ext = file.name.split('.').pop()
-      const path = `avatars/${user.id}.${ext}`
-      const { data, error } = await supabase.storage
-        .from('avatars')
-        .upload(path, file, { upsert: true, contentType: file.type })
-      if (error) throw error
-      
-      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path)
-      const publicUrl = urlData.publicUrl
-      await supabase.auth.updateUser({ data: { avatar_url: publicUrl } })
+      // 2. Subir imagen vía endpoint seguro /api/avatar que usa SERVICE_ROLE
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('userId', user.id)
+
+      const res = await fetch('/api/avatar', {
+        method: 'POST',
+        body: formData
+      })
+      const data = await res.json()
+
+      if (!res.ok || !data.success || !data.url) {
+        throw new Error(data.error || 'No se pudo subir la foto de perfil')
+      }
+
+      const publicUrl = data.url
       setAvatarPreview(publicUrl)
+
+      // 3. Guardar en Auth de Supabase
+      await supabase.auth.updateUser({ data: { avatar_url: publicUrl } })
+
+      // 4. Guardar mediante RPC y actualización directa en seguridad.usuarios
+      try {
+        await supabase.rpc('actualizar_mi_perfil_vint', {
+          p_nombre: name.trim() || 'Usuario',
+          p_username: username.replace(/^@+/, '').trim().toLowerCase(),
+          p_descripcion: descripcion.trim(),
+          p_avatar_url: publicUrl,
+          p_ciudad: location.trim()
+        })
+      } catch {}
+
+      try {
+        await supabase.schema('seguridad').from('usuarios').update({ avatar_url: publicUrl }).eq('id_auth_supabase', user.id)
+      } catch {}
+
+      // 5. Guardar en API FastAPI si está disponible
+      try {
+        const { data: sessionData } = await supabase.auth.getSession()
+        const token = sessionData?.session?.access_token
+        if (token) {
+          await fetch(`${API_BASE_URL}/api/perfil/me`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ nombre: name || 'Usuario', avatar_url: publicUrl })
+          })
+        }
+      } catch {}
+
+      window.dispatchEvent(new Event('updatePerfil'))
     } catch (err: any) {
-      setError('Error al subir avatar: ' + err.message)
+      console.error('Error al subir avatar:', err)
+      setError('Error al subir avatar: ' + (err.message || 'Error desconocido'))
     } finally {
       setUploading(false)
     }
@@ -366,7 +482,7 @@ function PerfilSection() {
 
       <SectionCard title="Información Personal" description="Datos visibles en tu perfil público">
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px' }}>
-          <FieldRow label="Nombre completo"><Input value={name} onChange={setName} /></FieldRow>
+          <FieldRow label="Nombre"><Input value={name} onChange={setName} placeholder="Tu nombre" /></FieldRow>
           <FieldRow label="Nombre de usuario"><Input value={username} onChange={setUsername} placeholder="@username" /></FieldRow>
           <FieldRow label="Email"><Input value={email} onChange={() => {}} type="email" disabled /></FieldRow>
           <FieldRow label="Ciudad"><Input value={location} onChange={setLocation} placeholder="Bogotá, Colombia" /></FieldRow>
@@ -786,9 +902,19 @@ export function PerfilClient() {
   useEffect(() => {
     if (user) {
       const fetchSidebarPerfil = async () => {
-        let res = await supabase.from('usuarios').select('primer_nombre, segundo_nombre, primer_apellido, segundo_apellido').eq('id_auth_supabase', user.id).maybeSingle()
-        if (res.error) {
-          res = await supabase.schema('seguridad').from('usuarios').select('primer_nombre, segundo_nombre, primer_apellido, segundo_apellido').eq('id_auth_supabase', user.id).maybeSingle()
+        let res = await supabase
+          .schema('seguridad')
+          .from('usuarios')
+          .select('primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, username, avatar_url, descripcion, ciudad')
+          .eq('id_auth_supabase', user.id)
+          .maybeSingle()
+
+        if (res.error || !res.data) {
+          res = await supabase
+            .from('usuarios')
+            .select('primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, username, avatar_url, descripcion, ciudad')
+            .eq('id_auth_supabase', user.id)
+            .maybeSingle()
         }
         if (res.data) setPerfilData(res.data)
       }
@@ -897,11 +1023,12 @@ export function PerfilClient() {
   
   const fallbackName = user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuario'
   const nombreCompleto = perfilData 
-    ? `${perfilData.primer_nombre} ${perfilData.segundo_nombre || ''} ${perfilData.primer_apellido} ${perfilData.segundo_apellido || ''}`.replace(/\s+/g, ' ').trim()
+    ? `${perfilData.primer_nombre || ''} ${perfilData.primer_apellido || ''}`.trim() || fallbackName
     : fallbackName
 
-  const initials = nombreCompleto.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
-  const avatarUrl = user?.user_metadata?.avatar_url || null
+  const currentUsername = perfilData?.username || user?.user_metadata?.username || user?.email?.split('@')[0] || 'usuario'
+  const avatarUrl = perfilData?.avatar_url || user?.user_metadata?.avatar_url || null
+  const initials = nombreCompleto.split(' ').filter(Boolean).map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) || 'US'
 
   return (
     <>
@@ -953,8 +1080,8 @@ export function PerfilClient() {
                   {avatarUrl ? <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
                 </div>
                 <div>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{nombreCompleto.split(' ')[0]}</p>
-                  <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>@{user?.user_metadata?.username || user?.email?.split('@')[0] || 'usuario'}</p>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{nombreCompleto}</p>
+                  <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>@{currentUsername}</p>
                 </div>
               </div>
 

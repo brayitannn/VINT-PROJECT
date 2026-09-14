@@ -18,7 +18,7 @@ interface Props {
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   published: { label: 'Publicado', className: 'badge-active' },
   draft: { label: 'Borrador', className: 'badge-draft' },
-  archived: { label: 'Oculto', className: 'badge-inactive' },
+  archived: { label: 'Oculto / Pausada', className: 'badge-inactive' },
   sold: { label: 'Vendida', className: 'badge-sold' },
 }
 
@@ -84,7 +84,6 @@ export function ProductTable({
                 onChange={onToggleSelectAll}
               />
             </th>
-            <SortTh label="SKU" field="sku" />
             <SortTh label="Producto" field="name" />
             <SortTh label="Precio" field="price" />
             <SortTh label="Categoría" field="category" />
@@ -97,7 +96,7 @@ export function ProductTable({
           {loading && products.length === 0 ? (
             Array.from({ length: 5 }).map((_, i) => (
               <tr key={i} className="tr-skeleton">
-                {Array.from({ length: 8 }).map((_, j) => (
+                {Array.from({ length: 7 }).map((_, j) => (
                   <td key={j} className="td">
                     <div className="skeleton" />
                   </td>
@@ -106,7 +105,7 @@ export function ProductTable({
             ))
           ) : products.length === 0 ? (
             <tr>
-              <td colSpan={8} className="td-empty">
+              <td colSpan={7} className="td-empty">
                 <div className="empty-state">
                   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
                     <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
@@ -128,7 +127,7 @@ export function ProductTable({
                   className={`tr ${isSelected ? 'tr-selected' : ''}`}
                   onClick={() => onViewProduct?.(product)}
                   style={{ cursor: 'pointer' }}
-                  title="Haz clic para ver el detalle en grande"
+                  title="Haz clic para ver el detalle completo de la prenda"
                 >
                   <td className="td td-check" onClick={(e) => e.stopPropagation()}>
                     <input
@@ -137,9 +136,6 @@ export function ProductTable({
                       checked={isSelected}
                       onChange={() => onToggleSelect(product.id)}
                     />
-                  </td>
-                  <td className="td">
-                    <code className="sku">{product.sku || 'N/A'}</code>
                   </td>
                   <td className="td">
                     <div className="product-cell">
@@ -156,9 +152,23 @@ export function ProductTable({
                       )}
                       <div>
                         <p className="product-name">{product.name}</p>
-                        {product.description && (
-                          <p className="product-desc line-clamp-1 max-w-[150px]">{product.description}</p>
-                        )}
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 4, flexWrap: 'wrap' }}>
+                          {product.brand && (
+                            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)' }}>
+                              {product.brand}
+                            </span>
+                          )}
+                          {product.size && (
+                            <span style={{ fontSize: 11, background: 'var(--bg-secondary)', padding: '1px 6px', borderRadius: 4, color: 'var(--text-secondary)', fontWeight: 600 }}>
+                              Talla {product.size}
+                            </span>
+                          )}
+                          {product.condition && (
+                            <span style={{ fontSize: 11, background: 'var(--bg-secondary)', padding: '1px 6px', borderRadius: 4, color: 'var(--text-muted)', fontWeight: 600 }}>
+                              {product.condition}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </td>
