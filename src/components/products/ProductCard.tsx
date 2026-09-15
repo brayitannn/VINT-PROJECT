@@ -195,7 +195,7 @@ export function ProductCard({ product, onOpen }: ProductCardProps) {
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
           <Link
-            href={`/tienda/${encodeURIComponent(product.seller.toLowerCase().replace(/\s+/g, '-'))}`}
+            href={`/tienda/${encodeURIComponent((product.sellerUsername?.replace(/^@+/, '') || (product.sellerEmail ? product.sellerEmail.split('@')[0] : null) || product.seller || 'vendedor').toLowerCase().trim().replace(/\s+/g, '-'))}`}
             onClick={(e) => e.stopPropagation()}
             style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}
             className="hover:opacity-80 transition-opacity"

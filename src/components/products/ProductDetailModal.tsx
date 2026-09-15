@@ -79,11 +79,11 @@ export function ProductDetailModal({ product, onClose, addToCartOptions }: Props
     let active = true
 
     const loadSellerInfo = async () => {
-      const identifier = product.sellerUsername || product.sellerEmail || product.seller
+      const identifier = product.sellerUsername?.replace(/^@+/, '') || product.sellerEmail || product.seller || 'vendedor'
       let avatar = product.sellerAvatar || null
       let sales = product.salesCount ?? 0
       let rating = 5.0
-      let uname = product.sellerUsername || identifier
+      let uname = product.sellerUsername?.replace(/^@+/, '') || (product.sellerEmail ? product.sellerEmail.split('@')[0] : identifier)
 
       // 1. Intentar obtener datos desde la vista pública de Supabase
       try {
@@ -100,7 +100,7 @@ export function ProductDetailModal({ product, onClose, addToCartOptions }: Props
         const { data: vData } = await q.maybeSingle()
         if (vData) {
           if (vData.avatar_url) avatar = vData.avatar_url
-          if (vData.username) uname = vData.username
+          if (vData.username) uname = vData.username.replace(/^@+/, '')
           if (typeof vData.ventas_exitosas === 'number') sales = vData.ventas_exitosas
         }
       } catch {}
@@ -112,7 +112,7 @@ export function ProductDetailModal({ product, onClose, addToCartOptions }: Props
           const json = await res.json()
           if (json?.success && json?.data) {
             if (json.data.avatar_url) avatar = json.data.avatar_url
-            if (json.data.username) uname = json.data.username
+            if (json.data.username) uname = json.data.username.replace(/^@+/, '')
             if (json.data.calificacion) rating = json.data.calificacion
             if (sales === 0 && json.data.ventas_exitosas) {
               sales = json.data.ventas_exitosas
@@ -148,7 +148,8 @@ export function ProductDetailModal({ product, onClose, addToCartOptions }: Props
   const finalRating = sellerData ? sellerData.rating.toFixed(1) : '5.0'
   const finalSales = sellerData ? sellerData.sales : (product.salesCount ?? 0)
   const finalAvatar = sellerData?.avatarUrl || product.sellerAvatar || null
-  const finalUsername = sellerData?.username || product.sellerUsername || product.seller.toLowerCase().replace(/\s+/g, '-')
+  const rawSellerSlug = sellerData?.username || product.sellerUsername || (product.sellerEmail ? product.sellerEmail.split('@')[0] : null) || product.seller || 'vendedor'
+  const finalUsername = rawSellerSlug.replace(/^@+/, '').split('@')[0].toLowerCase().trim().replace(/\s+/g, '-')
 
   const modalContent = (
     <>
