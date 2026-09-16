@@ -68,6 +68,7 @@ export function useRegister() {
           data: {
             // esto para el dashboard de supabase para que aparezca el nombre en auth
             full_name: `${formData.primerNombre} ${formData.primerApellido}`.trim(),
+            name: `${formData.primerNombre} ${formData.primerApellido}`.trim(),
 
             // esto para tabla de seguridad usuarios y que se manden
             primer_nombre: formData.primerNombre,
