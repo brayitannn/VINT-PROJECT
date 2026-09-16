@@ -8,7 +8,7 @@ export type ProductSize = 'XS' | 'S' | 'M' | 'L' | 'XL' | 'XXL' | 'Única' | str
 export type ProductCondition = 'NUEVO' | 'USADO' | 'nuevo' | 'como_nuevo' | 'buen_estado' | 'regular' | string
 
 /** Género objetivo de la prenda */
-export type ProductGender = 'Hombre' | 'Mujer' | 'Unisex' | 'HOMBRE' | 'MUJER' | 'UNISEX' | 'NIÑOS' | string
+export type ProductGender = 'Hombre' | 'Mujer' | 'Niños' | 'Unisex' | 'HOMBRE' | 'MUJER' | 'NIÑOS' | 'UNISEX' | string
 
 export interface Product {
   id: string
@@ -30,6 +30,8 @@ export interface Product {
   color?: string | null
   gender?: ProductGender | null
   condition?: ProductCondition | null
+  id_estado_prenda?: number | null
+  otra_marca?: string | null
 }
 
 export type ProductInsert = Omit<Product, 'id' | 'created_at' | 'updated_at'>

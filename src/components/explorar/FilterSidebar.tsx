@@ -22,8 +22,8 @@ interface FilterSidebarProps {
 
 const DEFAULT_CATEGORIAS = ['Camisetas', 'Pantalones', 'Chaquetas', 'Vestidos', 'Calzado', 'Suéteres', 'Faldas', 'Shorts', 'Accesorios']
 const TALLAS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '36', '37', '38', '39', '40', '41', '42', '43', '44']
-const CONDICIONES = ['Como Nuevo', 'Excelente', 'Muy Bueno', 'Bueno']
-const GENEROS = ['Todos', 'Mujer', 'Hombre', 'Unisex']
+const CONDICIONES = ['Nuevo con etiqueta', 'Nuevo sin etiqueta', 'Excelente estado', 'Buen estado', 'Aceptable', 'Regular']
+const GENEROS = ['Todos', 'Mujer', 'Hombre', 'Niños', 'Unisex']
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(true)

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect } from 'react'
-import { X, Edit3, RotateCcw, Tag, Ruler, Sparkles, Package, Calendar, CheckCircle2, AlertCircle } from 'lucide-react'
+import { X, Edit3, RotateCcw, Tag, Ruler, Sparkles, Package, Calendar, CheckCircle2, AlertCircle, Shapes, Award, Palette, User } from 'lucide-react'
 import type { Product } from '@/types/product'
 
 interface ProductViewModalProps {
@@ -294,53 +294,54 @@ export function ProductViewModal({ product, onClose, onEdit, onReactivar }: Prod
                 </div>
               )}
 
-              {/* Grid of Attributes */}
+              {/* Grid of Attributes (Estilo foto de referencia) */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                {/* 1. Categoría */}
                 <div className="pv-chip">
-                  <span className="pv-chip-lbl">Talla</span>
-                  <span className="pv-chip-val">{product.size || 'Única'}</span>
-                </div>
-
-                <div className="pv-chip">
-                  <span className="pv-chip-lbl">Condición</span>
-                  <span className="pv-chip-val capitalize">{product.condition?.toUpperCase() === 'NUEVO' ? 'Nuevo' : product.condition?.toUpperCase() === 'USADO' ? 'Usado' : (product.condition?.replace('_', ' ') || 'Buen estado')}</span>
-                </div>
-
-                <div className="pv-chip">
-                  <span className="pv-chip-lbl">Marca</span>
-                  <span className="pv-chip-val">{product.brand || 'Sin marca'}</span>
-                </div>
-
-                <div className="pv-chip">
-                  <span className="pv-chip-lbl">Color</span>
-                  <span className="pv-chip-val">{product.color || 'Varios'}</span>
-                </div>
-
-                <div className="pv-chip">
-                  <span className="pv-chip-lbl">Género</span>
-                  <span className="pv-chip-val">{product.gender || 'Unisex'}</span>
-                </div>
-
-                <div className="pv-chip">
-                  <span className="pv-chip-lbl">Estado</span>
-                  <span className="pv-chip-val" style={{ color: isSold ? '#6d28d9' : isPublished ? '#15803d' : 'inherit' }}>
-                    {isSold ? 'Vendida' : isPublished ? 'Disponible' : 'Pausada'}
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }} className="pv-chip-lbl">
+                    <Shapes size={13} style={{ color: 'var(--accent)' }} /> Categoría
                   </span>
-                </div>
-
-                <div className="pv-chip">
-                  <span className="pv-chip-lbl">Categoría</span>
                   <span className="pv-chip-val">{product.category || 'General'}</span>
                 </div>
 
+                {/* 2. Talla */}
                 <div className="pv-chip">
-                  <span className="pv-chip-lbl">Publicado</span>
-                  <span className="pv-chip-val" style={{ fontSize: 12 }}>{formatDate(product.created_at)}</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }} className="pv-chip-lbl">
+                    <Ruler size={13} style={{ color: 'var(--accent)' }} /> Talla
+                  </span>
+                  <span className="pv-chip-val">{product.size || 'Única'}</span>
                 </div>
 
+                {/* 3. Estado */}
                 <div className="pv-chip">
-                  <span className="pv-chip-lbl">Stock</span>
-                  <span className="pv-chip-val">{product.stock} un.</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }} className="pv-chip-lbl">
+                    <Award size={13} style={{ color: 'var(--accent)' }} /> Estado
+                  </span>
+                  <span className="pv-chip-val">{product.condition || 'Buen estado'}</span>
+                </div>
+
+                {/* 4. Marca */}
+                <div className="pv-chip">
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }} className="pv-chip-lbl">
+                    <Tag size={13} style={{ color: 'var(--accent)' }} /> Marca
+                  </span>
+                  <span className="pv-chip-val">{product.otra_marca || (product.brand === 'Otra' ? product.otra_marca : product.brand) || 'Sin marca'}</span>
+                </div>
+
+                {/* 5. Color */}
+                <div className="pv-chip">
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }} className="pv-chip-lbl">
+                    <Palette size={13} style={{ color: 'var(--accent)' }} /> Color
+                  </span>
+                  <span className="pv-chip-val">{product.color || 'Combinado'}</span>
+                </div>
+
+                {/* 6. Género */}
+                <div className="pv-chip">
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }} className="pv-chip-lbl">
+                    <User size={13} style={{ color: 'var(--accent)' }} /> Género
+                  </span>
+                  <span className="pv-chip-val">{product.gender || 'Unisex'}</span>
                 </div>
               </div>
 

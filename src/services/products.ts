@@ -24,6 +24,8 @@ function mapFromDB(item: any): Product {
   else if (dbStatus === 'VENDIDA' || dbStatus === 'SOLD') status = 'sold'
   else if (dbStatus === 'PAUSADA' || dbStatus === 'ARCHIVED' || dbStatus === 'OCULTO') status = 'archived'
 
+  const resolvedBrand = item.otra_marca || (item.marca === 'Otra' ? item.otra_marca : item.marca) || item.brand || null
+
   return {
     id: String(item.id_prenda || item.id),
     name: item.titulo || item.name || 'Sin título',
@@ -34,7 +36,7 @@ function mapFromDB(item: any): Product {
     category: item.categoria || item.category || 'General',
     category_id: item.id_categoria ?? item.category_id ?? null,
     id_marca: item.id_marca ?? null,
-    brand: item.marca || item.brand || null,
+    brand: resolvedBrand,
     status,
     image_url: item.imagen_principal ?? item.image_url ?? null,
     created_at: item.fecha_publicacion || item.created_at || new Date().toISOString(),
@@ -43,6 +45,8 @@ function mapFromDB(item: any): Product {
     color: item.color ?? null,
     gender: item.genero ?? item.gender ?? null,
     condition: item.condicion ?? item.estado_prenda ?? item.condition ?? null,
+    id_estado_prenda: item.id_estado_prenda ?? null,
+    otra_marca: item.otra_marca ?? null,
   }
 }
 
@@ -114,7 +118,7 @@ export async function getProducts(
           .schema('catalogo')
           .from('prendas')
           .select(`
-            id_prenda, titulo, descripcion, precio, talla, color, genero, condicion, estado_publicacion, fecha_publicacion, id_categoria, id_marca,
+            id_prenda, titulo, descripcion, precio, talla, color, genero, condicion, estado_publicacion, fecha_publicacion, id_categoria, id_marca, id_estado_prenda, otra_marca,
             categorias!left(nombre),
             marcas!left(nombre),
             imagenes_prendas!left(url_imagen, es_principal, orden)
@@ -127,7 +131,7 @@ export async function getProducts(
             const imgs = p.imagenes_prendas || []
             const principal = imgs.find((i: any) => i.es_principal) || imgs[0]
             const catNombre = p.categorias?.nombre || ''
-            const marcaNombre = p.marcas?.nombre || ''
+            const marcaNombre = p.otra_marca || (p.marcas?.nombre === 'Otra' ? p.otra_marca : p.marcas?.nombre) || 'Sin marca'
 
             let status: ProductStatus = 'draft'
             const dbStatus = (p.estado_publicacion || '').toUpperCase()
@@ -154,6 +158,8 @@ export async function getProducts(
               color: p.color || null,
               gender: p.genero || null,
               condition: p.condicion || null,
+              id_estado_prenda: p.id_estado_prenda || null,
+              otra_marca: p.otra_marca || null,
             }
           })
         }
@@ -260,8 +266,14 @@ export async function createProduct(
     }
 
     const idCat = Number(payload.category_id || payload.category) || 1
-    const idMarca = Number(payload.id_marca || payload.brand) || 1
-    const cond = (payload.condition?.toUpperCase() === 'NUEVO') ? 'NUEVO' : 'USADO'
+    // Por defecto marca: 9 ("Sin marca") si no se selecciona
+    const idMarca = Number(payload.id_marca || payload.brand) || 9
+    const otraMarca = (idMarca === 41 || payload.brand === 'Otra' || String(payload.id_marca) === '41') 
+      ? (payload.otra_marca?.trim() || null) 
+      : null
+
+    const idEstadoPrenda = payload.id_estado_prenda ? Number(payload.id_estado_prenda) : null
+    const condicionFinal = payload.condition?.trim() || 'Buen estado'
 
     let dbStatus = 'DISPONIBLE'
     if (payload.status === 'archived' || payload.status === 'draft') dbStatus = 'PAUSADA'
@@ -275,13 +287,15 @@ export async function createProduct(
         id_usuario: internalUserId,
         id_categoria: idCat,
         id_marca: idMarca,
+        otra_marca: otraMarca,
         titulo: payload.name.trim(),
         descripcion: payload.description?.trim() || 'Sin descripción adicional sobre la prenda.',
         precio: Number(payload.price) || 0,
         talla: payload.size || 'M',
         color: payload.color || 'Combinado',
         genero: payload.gender || 'Unisex',
-        condicion: cond,
+        condicion: condicionFinal,
+        id_estado_prenda: idEstadoPrenda,
         estado_publicacion: dbStatus,
       })
       .select()
@@ -330,7 +344,9 @@ export async function createProduct(
             size: payload.size ?? 'Única',
             color: payload.color ?? 'Combinado',
             gender: payload.gender ?? 'Unisex',
-            condition: cond,
+            condition: condicionFinal,
+            id_estado_prenda: idEstadoPrenda,
+            otra_marca: otraMarca,
           }),
         })
       }
@@ -390,10 +406,30 @@ export async function updateProduct(
       if (payload.color) updateData.color = payload.color
       if (payload.gender) updateData.genero = payload.gender
       if (payload.condition) {
-        updateData.condicion = payload.condition.toUpperCase() === 'NUEVO' ? 'NUEVO' : 'USADO'
+        updateData.condicion = payload.condition.trim()
       }
-      if (payload.id_marca !== undefined) updateData.id_marca = Number(payload.id_marca) || payload.id_marca
-      else if (payload.brand && !isNaN(Number(payload.brand))) updateData.id_marca = Number(payload.brand)
+      if (payload.id_estado_prenda !== undefined) {
+        updateData.id_estado_prenda = payload.id_estado_prenda ? Number(payload.id_estado_prenda) : null
+      }
+      if (payload.id_marca !== undefined) {
+        const marcaId = Number(payload.id_marca) || 9
+        updateData.id_marca = marcaId
+        if (marcaId === 41) {
+          updateData.otra_marca = payload.otra_marca?.trim() || null
+        } else {
+          updateData.otra_marca = null
+        }
+      } else if (payload.brand && !isNaN(Number(payload.brand))) {
+        const marcaId = Number(payload.brand) || 9
+        updateData.id_marca = marcaId
+        if (marcaId === 41) {
+          updateData.otra_marca = payload.otra_marca?.trim() || null
+        } else {
+          updateData.otra_marca = null
+        }
+      } else if (payload.otra_marca !== undefined) {
+        updateData.otra_marca = payload.otra_marca?.trim() || null
+      }
       if (payload.category_id !== undefined) updateData.id_categoria = Number(payload.category_id) || payload.category_id
       else if (payload.category && !isNaN(Number(payload.category))) updateData.id_categoria = Number(payload.category)
 
@@ -606,11 +642,60 @@ export async function getMarcas(): Promise<{ id_marca: string; nombre: string }[
   } catch {}
 
   return [
-    { id_marca: '1', nombre: 'Nike' },
     { id_marca: '2', nombre: 'Adidas' },
-    { id_marca: '3', nombre: 'Zara' },
+    { id_marca: '35', nombre: 'Americanino' },
+    { id_marca: '34', nombre: 'Arturo Calle' },
+    { id_marca: '7', nombre: 'Bershka' },
+    { id_marca: '36', nombre: 'Calvin Klein' },
+    { id_marca: '32', nombre: 'Chevignon' },
+    { id_marca: '38', nombre: 'Forever 21' },
+    { id_marca: '37', nombre: 'GAP' },
     { id_marca: '4', nombre: 'H&M' },
     { id_marca: '5', nombre: "Levi's" },
+    { id_marca: '39', nombre: 'Mango' },
+    { id_marca: '1', nombre: 'Nike' },
+    { id_marca: '6', nombre: 'Pull&Bear' },
     { id_marca: '9', nombre: 'Sin marca' },
+    { id_marca: '40', nombre: 'Stradivarius' },
+    { id_marca: '33', nombre: 'Tennis' },
+    { id_marca: '8', nombre: 'Tommy Hilfiger' },
+    { id_marca: '3', nombre: 'Zara' },
+    { id_marca: '41', nombre: 'Otra' },
+  ]
+}
+
+export interface EstadoPrendaOption {
+  id_estado_prenda: number
+  nombre: string
+  codigo?: string
+  descripcion?: string
+  orden?: number
+}
+
+export async function getEstadosPrenda(): Promise<EstadoPrendaOption[]> {
+  const supabase = getSupabaseClient()
+  try {
+    const { data: supaEstados, error: supaErr } = await supabase
+      .schema('catalogo')
+      .from('estados_prenda')
+      .select('id_estado_prenda, nombre, codigo, descripcion, orden')
+      .eq('activo', true)
+      .order('orden', { ascending: true })
+
+    if (!supaErr && supaEstados && supaEstados.length > 0) {
+      return supaEstados
+    }
+  } catch (err) {
+    console.warn('Error al cargar estados_prenda de Supabase:', err)
+  }
+
+  // Fallback garantizado a los 6 estados de catalogo.estados_prenda
+  return [
+    { id_estado_prenda: 1, nombre: 'Nuevo con etiqueta', codigo: 'NUEVO_CON_ETIQUETA' },
+    { id_estado_prenda: 2, nombre: 'Nuevo sin etiqueta', codigo: 'NUEVO_SIN_ETIQUETA' },
+    { id_estado_prenda: 3, nombre: 'Excelente estado', codigo: 'EXCELENTE_ESTADO' },
+    { id_estado_prenda: 4, nombre: 'Buen estado', codigo: 'BUEN_ESTADO' },
+    { id_estado_prenda: 5, nombre: 'Aceptable', codigo: 'ACEPTABLE' },
+    { id_estado_prenda: 6, nombre: 'Regular', codigo: 'REGULAR' },
   ]
 }

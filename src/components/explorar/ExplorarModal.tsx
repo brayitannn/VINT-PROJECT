@@ -93,7 +93,15 @@ export function ExplorarModal({ open, onClose }: ExplorarModalProps) {
       if (f.categorias.length > 0) filtered = filtered.filter(item => f.categorias.includes(item.categoria))
       if (f.tallas.length > 0) filtered = filtered.filter(item => f.tallas.includes(item.talla))
       if (f.condiciones.length > 0) filtered = filtered.filter(item => f.condiciones.includes(item.condicion))
-      if (f.genero !== 'Todos') filtered = filtered.filter(item => item.genero === f.genero)
+      if (f.genero !== 'Todos') {
+        filtered = filtered.filter(item => {
+          if (f.genero === 'Niños') {
+            const g = (item.genero || '').toLowerCase()
+            return g.includes('niñ') || g.includes('nin')
+          }
+          return item.genero?.toLowerCase() === f.genero.toLowerCase()
+        })
+      }
       filtered = filtered.filter(item =>
         Number(item.precio) >= f.priceMin && Number(item.precio) <= f.priceMax
       )
@@ -109,10 +117,19 @@ export function ExplorarModal({ open, onClose }: ExplorarModalProps) {
         name: item.titulo,
         price: Number(item.precio),
         size: item.talla ?? 'Única',
-        condition: item.condicion ?? 'Bueno',
+        condition: item.condicion ?? 'Buen estado',
         seller: item.vendedor ?? 'Vint Shop',
         image: item.imagen_principal ?? 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&h=500&fit=crop',
         rating: 5.0,
+        brand: item.otra_marca || item.marca || 'Sin marca',
+        category: item.categoria || null,
+        color: item.color || null,
+        gender: item.genero || null,
+        description: item.descripcion || null,
+        sellerEmail: item.correo_vendedor || null,
+        sellerAvatar: item.avatar_vendedor || null,
+        sellerUsername: item.username_vendedor || null,
+        otra_marca: item.otra_marca || null,
       }))
 
       setProducts(mapped)

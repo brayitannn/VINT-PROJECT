@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { X, ShoppingCart, MessageCircle, Star, Shield, Truck, HeadphonesIcon, Heart, Tag, Ruler } from 'lucide-react'
+import { X, ShoppingCart, MessageCircle, Star, Shield, Truck, HeadphonesIcon, Heart, Tag, Ruler, Shapes, Award, Palette, User } from 'lucide-react'
 import Link from 'next/link'
 import { useCart } from '@/context/CartContext'
 import { useFavorites } from '@/context/FavoritesContext'
@@ -23,12 +23,24 @@ function formatPrice(price: number): string {
   return `$${price.toLocaleString('es-CO')} COP`
 }
 
-function getConditionStyle(condition: Product['condition']): React.CSSProperties {
-  switch (condition) {
-    case 'Excelente': return { backgroundColor: '#D1FAE5', color: '#065F46' }
-    case 'Muy Bueno': return { backgroundColor: '#FEF3C7', color: '#92400E' }
-    case 'Bueno':     return { backgroundColor: '#E0E7FF', color: '#3730A3' }
+function getConditionStyle(condition?: string): React.CSSProperties {
+  const c = condition?.toLowerCase() || ''
+  if (c.includes('nuevo')) {
+    return { backgroundColor: '#D1FAE5', color: '#065F46' }
   }
+  if (c.includes('excelente')) {
+    return { backgroundColor: '#E0F2FE', color: '#0369A1' }
+  }
+  if (c.includes('buen') || c.includes('muy bueno')) {
+    return { backgroundColor: '#FEF3C7', color: '#92400E' }
+  }
+  if (c.includes('aceptable')) {
+    return { backgroundColor: '#FFEDD5', color: '#C2410C' }
+  }
+  if (c.includes('regular')) {
+    return { backgroundColor: '#FEE2E2', color: '#B91C1C' }
+  }
+  return { backgroundColor: '#F3F4F6', color: '#374151' }
 }
 
 export function ProductDetailModal({ product, onClose, addToCartOptions }: Props) {
@@ -42,6 +54,15 @@ export function ProductDetailModal({ product, onClose, addToCartOptions }: Props
     sales: number
     rating: number
     username: string
+  } | null>(null)
+  const [prendaDetails, setPrendaDetails] = useState<{
+    marca?: string
+    condicion?: string
+    color?: string
+    genero?: string
+    categoria?: string
+    talla?: string
+    descripcion?: string
   } | null>(null)
 
   let role = user?.user_metadata?.role || 'comprador'
@@ -133,6 +154,41 @@ export function ProductDetailModal({ product, onClose, addToCartOptions }: Props
 
     loadSellerInfo()
 
+    // Cargar detalles exactos de la prenda desde catalogo.prendas para recuperar otra_marca y condicion real
+    const loadPrendaDirect = async () => {
+      try {
+        const supabase = createClient()
+        const { data: pData } = await supabase
+          .schema('catalogo')
+          .from('prendas')
+          .select(`
+            otra_marca, condicion, color, genero, talla, descripcion, id_marca,
+            marcas!left(nombre),
+            categorias!left(nombre)
+          `)
+          .eq('id_prenda', product.id)
+          .maybeSingle()
+
+        if (pData && active) {
+          const catNombre = (pData.categorias as any)?.nombre || null
+          const rawMarca = (pData.marcas as any)?.nombre || null
+          const resolvedMarca = pData.otra_marca || (rawMarca === 'Otra' ? pData.otra_marca : rawMarca) || null
+
+          setPrendaDetails({
+            marca: resolvedMarca || undefined,
+            condicion: pData.condicion || undefined,
+            color: pData.color || undefined,
+            genero: pData.genero || undefined,
+            categoria: catNombre || undefined,
+            talla: pData.talla || undefined,
+            descripcion: pData.descripcion || undefined,
+          })
+        }
+      } catch {}
+    }
+
+    loadPrendaDirect()
+
     return () => { active = false }
   }, [product])
 
@@ -150,6 +206,14 @@ export function ProductDetailModal({ product, onClose, addToCartOptions }: Props
   const finalAvatar = sellerData?.avatarUrl || product.sellerAvatar || null
   const rawSellerSlug = sellerData?.username || product.sellerUsername || (product.sellerEmail ? product.sellerEmail.split('@')[0] : null) || product.seller || 'vendedor'
   const finalUsername = rawSellerSlug.replace(/^@+/, '').split('@')[0].toLowerCase().trim().replace(/\s+/g, '-')
+
+  const displayMarca = prendaDetails?.marca || product.otra_marca || (product.brand === 'Otra' ? product.otra_marca : product.brand) || 'Sin marca'
+  const displayCondicion = prendaDetails?.condicion || product.condition || 'Buen estado'
+  const displayCategoria = prendaDetails?.categoria || product.category || 'General'
+  const displayTalla = prendaDetails?.talla || product.size || 'M'
+  const displayColor = prendaDetails?.color || product.color || 'Combinado'
+  const displayGenero = prendaDetails?.genero || product.gender || 'Unisex'
+  const displayDescripcion = prendaDetails?.descripcion || product.description || `Prenda en estado ${displayCondicion}, talla ${displayTalla}. Publicada por ${product.seller}.`
 
   const modalContent = (
     <>
@@ -186,9 +250,9 @@ export function ProductDetailModal({ product, onClose, addToCartOptions }: Props
 
             <span
               className="product-detail-condition"
-              style={getConditionStyle(product.condition)}
+              style={getConditionStyle(displayCondicion)}
             >
-              {product.condition}
+              {displayCondicion}
             </span>
           </div>
 
@@ -208,14 +272,14 @@ export function ProductDetailModal({ product, onClose, addToCartOptions }: Props
               <h2 className="product-detail-title">{product.name}</h2>
               <div className="product-detail-tags">
                 <span className="product-detail-tag">
-                  <Tag size={11} /> {product.condition}
+                  <Tag size={11} /> {displayCondicion}
                 </span>
                 <span className="product-detail-tag">
-                  <Ruler size={11} /> Talla {product.size}
+                  <Ruler size={11} /> Talla {displayTalla}
                 </span>
-                {product.brand && (
+                {displayMarca && (
                   <span className="product-detail-tag">
-                    🏷️ {product.brand}
+                    🏷️ {displayMarca}
                   </span>
                 )}
               </div>
@@ -224,53 +288,69 @@ export function ProductDetailModal({ product, onClose, addToCartOptions }: Props
             <p className="product-detail-price">{formatPrice(product.price)}</p>
             <div className="product-detail-divider" />
 
-            <div className="product-detail-section">
-              <h3>Descripción</h3>
-              <p style={{ whiteSpace: 'pre-line', lineHeight: 1.6 }}>
-                {product.description || `Prenda en estado ${product.condition}, talla ${product.size}. Publicada por ${product.seller}.`}
-              </p>
+            {/* ── CUADRÍCULA DE 6 ATRIBUTOS (Diseño foto de referencia) ── */}
+            <div className="p-attr-grid">
+              {/* 1. Categoría */}
+              <div className="p-attr-card">
+                <div className="p-attr-icon">
+                  <Shapes size={17} />
+                </div>
+                <span className="p-attr-label">Categoría</span>
+                <span className="p-attr-value" title={displayCategoria}>{displayCategoria}</span>
+              </div>
+
+              {/* 2. Talla */}
+              <div className="p-attr-card">
+                <div className="p-attr-icon">
+                  <Ruler size={17} />
+                </div>
+                <span className="p-attr-label">Talla</span>
+                <span className="p-attr-value" title={displayTalla}>{displayTalla}</span>
+              </div>
+
+              {/* 3. Estado */}
+              <div className="p-attr-card">
+                <div className="p-attr-icon">
+                  <Award size={17} />
+                </div>
+                <span className="p-attr-label">Estado</span>
+                <span className="p-attr-value" title={displayCondicion}>{displayCondicion}</span>
+              </div>
+
+              {/* 4. Marca */}
+              <div className="p-attr-card">
+                <div className="p-attr-icon">
+                  <Tag size={17} />
+                </div>
+                <span className="p-attr-label">Marca</span>
+                <span className="p-attr-value" title={displayMarca}>{displayMarca}</span>
+              </div>
+
+              {/* 5. Color */}
+              <div className="p-attr-card">
+                <div className="p-attr-icon">
+                  <Palette size={17} />
+                </div>
+                <span className="p-attr-label">Color</span>
+                <span className="p-attr-value" title={displayColor}>{displayColor}</span>
+              </div>
+
+              {/* 6. Género */}
+              <div className="p-attr-card">
+                <div className="p-attr-icon">
+                  <User size={17} />
+                </div>
+                <span className="p-attr-label">Género</span>
+                <span className="p-attr-value" title={displayGenero}>{displayGenero}</span>
+              </div>
             </div>
 
-            <div className="product-detail-section">
-              <h3>Detalles del Producto</h3>
-              <div className="product-detail-list">
-                {product.brand && (
-                  <div className="product-detail-list-item">
-                    <span>🏷️</span>
-                    <span><strong>Marca:</strong> {product.brand}</span>
-                  </div>
-                )}
-                {product.category && (
-                  <div className="product-detail-list-item">
-                    <span>👗</span>
-                    <span><strong>Categoría:</strong> {product.category}</span>
-                  </div>
-                )}
-                <div className="product-detail-list-item">
-                  <span>✨</span>
-                  <span><strong>Condición:</strong> {product.condition}</span>
-                </div>
-                <div className="product-detail-list-item">
-                  <span>📏</span>
-                  <span><strong>Talla:</strong> {product.size}</span>
-                </div>
-                {product.color && (
-                  <div className="product-detail-list-item">
-                    <span>🎨</span>
-                    <span><strong>Color:</strong> {product.color}</span>
-                  </div>
-                )}
-                {product.gender && (
-                  <div className="product-detail-list-item">
-                    <span>👤</span>
-                    <span><strong>Género:</strong> {product.gender}</span>
-                  </div>
-                )}
-                <div className="product-detail-list-item">
-                  <span>📦</span>
-                  <span>Envío disponible a toda Colombia</span>
-                </div>
-              </div>
+            {/* ── DESCRIPCIÓN ── */}
+            <div className="p-desc-section">
+              <h3 className="p-desc-title">DESCRIPCIÓN</h3>
+              <p className="p-desc-text">
+                {displayDescripcion}
+              </p>
             </div>
 
             <Link
@@ -356,15 +436,92 @@ export function ProductDetailModal({ product, onClose, addToCartOptions }: Props
 
         .product-detail-modal {
           width: 100%;
-          max-width: 680px;
+          max-width: 720px;
           background-color: var(--bg-card);
           border-radius: 20px;
           box-shadow: 0 20px 60px rgba(0,0,0,0.28);
           display: flex;
           overflow: hidden;
-          max-height: 82vh;
+          max-height: 85vh;
           pointer-events: auto;
           animation: slideUpModal 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards;
+        }
+
+        /* ── Cuadrícula de Atributos (Estilo foto de referencia) ── */
+        .p-attr-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 10px;
+          margin-bottom: 20px;
+        }
+
+        @media (max-width: 520px) {
+          .p-attr-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+
+        .p-attr-card {
+          background-color: var(--bg-secondary);
+          border: 1px solid var(--border);
+          border-radius: 14px;
+          padding: 12px 14px;
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+          transition: transform 0.15s ease, border-color 0.15s ease;
+        }
+
+        .p-attr-card:hover {
+          border-color: var(--accent);
+          transform: translateY(-1px);
+        }
+
+        .p-attr-icon {
+          color: var(--text-secondary);
+          margin-bottom: 4px;
+          display: flex;
+          align-items: center;
+        }
+
+        .p-attr-label {
+          font-size: 11px;
+          color: var(--text-secondary);
+          font-weight: 500;
+          letter-spacing: 0.02em;
+          margin: 0;
+        }
+
+        .p-attr-value {
+          font-size: 14px;
+          font-weight: 700;
+          color: var(--text-primary);
+          margin: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .p-desc-section {
+          margin-bottom: 20px;
+        }
+
+        .p-desc-title {
+          font-size: 11px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          color: var(--text-secondary);
+          margin-bottom: 6px;
+        }
+
+        .p-desc-text {
+          font-size: 14px;
+          line-height: 1.6;
+          color: var(--text-primary);
+          white-space: pre-line;
+          margin: 0;
         }
 
         .product-detail-image {

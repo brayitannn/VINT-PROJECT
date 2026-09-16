@@ -12,14 +12,18 @@ import { getCategories } from '@/services/products'
 
 type SortOption = 'reciente' | 'precio_asc' | 'precio_desc'
 
-function mapCondicion(condicion: string): Product['condition'] {
-  switch (condicion?.toUpperCase()) {
-    case 'NUEVO':
-    case 'COMO_NUEVO': return 'Excelente'
-    case 'USADO': return 'Muy Bueno'
-    case 'DESGASTADO': return 'Bueno'
-    default: return 'Bueno'
-  }
+function mapCondicion(condicion: string): string {
+  if (!condicion) return 'Buen estado'
+  const u = condicion.toUpperCase().trim()
+  if (u === 'NUEVO_CON_ETIQUETA') return 'Nuevo con etiqueta'
+  if (u === 'NUEVO_SIN_ETIQUETA') return 'Nuevo sin etiqueta'
+  if (u === 'EXCELENTE_ESTADO' || u === 'COMO_NUEVO') return 'Excelente estado'
+  if (u === 'BUEN_ESTADO') return 'Buen estado'
+  if (u === 'ACEPTABLE') return 'Aceptable'
+  if (u === 'REGULAR') return 'Regular'
+  if (u === 'NUEVO') return 'Nuevo'
+  if (u === 'USADO') return 'Buen estado'
+  return condicion
 }
 
 function ProductSkeleton() {
@@ -129,16 +133,41 @@ export function ExplorarClient() {
         if (error) throw error
 
         if (data) {
+          let extraMarca: string | null = null
+          let extraCondicion = data.condicion
+          if (data.marca === 'Otra' || !data.marca) {
+            try {
+              const { data: extraP } = await supabase
+                .schema('catalogo')
+                .from('prendas')
+                .select('otra_marca, condicion')
+                .eq('id_prenda', data.id_prenda)
+                .maybeSingle()
+              if (extraP) {
+                if (extraP.otra_marca) extraMarca = extraP.otra_marca
+                if (extraP.condicion) extraCondicion = extraP.condicion
+              }
+            } catch {}
+          }
+
           const mapped: Product = {
             id: data.id_prenda,
             name: data.titulo,
             price: Number(data.precio),
             size: data.talla ?? 'M',
-            condition: mapCondicion(data.condicion),
+            condition: mapCondicion(extraCondicion),
             seller: data.vendedor ?? 'Vendedor',
             image: data.imagen_principal ?? 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&h=500&fit=crop',
             rating: 4.5,
             sellerEmail: data.correo_vendedor,
+            brand: extraMarca || (data.marca === 'Otra' ? extraMarca : data.marca) || 'Sin marca',
+            category: data.categoria,
+            color: data.color,
+            gender: data.genero,
+            description: data.descripcion,
+            sellerAvatar: data.avatar_vendedor,
+            sellerUsername: data.username_vendedor,
+            otra_marca: extraMarca,
           }
           setSelectedProduct(mapped)
         }
@@ -179,15 +208,22 @@ export function ExplorarClient() {
       }
       if (f.condiciones.length > 0) {
         const dbCondiciones = f.condiciones.flatMap(c => {
-          if (c === 'Excelente') return ['NUEVO', 'COMO_NUEVO']
-          if (c === 'Muy Bueno') return ['USADO']
-          if (c === 'Bueno') return ['DESGASTADO']
-          return []
+          if (c === 'Nuevo con etiqueta') return ['NUEVO_CON_ETIQUETA', 'Nuevo con etiqueta', 'NUEVO']
+          if (c === 'Nuevo sin etiqueta') return ['NUEVO_SIN_ETIQUETA', 'Nuevo sin etiqueta']
+          if (c === 'Excelente estado' || c === 'Como Nuevo') return ['EXCELENTE_ESTADO', 'Excelente estado', 'COMO_NUEVO']
+          if (c === 'Buen estado' || c === 'Muy Bueno') return ['BUEN_ESTADO', 'Buen estado', 'USADO']
+          if (c === 'Aceptable' || c === 'Bueno') return ['ACEPTABLE', 'Aceptable', 'DESGASTADO']
+          if (c === 'Regular') return ['REGULAR', 'Regular']
+          return [c]
         })
         query = query.in('condicion', dbCondiciones)
       }
       if (f.genero !== 'Todos') {
-        query = query.ilike('genero', f.genero)
+        if (f.genero.toLowerCase().includes('niñ') || f.genero.toLowerCase().includes('nin')) {
+          query = query.or('genero.ilike.%niñ%,genero.ilike.%nin%')
+        } else {
+          query = query.ilike('genero', f.genero)
+        }
       }
       query = query.gte('precio', f.priceMin).lte('precio', f.priceMax)
 
@@ -203,24 +239,50 @@ export function ExplorarClient() {
       const { data, error, count } = await query
       if (error) throw error
 
-      const mapped: Product[] = (data ?? []).map((item: any) => ({
-        id: item.id_prenda,
-        name: item.titulo,
-        price: Number(item.precio),
-        size: item.talla ?? 'M',
-        condition: mapCondicion(item.condicion),
-        seller: item.vendedor ?? 'Vendedor',
-        image: item.imagen_principal ?? 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&h=500&fit=crop',
-        rating: 5.0,
-        sellerEmail: item.correo_vendedor,
-        description: item.descripcion || null,
-        brand: item.marca || null,
-        category: item.categoria || null,
-        color: item.color || null,
-        gender: item.genero || null,
-        sellerAvatar: item.avatar_vendedor || null,
-        sellerUsername: item.username_vendedor || null,
-      }))
+      const rawItems = data ?? []
+      // Si hay prendas con marca 'Otra', consultar su otra_marca real en catalogo.prendas
+      const idsOtra = rawItems.filter((i: any) => i.marca === 'Otra' || !i.marca).map((i: any) => i.id_prenda)
+      let otraMarcasMap: Record<number, { otra_marca?: string; condicion?: string }> = {}
+      if (idsOtra.length > 0) {
+        try {
+          const { data: prendaData } = await supabase
+            .schema('catalogo')
+            .from('prendas')
+            .select('id_prenda, otra_marca, condicion')
+            .in('id_prenda', idsOtra)
+          if (prendaData) {
+            prendaData.forEach((p: any) => {
+              otraMarcasMap[p.id_prenda] = { otra_marca: p.otra_marca, condicion: p.condicion }
+            })
+          }
+        } catch {}
+      }
+
+      const mapped: Product[] = rawItems.map((item: any) => {
+        const extra = otraMarcasMap[item.id_prenda]
+        const finalMarca = extra?.otra_marca || item.otra_marca || (item.marca === 'Otra' ? extra?.otra_marca || item.otra_marca : item.marca) || 'Sin marca'
+        const finalCondicion = extra?.condicion || item.condicion
+
+        return {
+          id: item.id_prenda,
+          name: item.titulo,
+          price: Number(item.precio),
+          size: item.talla ?? 'M',
+          condition: mapCondicion(finalCondicion),
+          seller: item.vendedor ?? 'Vendedor',
+          image: item.imagen_principal ?? 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&h=500&fit=crop',
+          rating: 5.0,
+          sellerEmail: item.correo_vendedor,
+          description: item.descripcion || null,
+          brand: finalMarca,
+          category: item.categoria || null,
+          color: item.color || null,
+          gender: item.genero || null,
+          sellerAvatar: item.avatar_vendedor || null,
+          sellerUsername: item.username_vendedor || null,
+          otra_marca: extra?.otra_marca || item.otra_marca || null,
+        }
+      })
       setProducts(mapped)
       setTotalCount(count ?? 0)
     } catch (err) {

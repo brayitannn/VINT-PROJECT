@@ -13,7 +13,7 @@ export interface Product {
   name: string
   price: number
   size: string
-  condition: 'Excelente' | 'Muy Bueno' | 'Bueno'
+  condition: string
   seller: string
   image: string
   rating: number
@@ -26,6 +26,8 @@ export interface Product {
   sellerAvatar?: string | null
   sellerUsername?: string | null
   salesCount?: number
+  id_estado_prenda?: number | null
+  otra_marca?: string | null
 }
 
 interface ProductCardProps {
@@ -37,15 +39,24 @@ function formatPrice(price: number): string {
   return `$${price.toLocaleString('es-CO')} COP`
 }
 
-function getConditionStyle(condition: Product['condition']): React.CSSProperties {
-  switch (condition) {
-    case 'Excelente':
-      return { backgroundColor: '#D1FAE5', color: '#065F46' }
-    case 'Muy Bueno':
-      return { backgroundColor: '#FEF3C7', color: '#92400E' }
-    case 'Bueno':
-      return { backgroundColor: '#E0E7FF', color: '#3730A3' }
+function getConditionStyle(condition: string): React.CSSProperties {
+  const c = condition?.toLowerCase() || ''
+  if (c.includes('nuevo')) {
+    return { backgroundColor: '#D1FAE5', color: '#065F46' }
   }
+  if (c.includes('excelente')) {
+    return { backgroundColor: '#E0F2FE', color: '#0369A1' }
+  }
+  if (c.includes('buen') || c.includes('muy bueno')) {
+    return { backgroundColor: '#FEF3C7', color: '#92400E' }
+  }
+  if (c.includes('aceptable')) {
+    return { backgroundColor: '#FFEDD5', color: '#C2410C' }
+  }
+  if (c.includes('regular')) {
+    return { backgroundColor: '#FEE2E2', color: '#B91C1C' }
+  }
+  return { backgroundColor: '#F3F4F6', color: '#374151' }
 }
 
 export function ProductCard({ product, onOpen }: ProductCardProps) {

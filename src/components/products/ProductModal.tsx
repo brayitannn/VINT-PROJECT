@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
+import { Search, ChevronDown, Check, Tag } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import type { Product, ProductInsert, ProductUpdate, ProductStatus } from '@/types/product'
-import { getSupabaseClient } from '@/lib/supabase/client'
-import { getCategories, getMarcas } from '@/services/products'
+import { getCategories, getMarcas, getEstadosPrenda, type EstadoPrendaOption } from '@/services/products'
 
 interface Props {
   open: boolean
@@ -22,14 +22,16 @@ const EMPTY: ProductInsert = {
   stock: 1,
   category: "1",
   category_id: 1,
-  id_marca: 1,
+  id_marca: 9, // Sin marca por defecto
   brand: "Sin marca",
+  otra_marca: null,
   status: "published",
   image_url: "",
   size: "M",
   color: "Combinado",
   gender: "Unisex",
-  condition: "USADO",
+  condition: "Buen estado",
+  id_estado_prenda: 4,
 }
 
 const STATUS_OPTIONS: { value: ProductStatus; label: string }[] = [
@@ -39,15 +41,28 @@ const STATUS_OPTIONS: { value: ProductStatus; label: string }[] = [
   { value: 'draft', label: 'Borrador' },
 ]
 
-const CONDICIONES_OPTIONS = [
-  { value: 'USADO', label: 'Usado (Buen estado)' },
-  { value: 'NUEVO', label: 'Nuevo (Con o sin etiqueta)' },
-]
-
 const GENEROS_OPTIONS = [
   { value: 'Unisex', label: 'Unisex' },
   { value: 'Hombre', label: 'Hombre' },
   { value: 'Mujer', label: 'Mujer' },
+  { value: 'Niños', label: 'Niños' },
+]
+
+const COLORES_OPTIONS = [
+  'Combinado',
+  'Negro',
+  'Blanco',
+  'Azul',
+  'Rojo',
+  'Verde',
+  'Gris',
+  'Beis',
+  'Café',
+  'Rosado',
+  'Morado',
+  'Camel',
+  'Floral / Estampado',
+  'A cuadros',
 ]
 
 const TALLAS_COMUNES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Única', '28', '30', '32', '34', '36', '38', '40']
@@ -59,10 +74,20 @@ export function ProductModal({ open, product, onClose, onSubmit, categories: ini
   const [fieldError, setFieldError] = useState<string | null>(null)
   const [categoriesList, setCategoriesList] = useState(initialCategories)
   const [marcasList, setMarcasList] = useState(initialMarcas)
+  const [estadosPrendaList, setEstadosPrendaList] = useState<EstadoPrendaOption[]>([])
+
+  // Control para desplegable predictivo de marca
+  const [brandDropdownOpen, setBrandDropdownOpen] = useState(false)
+  const [brandSearch, setBrandSearch] = useState('')
+  const brandRef = useRef<HTMLDivElement>(null)
+  const brandSearchInputRef = useRef<HTMLInputElement>(null)
+
   const isEdit = !!product
 
-  // Cargar categorías y marcas de base de datos si no vienen por props
+  // Cargar categorías, marcas y estados de prenda
   useEffect(() => {
+    if (!open) return
+
     if (initialCategories.length > 0) {
       setCategoriesList(initialCategories)
     } else {
@@ -74,17 +99,44 @@ export function ProductModal({ open, product, onClose, onSubmit, categories: ini
     } else {
       getMarcas().then(setMarcasList)
     }
+
+    getEstadosPrenda().then(setEstadosPrendaList)
   }, [initialCategories, initialMarcas, open])
+
+  // Cerrar dropdown al hacer click afuera
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (brandRef.current && !brandRef.current.contains(e.target as Node)) {
+        setBrandDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  // Autoenfocar campo de búsqueda al abrir el dropdown
+  useEffect(() => {
+    if (brandDropdownOpen) {
+      setTimeout(() => {
+        brandSearchInputRef.current?.focus()
+      }, 50)
+    } else {
+      setBrandSearch('')
+    }
+  }, [brandDropdownOpen])
 
   useEffect(() => {
     if (product) {
+      const isOtra = product.id_marca === 41 || product.brand === 'Otra' || !!product.otra_marca
       setForm({ 
         ...product,
         category: product.category_id?.toString() || product.category || '1',
         category_id: product.category_id || (product.category ? Number(product.category) : 1),
-        brand: product.id_marca?.toString() || product.brand || '1',
-        id_marca: product.id_marca || (product.brand ? Number(product.brand) : 1),
-        condition: (product.condition?.toUpperCase() === 'NUEVO' ? 'NUEVO' : 'USADO'),
+        brand: isOtra ? 'Otra' : (product.brand || 'Sin marca'),
+        id_marca: isOtra ? 41 : (product.id_marca || 9),
+        otra_marca: product.otra_marca || (isOtra ? product.brand : ''),
+        condition: product.condition || 'Buen estado',
+        id_estado_prenda: product.id_estado_prenda || 4,
         gender: product.gender || 'Unisex',
         size: product.size || 'M',
         color: product.color || 'Combinado',
@@ -94,10 +146,32 @@ export function ProductModal({ open, product, onClose, onSubmit, categories: ini
       setForm(EMPTY)
     }
     setFieldError(null)
+    setBrandDropdownOpen(false)
+    setBrandSearch('')
   }, [product, open])
 
   const set = (key: string, value: any) =>
     setForm((f: any) => ({ ...f, [key]: value }))
+
+  const handleSelectMarca = (marca: { id_marca: string | number; nombre: string }) => {
+    const idNum = Number(marca.id_marca)
+    if (idNum === 41 || marca.nombre.toLowerCase() === 'otra') {
+      setForm((f: any) => ({
+        ...f,
+        id_marca: 41,
+        brand: 'Otra',
+      }))
+    } else {
+      setForm((f: any) => ({
+        ...f,
+        id_marca: idNum,
+        brand: marca.nombre,
+        otra_marca: '',
+      }))
+    }
+    setBrandDropdownOpen(false)
+    setBrandSearch('')
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -105,19 +179,38 @@ export function ProductModal({ open, product, onClose, onSubmit, categories: ini
     if (form.price <= 0) return setFieldError('El precio debe ser mayor a $0 COP.')
     if (form.stock < 0) return setFieldError('El stock no puede ser negativo.')
 
+    // Si seleccionó Otra, exigir el nombre de la marca
+    if (Number(form.id_marca) === 41 && (!form.otra_marca || !form.otra_marca.trim())) {
+      return setFieldError('Por favor escribe el nombre de la marca en el campo de texto.')
+    }
+
     setSubmitting(true)
     setFieldError(null)
 
-    // Normalizar category_id e id_marca para enviar tanto IDs como nombres
+    // Normalizar IDs
     const catIdNum = Number(form.category) || Number(form.category_id) || 1
-    const marcaIdNum = Number(form.brand) || Number(form.id_marca) || 1
+    // Si no seleccionó marca, por defecto 9 ("Sin marca")
+    const marcaIdNum = Number(form.id_marca) || 9
+    const isOtra = marcaIdNum === 41
+    const finalBrandName = isOtra ? (form.otra_marca?.trim() || 'Otra') : (form.brand || 'Sin marca')
+    const finalOtraMarca = isOtra ? form.otra_marca?.trim() : null
+
+    // Encontrar nombre del estado si no está sincronizado
+    let condName = form.condition || 'Buen estado'
+    if (estadosPrendaList.length > 0 && form.id_estado_prenda) {
+      const match = estadosPrendaList.find(e => e.id_estado_prenda === Number(form.id_estado_prenda))
+      if (match) condName = match.nombre
+    }
 
     const payload = {
       ...form,
       category_id: catIdNum,
       category: String(catIdNum),
       id_marca: marcaIdNum,
-      brand: String(marcaIdNum),
+      brand: finalBrandName,
+      otra_marca: finalOtraMarca,
+      id_estado_prenda: form.id_estado_prenda || 4,
+      condition: condName,
     }
 
     const { error } = await onSubmit(payload)
@@ -159,6 +252,20 @@ export function ProductModal({ open, product, onClose, onSubmit, categories: ini
 
   if (!open) return null
 
+  // Filtro predictivo de marcas
+  const searchLower = brandSearch.toLowerCase().trim()
+  const regularMarcas = marcasList.filter(m => m.id_marca !== '41' && m.nombre.toLowerCase() !== 'otra')
+  const filteredMarcas = searchLower
+    ? regularMarcas.filter(m => m.nombre.toLowerCase().includes(searchLower))
+    : regularMarcas
+
+  // Marca actualmente seleccionada para mostrar en el botón
+  const isOtraSelected = Number(form.id_marca) === 41
+  const selectedBrandObj = marcasList.find(m => Number(m.id_marca) === Number(form.id_marca))
+  const displayBrandLabel = isOtraSelected
+    ? (form.otra_marca ? `Otra: ${form.otra_marca}` : 'Otra marca (Escribir)')
+    : (selectedBrandObj?.nombre || form.brand || 'Sin marca')
+
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal-container" style={{ maxWidth: 640 }}>
@@ -190,7 +297,7 @@ export function ProductModal({ open, product, onClose, onSubmit, categories: ini
               />
             </div>
 
-            {/* Categoría & Marca */}
+            {/* Categoría */}
             <div className="field">
               <label className="field-label">Categoría *</label>
               <select
@@ -209,39 +316,208 @@ export function ProductModal({ open, product, onClose, onSubmit, categories: ini
               </select>
             </div>
 
-            <div className="field">
+            {/* Marca con buscador interactivo y opción "Otra" */}
+            <div className="field" ref={brandRef} style={{ position: 'relative' }}>
               <label className="field-label">Marca *</label>
-              <select
+              <button
+                type="button"
                 className="field-input"
-                value={form.brand || form.id_marca || ''}
-                onChange={(e) => {
-                  set('brand', e.target.value)
-                  set('id_marca', Number(e.target.value))
+                onClick={() => setBrandDropdownOpen(!brandDropdownOpen)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  background: 'var(--bg-secondary)',
+                  fontWeight: 500,
+                  gap: 8,
                 }}
-                required
               >
-                <option value="">Selecciona marca</option>
-                {marcasList.map(m => (
-                  <option key={m.id_marca} value={m.id_marca}>{m.nombre}</option>
-                ))}
-              </select>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <Tag size={14} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+                  {displayBrandLabel}
+                </span>
+                <ChevronDown size={16} style={{ color: 'var(--text-muted)', transform: brandDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }} />
+              </button>
+
+              {/* Menú flotante de búsqueda */}
+              {brandDropdownOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 4px)',
+                  left: 0,
+                  right: 0,
+                  zIndex: 999,
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 12,
+                  boxShadow: '0 12px 28px rgba(0,0,0,0.18)',
+                  padding: 8,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 6,
+                  maxHeight: 280,
+                }}>
+                  {/* Buscador de marca */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '6px 10px',
+                    borderRadius: 8,
+                    background: 'var(--bg-secondary)',
+                    border: '1px solid var(--border)',
+                  }}>
+                    <Search size={14} style={{ color: 'var(--text-muted)' }} />
+                    <input
+                      ref={brandSearchInputRef}
+                      type="text"
+                      value={brandSearch}
+                      onChange={(e) => setBrandSearch(e.target.value)}
+                      placeholder="Buscar marca..."
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        outline: 'none',
+                        fontSize: 13,
+                        color: 'var(--text-primary)',
+                        width: '100%',
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+
+                  {/* Lista de marcas filtradas */}
+                  <div style={{
+                    overflowY: 'auto',
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2,
+                    maxHeight: 180,
+                  }}>
+                    {/* Opción Sin marca siempre visible en lista si coincide */}
+                    {filteredMarcas.length === 0 && !searchLower.includes('otra') && (
+                      <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>
+                        No se encontró &quot;{brandSearch}&quot;
+                      </div>
+                    )}
+
+                    {filteredMarcas.map(m => {
+                      const isSelected = Number(form.id_marca) === Number(m.id_marca) && !isOtraSelected
+                      return (
+                        <button
+                          key={m.id_marca}
+                          type="button"
+                          onClick={() => handleSelectMarca(m)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '8px 12px',
+                            borderRadius: 8,
+                            fontSize: 13,
+                            fontWeight: isSelected ? 700 : 500,
+                            color: isSelected ? 'var(--accent)' : 'var(--text-primary)',
+                            background: isSelected ? 'rgba(139, 94, 60, 0.1)' : 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            transition: 'background 0.15s',
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isSelected) e.currentTarget.style.background = 'var(--bg-secondary)'
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isSelected) e.currentTarget.style.background = 'transparent'
+                          }}
+                        >
+                          <span>{m.nombre}</span>
+                          {isSelected && <Check size={14} style={{ color: 'var(--accent)' }} />}
+                        </button>
+                      )
+                    })}
+
+                    {/* Opción 'Otra' siempre de última en cualquier búsqueda */}
+                    <div style={{ borderTop: '1px solid var(--border)', marginTop: 4, paddingTop: 4 }}>
+                      <button
+                        type="button"
+                        onClick={() => handleSelectMarca({ id_marca: '41', nombre: 'Otra' })}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: 8,
+                          fontSize: 13,
+                          fontWeight: 700,
+                          color: isOtraSelected ? 'var(--accent)' : 'var(--text-primary)',
+                          background: isOtraSelected ? 'rgba(139, 94, 60, 0.1)' : 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isOtraSelected) e.currentTarget.style.background = 'var(--bg-secondary)'
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isOtraSelected) e.currentTarget.style.background = 'transparent'
+                        }}
+                      >
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span>🏷️</span>
+                          <span>Otra (Ingresar nombre...)</span>
+                        </span>
+                        {isOtraSelected && <Check size={14} style={{ color: 'var(--accent)' }} />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Campo para ingresar el nombre de la otra marca */}
+              {isOtraSelected && (
+                <div style={{ marginTop: 8 }}>
+                  <label className="field-label" style={{ fontSize: 12, marginBottom: 4 }}>
+                    Nombre de la Marca *
+                  </label>
+                  <input
+                    className="field-input"
+                    value={form.otra_marca || ''}
+                    onChange={(e) => set('otra_marca', e.target.value)}
+                    placeholder="Ej. Canabbis, Gucci, Levi's..."
+                    required
+                    autoFocus
+                  />
+                </div>
+              )}
             </div>
 
-            {/* Estado de la prenda (Condición) & Talla */}
+            {/* Estado de la prenda (Opciones reales de catalogo.estados_prenda) */}
             <div className="field">
               <label className="field-label">Estado de la Prenda *</label>
               <select
                 className="field-input"
-                value={form.condition}
-                onChange={(e) => set('condition', e.target.value)}
+                value={form.id_estado_prenda || ''}
+                onChange={(e) => {
+                  const idNum = Number(e.target.value)
+                  const matched = estadosPrendaList.find(x => x.id_estado_prenda === idNum)
+                  set('id_estado_prenda', idNum)
+                  set('condition', matched?.nombre || 'Buen estado')
+                }}
                 required
               >
-                {CONDICIONES_OPTIONS.map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                {estadosPrendaList.map(opt => (
+                  <option key={opt.id_estado_prenda} value={opt.id_estado_prenda}>
+                    {opt.nombre}
+                  </option>
                 ))}
               </select>
             </div>
 
+            {/* Talla */}
             <div className="field">
               <label className="field-label">Talla *</label>
               <select
@@ -273,6 +549,7 @@ export function ProductModal({ open, product, onClose, onSubmit, categories: ini
               </div>
             </div>
 
+            {/* Estado de Publicación */}
             <div className="field">
               <label className="field-label">Estado de Publicación</label>
               <select
@@ -286,17 +563,22 @@ export function ProductModal({ open, product, onClose, onSubmit, categories: ini
               </select>
             </div>
 
-            {/* Color & Género */}
+            {/* Color (Selección cerrada sin escribir) */}
             <div className="field">
-              <label className="field-label">Color</label>
-              <input
+              <label className="field-label">Color *</label>
+              <select
                 className="field-input"
-                value={form.color}
+                value={form.color || 'Combinado'}
                 onChange={(e) => set('color', e.target.value)}
-                placeholder="Ej. Negro, Azul, Blanco..."
-              />
+                required
+              >
+                {COLORES_OPTIONS.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
             </div>
 
+            {/* Género */}
             <div className="field">
               <label className="field-label">Género</label>
               <select
@@ -310,7 +592,7 @@ export function ProductModal({ open, product, onClose, onSubmit, categories: ini
               </select>
             </div>
 
-            {/* Image Selection */}
+            {/* Fotografía de la Prenda */}
             <div className="field col-span-2">
               <label className="field-label">Fotografía de la Prenda</label>
               <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
