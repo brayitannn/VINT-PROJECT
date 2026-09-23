@@ -23,6 +23,21 @@ function formatPrice(price: number): string {
   return `$${price.toLocaleString('es-CO')} COP`
 }
 
+function mapCondicion(condicion?: string): string {
+  if (!condicion) return 'Buen estado'
+  const u = condicion.toUpperCase().trim()
+  if (u === 'NUEVO_CON_ETIQUETA' || u === 'NUEVO CON ETIQUETA') return 'Nuevo con etiqueta'
+  if (u === 'NUEVO_SIN_ETIQUETA' || u === 'NUEVO SIN ETIQUETA') return 'Nuevo sin etiqueta'
+  if (u === 'EXCELENTE_ESTADO' || u === 'EXCELENTE ESTADO' || u === 'COMO_NUEVO' || u === 'COMO NUEVO') return 'Excelente estado'
+  if (u === 'BUEN_ESTADO' || u === 'BUEN ESTADO') return 'Buen estado'
+  if (u === 'ACEPTABLE') return 'Aceptable'
+  if (u === 'REGULAR') return 'Regular'
+  if (u === 'NUEVO') return 'Nuevo con etiqueta'
+  if (u === 'USADO') return 'Buen estado'
+  if (u === 'DESGASTADO') return 'Aceptable'
+  return condicion
+}
+
 function getConditionStyle(condition?: string): React.CSSProperties {
   const c = condition?.toLowerCase() || ''
   if (c.includes('nuevo')) {
@@ -208,7 +223,7 @@ export function ProductDetailModal({ product, onClose, addToCartOptions }: Props
   const finalUsername = rawSellerSlug.replace(/^@+/, '').split('@')[0].toLowerCase().trim().replace(/\s+/g, '-')
 
   const displayMarca = prendaDetails?.marca || product.otra_marca || (product.brand === 'Otra' ? product.otra_marca : product.brand) || 'Sin marca'
-  const displayCondicion = prendaDetails?.condicion || product.condition || 'Buen estado'
+  const displayCondicion = mapCondicion(prendaDetails?.condicion || product.condition)
   const displayCategoria = prendaDetails?.categoria || product.category || 'General'
   const displayTalla = prendaDetails?.talla || product.size || 'M'
   const displayColor = prendaDetails?.color || product.color || 'Combinado'
