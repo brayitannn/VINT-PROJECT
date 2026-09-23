@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { ArrowLeft, Settings, MapPin, Calendar, Star, Package, MessageCircle, UserPlus, MessageSquare, Trash2, Send, Check } from 'lucide-react'
 import Link from 'next/link'
 import { ProductCard, type Product } from '@/components/products/ProductCard'
+import { ProductDetailModal } from '@/components/products/ProductDetailModal'
 import { useAuth } from '@/context/AuthContext'
 import { ChatModal } from '@/components/chat/ChatModal'
 import { getMisVentas } from '@/services/pedidos'
@@ -28,6 +29,7 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
   const [joinYear, setJoinYear] = useState<number>(new Date().getFullYear())
   const [ventasExitosas, setVentasExitosas] = useState<number>(0)
   const [sellerAuthId, setSellerAuthId] = useState<string | null>(sellerId || null)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
 
   const supabase = createClient()
   const { user } = useAuth()
@@ -63,45 +65,16 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
   }
 
   const loadFromLocalStorage = () => {
-    const local = localStorage.getItem(`vint_comments_${sellerIdentifier}`);
-    if (local) {
-      setComentarios(JSON.parse(local));
-    } else {
-      const mockComments = [
-        {
-          id: 'mock-c1',
-          vendedor_id: sellerIdentifier,
-          autor_id: 'mock-a1',
-          autor_nombre: 'Santiago Gómez',
-          autor_avatar: null,
-          calificacion: 5,
-          contenido: '¡Excelente vendedora! La prenda llegó impecable, súper bien empacada y con un detalle muy lindo. Envío súper rápido.',
-          fecha: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
-        },
-        {
-          id: 'mock-c2',
-          vendedor_id: sellerIdentifier,
-          autor_id: 'mock-a2',
-          autor_nombre: 'Mariana Restrepo',
-          autor_avatar: null,
-          calificacion: 4,
-          contenido: 'La chaqueta está en muy buen estado, tal como se describía. La comunicación fue excelente.',
-          fecha: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-        },
-        {
-          id: 'mock-c3',
-          vendedor_id: sellerIdentifier,
-          autor_id: 'mock-a3',
-          autor_nombre: 'Mateo Díaz',
-          autor_avatar: null,
-          calificacion: 5,
-          contenido: 'Todo perfecto, recomendado 100%. Volveré a comprar sin duda.',
-          fecha: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()
-        }
-      ];
-      localStorage.setItem(`vint_comments_${sellerIdentifier}`, JSON.stringify(mockComments));
-      setComentarios(mockComments);
-    }
+    try {
+      const local = localStorage.getItem(`vint_comments_${sellerIdentifier}`);
+      if (local) {
+        const list = JSON.parse(local);
+        const realComments = Array.isArray(list) ? list.filter((c: any) => !c.id?.toString().startsWith('mock-')) : [];
+        setComentarios(realComments);
+        return;
+      }
+    } catch {}
+    setComentarios([]);
   }
 
   const handleSubmitComment = async (e: React.FormEvent) => {
@@ -267,10 +240,12 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
 
               // Cargar prendas del vendedor en el catálogo
               let pQuery = supabase.from('v_catalogo_publico').select('*')
-              if (d.email) {
-                pQuery = pQuery.eq('correo_vendedor', d.email)
+              if (d.email && d.username) {
+                pQuery = pQuery.or(`correo_vendedor.ilike.${d.email},username_vendedor.ilike.${d.username}`)
+              } else if (d.email) {
+                pQuery = pQuery.ilike('correo_vendedor', d.email)
               } else if (d.username) {
-                pQuery = pQuery.eq('username_vendedor', d.username)
+                pQuery = pQuery.ilike('username_vendedor', d.username)
               } else {
                 pQuery = pQuery.ilike('vendedor', `%${parts[0]}%`)
               }
@@ -291,7 +266,9 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
             uQuery = uQuery.eq('id_auth_supabase', sellerId)
           } else if (sellerSlug) {
             const cleanSlug = sellerSlug.replace(/^@+/, '')
-            uQuery = uQuery.or(`username.ilike.${cleanSlug},correo.ilike.${cleanSlug},correo.ilike.${cleanSlug}@%,primer_nombre.ilike.${cleanSlug}`)
+            const slugWithDot = cleanSlug.replace(/-/g, '.')
+            const slugWithSpace = cleanSlug.replace(/-/g, ' ')
+            uQuery = uQuery.or(`username.ilike.${cleanSlug},username.ilike.${slugWithDot},correo.ilike.${cleanSlug}@%,correo.ilike.${slugWithDot}@%,nombre_completo.ilike.%${slugWithSpace}%,primer_nombre.ilike.${cleanSlug}`)
           }
           const { data: uData } = await uQuery.maybeSingle()
           if (uData) {
@@ -320,11 +297,17 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
               primer_apellido: uData.primer_apellido
             })
 
-            const { data: prods } = await supabase
-              .from('v_catalogo_publico')
-              .select('*')
-              .eq('correo_vendedor', uData.correo)
-              .order('fecha_publicacion', { ascending: false })
+            let pQuery = supabase.from('v_catalogo_publico').select('*')
+            if (uData.correo && uData.username) {
+              pQuery = pQuery.or(`correo_vendedor.ilike.${uData.correo},username_vendedor.ilike.${uData.username}`)
+            } else if (uData.correo) {
+              pQuery = pQuery.ilike('correo_vendedor', uData.correo)
+            } else if (uData.username) {
+              pQuery = pQuery.ilike('username_vendedor', uData.username)
+            } else {
+              pQuery = pQuery.ilike('vendedor', `%${uData.primer_nombre}%`)
+            }
+            const { data: prods } = await pQuery.order('fecha_publicacion', { ascending: false })
             fetchedProducts = prods || []
             apiLoaded = true
           }
@@ -353,35 +336,46 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
           setVentasExitosas(count || 0)
 
           const emailToUse = sellerEmail || authUser.email
-          if (emailToUse) {
-            const { data: prods } = await supabase
-              .from('v_catalogo_publico')
-              .select('*')
-              .eq('correo_vendedor', emailToUse)
-              .order('fecha_publicacion', { ascending: false })
+          const usernameToUse = authUser.user_metadata?.username
+          if (emailToUse || usernameToUse) {
+            let pQuery = supabase.from('v_catalogo_publico').select('*')
+            if (emailToUse && usernameToUse) {
+              pQuery = pQuery.or(`correo_vendedor.ilike.${emailToUse},username_vendedor.ilike.${usernameToUse}`)
+            } else if (emailToUse) {
+              pQuery = pQuery.ilike('correo_vendedor', emailToUse)
+            } else if (usernameToUse) {
+              pQuery = pQuery.ilike('username_vendedor', usernameToUse)
+            }
+            const { data: prods } = await pQuery.order('fecha_publicacion', { ascending: false })
             fetchedProducts = prods || []
           }
         }
       }
 
-      const mapped: Product[] = fetchedProducts.map((p: any) => ({
-        id: p.id_prenda,
-        name: p.titulo || 'Sin título',
-        price: Number(p.precio) || 0,
-        image: p.imagen_principal || 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&h=500&fit=crop',
-        size: p.talla || 'M',
-        condition: mapConditionDBtoUI(p.condicion || p.estado_publicacion),
-        seller: p.vendedor || nombreLimpio,
-        rating: 5.0,
-        sellerEmail: p.correo_vendedor,
-        description: p.descripcion || null,
-        brand: p.marca || null,
-        category: p.categoria || null,
-        color: p.color || null,
-        gender: p.genero || null,
-        sellerAvatar: p.avatar_vendedor || null,
-        sellerUsername: p.username_vendedor || null,
-      }))
+      const mapped: Product[] = fetchedProducts.map((p: any) => {
+        const finalMarca = p.otra_marca || (p.marca === 'Otra' ? p.otra_marca : p.marca) || 'Sin marca'
+        return {
+          id: p.id_prenda,
+          name: p.titulo || 'Sin título',
+          price: Number(p.precio) || 0,
+          image: p.imagen_principal || 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&h=500&fit=crop',
+          size: p.talla || 'M',
+          condition: mapCondicion(p.condicion),
+          seller: p.vendedor || nombreLimpio,
+          rating: 5.0,
+          sellerEmail: p.correo_vendedor,
+          description: p.descripcion || null,
+          brand: finalMarca,
+          category: p.categoria || null,
+          color: p.color || null,
+          gender: p.genero || null,
+          sellerAvatar: p.avatar_vendedor || null,
+          sellerUsername: p.username_vendedor || null,
+          salesCount: ventasExitosas,
+          id_estado_prenda: p.id_estado_prenda ?? null,
+          otra_marca: p.otra_marca || null,
+        }
+      })
 
       setProductos(mapped)
       setLoading(false)
@@ -390,14 +384,19 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
     fetchData()
   }, [isOwner, sellerId, sellerSlug, user])
 
-  const mapConditionDBtoUI = (condicion: string) => {
-    switch(condicion?.toUpperCase()) {
-      case 'NUEVO':
-      case 'COMO_NUEVO': return 'Excelente'
-      case 'USADO': return 'Muy Bueno'
-      case 'DESGASTADO': return 'Bueno'
-      default: return 'Bueno'
-    }
+  const mapCondicion = (condicion?: string): string => {
+    if (!condicion) return 'Buen estado'
+    const u = condicion.toUpperCase().trim()
+    if (u === 'NUEVO_CON_ETIQUETA' || u === 'NUEVO CON ETIQUETA') return 'Nuevo con etiqueta'
+    if (u === 'NUEVO_SIN_ETIQUETA' || u === 'NUEVO SIN ETIQUETA') return 'Nuevo sin etiqueta'
+    if (u === 'EXCELENTE_ESTADO' || u === 'EXCELENTE ESTADO' || u === 'COMO_NUEVO' || u === 'COMO NUEVO') return 'Excelente estado'
+    if (u === 'BUEN_ESTADO' || u === 'BUEN ESTADO') return 'Buen estado'
+    if (u === 'ACEPTABLE') return 'Aceptable'
+    if (u === 'REGULAR') return 'Regular'
+    if (u === 'NUEVO') return 'Nuevo con etiqueta'
+    if (u === 'USADO') return 'Buen estado'
+    if (u === 'DESGASTADO') return 'Aceptable'
+    return condicion
   }
 
   if (loading) {
@@ -920,9 +919,9 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '24px' }}>
                   {productos.map((prod) => (
                     <div key={prod.id} style={{ position: 'relative' }}>
-                      <ProductCard product={prod} />
-                      {isOwner && (
-                        <div style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', color: 'white', padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700, letterSpacing: 0.5, zIndex: 10 }}>
+                      <ProductCard product={prod} onOpen={setSelectedProduct} />
+                      {isEffectiveOwner && (
+                        <div style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', color: 'white', padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700, letterSpacing: 0.5, zIndex: 10, pointerEvents: 'none' }}>
                           TU PUBLICACIÓN
                         </div>
                       )}
@@ -1259,6 +1258,11 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
           sellerName={nombreCompleto}
           sellerSlug={sellerSlug}
           sellerId={sellerId}
+        />
+
+        <ProductDetailModal
+          product={selectedProduct}
+          onClose={() => setSelectedProduct(null)}
         />
       </main>
     </>
