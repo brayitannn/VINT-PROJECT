@@ -137,6 +137,7 @@ export function FilterSidebar({ filters, onChange, totalResults, availableCatego
         <div style={{ padding: '0 4px' }}>
           <input
             type="range"
+            aria-label="Precio máximo"
             min={0} max={300000} step={5000}
             value={filters.priceMax}
             onChange={e => onChange({ ...filters, priceMax: Number(e.target.value) })}

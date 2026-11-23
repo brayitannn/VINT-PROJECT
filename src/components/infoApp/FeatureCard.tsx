@@ -111,7 +111,7 @@ export function FeatureCard({
             }
           </div>
 
-          <h3 style={{
+          <h2 style={{
             fontWeight: 700,
             fontSize: 18,
             color: "var(--text-primary)",
@@ -119,7 +119,7 @@ export function FeatureCard({
             textAlign: "center",
           }}>
             {title}
-          </h3>
+          </h2>
 
           {/* Contador de agua — aparece al ver la tarjeta */}
           {title === 'Moda Sostenible' && (

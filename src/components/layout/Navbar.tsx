@@ -222,6 +222,8 @@ export function Navbar() {
                 
                 {/* HAMBURGER MENU ON MOBILE */}
                 <button
+                  type="button"
+                  aria-label="Abrir menú de navegación"
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                   className="show-mobile-only flex h-[38px] w-[38px] items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
                   style={{
@@ -236,6 +238,8 @@ export function Navbar() {
                 {/* CAMBIAR TEMA */}
                 {mounted && (
                   <button
+                    type="button"
+                    aria-label={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
                     onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                     className="flex h-[38px] w-[38px] items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-secondary)] transition-all hover:scale-105 hover:border-[var(--accent)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)]"
                     style={{ background: 'transparent', cursor: 'pointer' }}
@@ -247,6 +251,8 @@ export function Navbar() {
                 {/* NOTIFICACIONES */}
                 <div ref={notifRef} className="relative">
                   <button
+                    type="button"
+                    aria-label="Ver notificaciones"
                     onClick={() => setNotifOpen(!notifOpen)}
                     className="relative flex h-[38px] w-[38px] items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-secondary)] transition-all hover:scale-105 hover:border-[var(--accent)] hover:bg-[var(--bg-secondary)] hover:text-[var(--accent)]"
                     style={{ background: 'transparent', cursor: 'pointer' }}
@@ -520,6 +526,8 @@ export function Navbar() {
                 
                 {/* HAMBURGER MENU ON MOBILE (GUEST) */}
                 <button
+                  type="button"
+                  aria-label="Abrir menú de navegación"
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                   className="show-mobile-only flex h-[38px] w-[38px] items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
                   style={{

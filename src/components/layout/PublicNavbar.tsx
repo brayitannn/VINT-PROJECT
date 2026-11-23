@@ -63,7 +63,13 @@ export function PublicNavbar() {
         {/* ACCIONES DERECHA */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           {mounted && (
-            <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} style={iconButtonStyle} className="hover:bg-[var(--bg-secondary)]">
+            <button
+              type="button"
+              aria-label={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              style={iconButtonStyle}
+              className="hover:bg-[var(--bg-secondary)]"
+            >
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </button>
           )}

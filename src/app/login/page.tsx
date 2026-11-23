@@ -127,8 +127,9 @@ function LoginForm() {
             />
             <button 
               type="button"
+              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
             >
               {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
@@ -173,7 +174,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex flex-col md:flex-row relative w-full overflow-hidden bg-[var(--bg-primary)]">
+    <main className="min-h-screen flex flex-col md:flex-row relative w-full overflow-hidden bg-[var(--bg-primary)]">
       <style jsx global>{`
         .vint-input::placeholder {
           color: var(--text-muted) !important;
@@ -246,6 +247,6 @@ export default function LoginPage() {
          </div>
 
       </div>
-    </div>
+    </main>
   )
 }

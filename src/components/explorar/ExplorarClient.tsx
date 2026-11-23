@@ -582,6 +582,8 @@ export function ExplorarClient() {
                 {([['grid', LayoutGrid], ['list', List]] as const).map(([mode, Icon]) => (
                   <button
                     key={mode}
+                    type="button"
+                    aria-label={mode === 'grid' ? 'Vista en cuadrícula' : 'Vista en lista'}
                     className="view-btn"
                     onClick={() => setViewMode(mode)}
                     style={{
@@ -680,6 +682,8 @@ export function ExplorarClient() {
             }}>
               {/* Botón Anterior */}
               <button
+                type="button"
+                aria-label="Página anterior"
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
                 className="pag-btn"
@@ -770,6 +774,8 @@ export function ExplorarClient() {
 
               {/* Botón Siguiente */}
               <button
+                type="button"
+                aria-label="Página siguiente"
                 onClick={() => {
                   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
                   setCurrentPage(prev => Math.min(prev + 1, totalPages))

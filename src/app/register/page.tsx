@@ -7,7 +7,7 @@ import { RegisterForm } from "@/components/auth/RegisterForm";
 
 export default function RegisterPage() {
   return (
-    <div className="h-screen flex flex-col md:flex-row relative w-full overflow-hidden bg-[var(--bg-primary)]">
+    <main className="h-screen flex flex-col md:flex-row relative w-full overflow-hidden bg-[var(--bg-primary)]">
       <style jsx global>{`
         .vint-input::placeholder {
           color: var(--text-muted) !important;
@@ -80,6 +80,6 @@ export default function RegisterPage() {
          </div>
 
       </div>
-    </div>
+    </main>
   )
 }

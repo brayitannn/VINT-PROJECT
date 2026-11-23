@@ -186,11 +186,11 @@ export function ProductCard({ product, onOpen }: ProductCardProps) {
 
       <div style={{ padding: '20px 20px 24px', display: 'flex', flexDirection: 'column', flex: 1, position: 'relative', zIndex: 2 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
-          <h3 style={{ fontWeight: 700, fontSize: 16, color: 'var(--text-primary)', lineHeight: 1.3 }}
+          <h2 style={{ fontWeight: 700, fontSize: 16, color: 'var(--text-primary)', lineHeight: 1.3 }}
             className="line-clamp-2"
           >
             {product.name}
-          </h3>
+          </h2>
           <span style={{
             ...getConditionStyle(product.condition),
             fontSize: 11, fontWeight: 700, padding: '4px 10px',

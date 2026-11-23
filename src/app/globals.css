@@ -12,8 +12,8 @@
   --bg-card: #FCF9F2;           /* Blanco roto cálido para cards */
   --bg-card-hover: rgba(255, 255, 255, 0.85); /* Vidrio blanco brillante */
   --text-primary: #2C241E;      /* Café expreso casi negro */
-  --text-secondary: #7A7369;    /* Taupe / Gris Pardo (sin verde) */
-  --text-muted: #A8A39D;        /* Gris cálido claro */
+  --text-secondary: #5A5249;    /* Taupe oscuro WCAG AA (>= 6.5:1) */
+  --text-muted: #5F574E;        /* Gris cálido accesible WCAG AA (>= 5.8:1) */
   --accent: #8B5E3C;            /* Café cuero clásico */
   --accent-hover: #6D482D;      /* Café oscuro tostado */
   --accent-light: #F4EFE6;      /* Crema suave */
@@ -29,8 +29,8 @@
   --bg-card: #2A2520;           /* Café grisáceo para cards */
   --bg-card-hover: rgba(53, 46, 40, 0.85); /* Vidrio oscuro cálido */
   --text-primary: #F4EFE6;      /* Crema suave */
-  --text-secondary: #A8A39D;    /* Gris cálido claro */
-  --text-muted: #7A7369;        /* Taupe oscuro */
+  --text-secondary: #C4BEB6;    /* Gris cálido claro accesible */
+  --text-muted: #B0AAA2;        /* Taupe claro accesible en modo oscuro */
   --accent: #A8724D;            /* Café caramelo (brillante de noche) */
   --accent-hover: #C58A62;      /* Caramelo iluminado */
   --accent-light: #2A2520;      /* Fondo de botones secundarios */
@@ -48,6 +48,8 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 body {
@@ -55,6 +57,8 @@ body {
   color: var(--text-primary);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 input, button, select, textarea {

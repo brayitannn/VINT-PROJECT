@@ -72,6 +72,7 @@ export function RegisterForm() {
               type="text"
               name="firstName"
               id="firstName"
+              aria-label="Primer nombre"
               autoComplete="given-name"
               placeholder="Primer Nombre"
               value={formData.primerNombre}
@@ -93,6 +94,7 @@ export function RegisterForm() {
             <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)] transition-colors group-focus-within:text-[var(--accent)] z-20 pointer-events-none" />
             <Input
               type="text"
+              aria-label="Segundo nombre"
               placeholder="Segundo Nombre (Opcional)"
               value={formData.segundoNombre}
               onChange={(e) => setFormData({ ...formData, segundoNombre: e.target.value })}
@@ -114,6 +116,7 @@ export function RegisterForm() {
               type="text"
               name="lastName"
               id="lastName"
+              aria-label="Primer apellido"
               autoComplete="family-name"
               placeholder="Primer Apellido"
               value={formData.primerApellido}
@@ -135,6 +138,7 @@ export function RegisterForm() {
             <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)] transition-colors group-focus-within:text-[var(--accent)] z-20 pointer-events-none" />
             <Input
               type="text"
+              aria-label="Segundo apellido"
               placeholder="Segundo Apellido"
               value={formData.segundoApellido}
               onChange={(e) => setFormData({ ...formData, segundoApellido: e.target.value })}
@@ -157,6 +161,7 @@ export function RegisterForm() {
               type="email"
               name="email"
               id="email"
+              aria-label="Correo electrónico"
               autoComplete="username"
               placeholder="Email"
               value={formData.email}
@@ -178,6 +183,7 @@ export function RegisterForm() {
             <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)] transition-colors group-focus-within:text-[var(--accent)] z-20 pointer-events-none" />
             <Input
               type="tel"
+              aria-label="Teléfono"
               placeholder="Teléfono"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -196,10 +202,12 @@ export function RegisterForm() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Fecha de Nacimiento */}
             <div className="flex flex-col gap-2">
-               <label className="text-[12px] font-bold uppercase tracking-wider ml-1" style={{ color: "var(--text-muted)" }}>Fecha de Nacimiento</label>
+               <label htmlFor="fechaNacimiento" className="text-[12px] font-bold uppercase tracking-wider ml-1" style={{ color: "var(--text-muted)" }}>Fecha de Nacimiento</label>
                <div className="relative group">
                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)] transition-colors group-focus-within:text-[var(--accent)] z-20 pointer-events-none" />
                  <Input
+                   id="fechaNacimiento"
+                   aria-label="Fecha de nacimiento"
                    type="date"
                    max={hoy}
                    value={formData.fechaNacimiento}
@@ -255,6 +263,7 @@ export function RegisterForm() {
                 type={showPassword ? "text" : "password"}
                 name="password"
                 id="password"
+                aria-label="Contraseña"
                 autoComplete="new-password"
                 placeholder="Contraseña"
                 value={formData.password}
@@ -271,8 +280,9 @@ export function RegisterForm() {
               />
               <button 
                 type="button"
+                aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors z-30"
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors z-30"
               >
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
@@ -284,6 +294,7 @@ export function RegisterForm() {
                 type={showConfirmPassword ? "text" : "password"}
                 name="confirmPassword"
                 id="confirmPassword"
+                aria-label="Confirmar contraseña"
                 autoComplete="new-password"
                 placeholder="Confirmar contraseña"
                 value={formData.confirmPassword}
@@ -300,8 +311,9 @@ export function RegisterForm() {
               />
               <button 
                 type="button"
+                aria-label={showConfirmPassword ? "Ocultar confirmación de contraseña" : "Mostrar confirmación de contraseña"}
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors z-30"
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors z-30"
               >
                 {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
