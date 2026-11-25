@@ -1,0 +1,198 @@
+newman
+
+VINT — Suite de Pruebas de Integración (PR-05)
+
+→ CP-INT-001a | Supabase Auth Login Vendedor (válido)
+  POST https://nthcmtvncuevvczhlrhk.supabase.co/auth/v1/token?grant_type=password [200 OK, 3.65kB, 407ms]
+  √  HTTP 200 y access_token JWT emitido
+
+→ CP-INT-001b | GET /api/perfil/me con JWT válido
+  GET https://api-vint.onrender.com/api/perfil/me [200 OK, 758B, 1184ms]
+  √  HTTP 200 y perfil autenticado retornado
+
+→ Setup Auth | Login Comprador
+  POST https://nthcmtvncuevvczhlrhk.supabase.co/auth/v1/token?grant_type=password [200 OK, 3.67kB, 298ms]
+  √  JWT comprador obtenido
+
+→ Setup Auth | Login Admin
+  POST https://nthcmtvncuevvczhlrhk.supabase.co/auth/v1/token?grant_type=password [200 OK, 3.63kB, 274ms]
+  √  JWT admin obtenido
+
+→ CP-INT-002a | Supabase Auth contraseña inválida
+  POST https://nthcmtvncuevvczhlrhk.supabase.co/auth/v1/token?grant_type=password [400 Bad Request, 995B, 275ms]
+  √  Rechazo 400/401 con mensaje genérico
+
+→ CP-INT-002b | GET /api/perfil/me con JWT inválido
+  GET https://api-vint.onrender.com/api/perfil/me [401 Unauthorized, 422B, 329ms]
+  √  HTTP 401 Token inválido o expirado
+
+→ CP-INT-003a | POST /api/auth/change-password contraseña débil (400)
+  POST https://api-vint.onrender.com/api/auth/change-password [400 Bad Request, 421B, 351ms]
+  √  HTTP 400 por fortaleza insuficiente
+
+→ CP-INT-003b | POST /api/auth/change-password actual incorrecta (403)
+  POST https://api-vint.onrender.com/api/auth/change-password [403 Forbidden, 401B, 693ms]
+  √  HTTP 403 contraseña actual incorrecta
+
+→ CP-INT-003c | POST /api/auth/change-password exitoso (200)
+  POST https://api-vint.onrender.com/api/auth/change-password [200 OK, 412B, 1295ms]
+  √  HTTP 200 contraseña actualizada
+
+→ Setup Auth | Re-login Comprador con nueva contraseña
+  POST https://nthcmtvncuevvczhlrhk.supabase.co/auth/v1/token?grant_type=password [200 OK, 3.67kB, 297ms]
+  √  Nuevo JWT comprador obtenido tras cambio de clave
+
+→ CP-INT-004a | GET /api/products/categories
+  GET https://api-vint.onrender.com/api/products/categories [200 OK, 852B, 983ms]
+  √  HTTP 200 y array de categorías no vacío
+
+→ CP-INT-004b | GET /api/products/marcas
+  GET https://api-vint.onrender.com/api/products/marcas [200 OK, 1.02kB, 714ms]
+  √  HTTP 200 y array de marcas no vacío
+
+→ CP-INT-004c | GET /api/products/estados
+  GET https://api-vint.onrender.com/api/products/estados [200 OK, 1.33kB, 720ms]
+  √  HTTP 200 y estados físicos activos
+
+→ CP-INT-005a | POST /api/products crear prenda válida (estado id=5)
+  POST https://api-vint.onrender.com/api/products [201 Created, 734B, 1502ms]
+  √  HTTP 201 y prenda creada en BD
+
+→ CP-INT-005b | POST /api/products con estado 'Nuevo con etiqueta' (id=1)
+  POST https://api-vint.onrender.com/api/products [500 Internal Server Error, 512B, 1615ms]
+  1. HTTP 201 prenda creada con estado catalogo id=1
+
+→ Setup Prenda 2 | POST /api/products prenda auxiliar QA
+  POST https://api-vint.onrender.com/api/products [201 Created, 744B, 1604ms]
+  √  Prenda auxiliar creada
+
+→ CP-INT-006a | GET /api/products/999999 inexistente (404)
+  GET https://api-vint.onrender.com/api/products/999999 [404 Not Found, 386B, 1444ms]
+  √  HTTP 404 Prenda no encontrada
+
+→ CP-INT-006b | PATCH /api/products sin ser propietario (403/404)
+  PATCH https://api-vint.onrender.com/api/products [403 Forbidden, 411B, 1273ms]
+  √  HTTP 403/404 bloqueo de propiedad (_verify_prenda_owner)
+
+→ CP-INT-007a | POST /api/products/{id}/imagenes
+  POST https://api-vint.onrender.com/api/products/456/imagenes [201 Created, 517B, 1500ms]
+  √  HTTP 200/201 imagen asociada
+
+→ CP-INT-007b | PATCH /api/products/{id}/imagenes/{imgId}/principal
+  PATCH https://api-vint.onrender.com/api/products/456/imagenes/394/principal [200 OK, 387B, 1775ms]
+  √  HTTP 200 imagen marcada como principal
+
+→ CP-INT-008 | POST /api/products con category_id inexistente (FK)
+  POST https://api-vint.onrender.com/api/products [400 Bad Request, 408B, 2.3s]
+  √  Rechazo por FK inválida sin registro huérfano (400/422/500)
+
+→ CP-INT-009 | POST /api/checkout/comprar exitoso (DISPONIBLE -> VENDIDA)
+  POST https://api-vint.onrender.com/api/checkout/comprar [200 OK, 624B, 2.8s]
+  √  HTTP 200 pedido creado y prenda marcada VENDIDA
+
+→ CP-INT-010a | POST /api/checkout/comprar carrito vacío (400)
+  POST https://api-vint.onrender.com/api/checkout/comprar [400 Bad Request, 463B, 306ms]
+  √  HTTP 400 CARRITO_VACIO
+
+→ CP-INT-010b | POST /api/checkout/comprar prenda ya VENDIDA (409)
+  POST https://api-vint.onrender.com/api/checkout/comprar [409 Conflict, 546B, 830ms]
+  √  HTTP 409 PRENDA_NO_DISPONIBLE
+
+→ CP-INT-011 | POST /api/checkout/comprar autocompra (400)
+  POST https://api-vint.onrender.com/api/checkout/comprar [400 Bad Request, 548B, 1330ms]
+  √  HTTP 400 AUTOCOMPRA_NO_PERMITIDA
+
+→ CP-INT-012a | GET /api/pedidos/mis-compras
+  GET https://api-vint.onrender.com/api/pedidos/mis-compras [200 OK, 902B, 1194ms]
+  √  HTTP 200 y compra registrada visible
+
+→ CP-INT-012b | GET /api/pedidos/mis-ventas (contrato JSON)
+  GET https://api-vint.onrender.com/api/pedidos/mis-ventas [200 OK, 348B, 1202ms]
+  2. HTTP 200 y JSON con estructura {success, data, count}
+
+→ CP-INT-012c | POST /api/pedidos/{pedido_id}/cancelar
+  POST https://api-vint.onrender.com/api/pedidos/547a9b62-0d41-4e18-8ace-f260eb20e549/cancelar [200 OK, 554B, 1457ms]
+  √  HTTP 200 pedido cancelado y prenda restaurada
+
+→ CP-INT-013a | GET /api/admin/users como ADMIN (200)
+  GET https://api-vint.onrender.com/api/admin/users?page=1&limit=10 [200 OK, 3.31kB, 1710ms]
+  √  HTTP 200 listado paginado para ADMIN
+
+→ CP-INT-013b | GET /api/admin/users como COMPRADOR (403)
+  GET https://api-vint.onrender.com/api/admin/users?page=1&limit=10 [403 Forbidden, 401B, 1237ms]
+  √  HTTP 403 acceso denegado a rol COMPRADOR
+
+→ CP-INT-014a | GET /api/vendedor/stats
+  GET https://api-vint.onrender.com/api/vendedor/stats [200 OK, 491B, 1325ms]
+  √  HTTP 200 estadísticas del vendedor
+
+→ CP-INT-014b | GET /api/vendedor/reportes/pdf
+  GET https://api-vint.onrender.com/api/vendedor/reportes/pdf [200 OK, 5.09kB, 2.1s]
+  √  HTTP 200 y Content-Type application/pdf
+
+→ CP-INT-014c | GET /api/vendedor/reportes/excel
+  GET https://api-vint.onrender.com/api/vendedor/reportes/excel [200 OK, 8.76kB, 2s]
+  √  HTTP 200 y Content-Type spreadsheetml
+
+→ CP-INT-015a | PUT /api/perfil/me válido (200)
+  PUT https://api-vint.onrender.com/api/perfil/me [200 OK, 796B, 1160ms]
+  √  HTTP 200 perfil actualizado
+
+→ CP-INT-015b | PUT /api/perfil/me username corto inválido (422)
+  PUT https://api-vint.onrender.com/api/perfil/me [422 Unprocessable Entity, 515B, 382ms]
+  √  HTTP 422 validación Pydantic min_length=3
+
+→ CP-INT-015c | POST /api/recomendaciones
+  POST https://api-vint.onrender.com/api/recomendaciones [200 OK, 3.5kB, 498ms]
+  √  HTTP 200 recomendaciones retornadas
+
+→ CP-INT-016 | Web ↔ API CORS Preflight (Origin Vercel)
+  OPTIONS https://api-vint.onrender.com/api/products/categories [200 OK, 634B, 183ms]
+  √  HTTP 200 y Access-Control-Allow-Origin para Vercel
+
+→ CP-INT-017 | Web ↔ API Perfil público vendedor + CORS Vercel
+  GET https://api-vint.onrender.com/api/vendedor/qa_vend_1795385464/publico [200 OK, 887B, 2.6s]
+  √  HTTP 200 perfil público de tienda y cabecera CORS
+
+→ CP-INT-018 | Móvil ↔ API Listado de prendas (User-Agent Dart/Flutter)
+  GET https://api-vint.onrender.com/api/products [200 OK, 1.71kB, 1553ms]
+  √  HTTP 200 contrato JSON compatible con app Flutter
+
+→ CP-INT-019 | Móvil ↔ API Eliminación de prenda propia (Dart/Flutter)
+  DELETE https://api-vint.onrender.com/api/products [200 OK, 377B, 1717ms]
+  √  HTTP 200 prenda auxiliar eliminada por su propietario
+
+┌─────────────────────────┬─────────────────────┬────────────────────┐
+│                         │            executed │             failed │
+├─────────────────────────┼─────────────────────┼────────────────────┤
+│              iterations │                   1 │                  0 │
+├─────────────────────────┼─────────────────────┼────────────────────┤
+│                requests │                  40 │                  0 │
+├─────────────────────────┼─────────────────────┼────────────────────┤
+│            test-scripts │                  40 │                  0 │
+├─────────────────────────┼─────────────────────┼────────────────────┤
+│      prerequest-scripts │                   3 │                  0 │
+├─────────────────────────┼─────────────────────┼────────────────────┤
+│              assertions │                  40 │                  2 │
+├─────────────────────────┴─────────────────────┴────────────────────┤
+│ total run duration: 49.8s                                          │
+├────────────────────────────────────────────────────────────────────┤
+│ total data received: 37.84kB (approx)                              │
+├────────────────────────────────────────────────────────────────────┤
+│ average response time: 1166ms [min: 183ms, max: 2.8s, s.d.: 685ms] │
+└────────────────────────────────────────────────────────────────────┘
+
+[31m  # [39m[31m failure        [39m[31m detail                                                                           [39m
+[90m    [39m[90m                [39m[90m                                                                                  [39m
+ 1.  AssertionError  HTTP 201 prenda creada con estado catalogo id=1                                  
+                     expected 500 to be one of [ 200, 201 ]                                           
+                     at assertion:0 in test-script                                                    
+                     inside "CP-INT-005b | POST /api/products con estado 'Nuevo con etiqueta' (id=1)" 
+[90m    [39m[90m                [39m[90m                                                                                  [39m
+ 2.  AssertionError  HTTP 200 y JSON con estructura {success, data, count}                            
+                     expected null to be an object                                                    
+                     at assertion:0 in test-script                                                    
+                     inside "CP-INT-012b | GET /api/pedidos/mis-ventas (contrato JSON)"               
+
+(node:20348) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)

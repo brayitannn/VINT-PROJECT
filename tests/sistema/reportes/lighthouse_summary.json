@@ -1,0 +1,49 @@
+[
+  {
+    "screen": "Inicio (/)",
+    "url": "https://vint-project-git-develop-elbrayanf022-6820s-projects.vercel.app/",
+    "accessibility": 88,
+    "performance": 91,
+    "failed_wcag": [
+      "Buttons do not have an accessible name",
+      "Background and foreground colors do not have a sufficient contrast ratio.",
+      "Heading elements are not in a sequentially-descending order"
+    ]
+  },
+  {
+    "screen": "Inicio de sesión (/login)",
+    "url": "https://vint-project-git-develop-elbrayanf022-6820s-projects.vercel.app/login",
+    "accessibility": 84,
+    "performance": 99,
+    "failed_wcag": [
+      "Buttons do not have an accessible name",
+      "Background and foreground colors do not have a sufficient contrast ratio.",
+      "Touch targets do not have sufficient size or spacing.",
+      "Document does not have a main landmark."
+    ]
+  },
+  {
+    "screen": "Registro (/register)",
+    "url": "https://vint-project-git-develop-elbrayanf022-6820s-projects.vercel.app/register",
+    "accessibility": 82,
+    "performance": 93,
+    "failed_wcag": [
+      "Buttons do not have an accessible name",
+      "Background and foreground colors do not have a sufficient contrast ratio.",
+      "Form elements do not have associated labels",
+      "Document does not have a main landmark."
+    ]
+  },
+  {
+    "screen": "Catálogo (/explorar)",
+    "url": "https://vint-project-git-develop-elbrayanf022-6820s-projects.vercel.app/explorar",
+    "accessibility": 84,
+    "performance": 83,
+    "failed_wcag": [
+      "Buttons do not have an accessible name",
+      "Background and foreground colors do not have a sufficient contrast ratio.",
+      "Heading elements are not in a sequentially-descending order",
+      "Form elements do not have associated labels"
+    ]
+  }
+]

@@ -1,0 +1,60 @@
+{
+  "baseUrl": "https://vint-project-git-develop-elbrayanf022-6820s-projects.vercel.app",
+  "timestamp": "2026-11-22T22:42:11.803Z",
+  "e2e": [
+    {
+      "id": "CP-SIS-001",
+      "scenario": "Registro (/register), recuperación (/forgot-password) e inicio de sesión con redirección por rol",
+      "passed": true,
+      "details": "Form registro: true, Form forgot-password: true, URL tras login VENDEDOR: https://vint-project-git-develop-elbrayanf022-6820s-projects.vercel.app/dashboard/vendedor, errores JS: 0",
+      "errors": []
+    },
+    {
+      "id": "CP-SIS-002",
+      "scenario": "Exploración de catálogo (/explorar, /tienda) y acceso a gestión Mi Tienda del Vendedor",
+      "passed": true,
+      "details": "/explorar (1719 chars), /tienda (1719 chars), Mi Tienda URL: https://vint-project-git-develop-elbrayanf022-6820s-projects.vercel.app/dashboard/vendedor/mi-tienda (530 chars), errores JS: 0",
+      "errors": []
+    },
+    {
+      "id": "CP-SIS-003",
+      "scenario": "Flujo Comprador: login por rol, favoritos (/favoritos), checkout (/checkout) y perfil (/perfil)",
+      "passed": true,
+      "details": "URL tras login COMPRADOR: https://vint-project-git-develop-elbrayanf022-6820s-projects.vercel.app/dashboard/comprador, /favoritos: true, /checkout: true, /perfil: true, errores JS: 0",
+      "errors": []
+    },
+    {
+      "id": "CP-SIS-004",
+      "passed": false,
+      "details": "TimeoutError: page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://vint-project-git-develop-elbrayanf022-6820s-projects.vercel.app/dashboard/admin\", waiting until \"networkidle\"\u001b[22m\n"
+    }
+  ],
+  "compat": [
+    {
+      "platform": "Google Chrome (Escritorio)",
+      "version": "158.0.8127.36",
+      "resolution": "1920×1080",
+      "passed": true,
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "platform": "Google Chrome (Vista Móvil Responsive)",
+      "version": "158.0.8127.36",
+      "resolution": "390×844",
+      "passed": true,
+      "overflow": true,
+      "errors": []
+    },
+    {
+      "platform": "Microsoft Edge (Escritorio)",
+      "version": "158.0.4370.33",
+      "resolution": "1920×1080",
+      "passed": true,
+      "overflow": false,
+      "errors": []
+    }
+  ],
+  "chromeVersion": "158.0.8127.36",
+  "edgeVersion": "158.0.4370.33"
+}

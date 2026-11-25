@@ -1,0 +1,68 @@
+{
+  "load": {
+    "vus": 50,
+    "duration_s": 38.38,
+    "warmup_ms": 975.2,
+    "endpoints": [
+      "/",
+      "/api/products/categories",
+      "/api/products/marcas",
+      "/api/products/estados"
+    ],
+    "total_requests": 77,
+    "errors": 45,
+    "error_rate_pct": 58.44,
+    "throughput_rps": 2.01,
+    "avg_ms": 14417.8,
+    "p50_ms": 20018.3,
+    "p95_ms": 20346.2,
+    "p99_ms": 20352.0,
+    "min_ms": 1003.2,
+    "max_ms": 20354.9,
+    "status_counts": {
+      "200": 32,
+      "EXC": 45
+    }
+  },
+  "security": {
+    "api_headers": {
+      "strict-transport-security": null,
+      "x-content-type-options": null,
+      "x-frame-options": null,
+      "content-security-policy": null,
+      "referrer-policy": null,
+      "permissions-policy": null,
+      "server": "cloudflare"
+    },
+    "web_headers": {
+      "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+      "x-content-type-options": null,
+      "x-frame-options": null,
+      "content-security-policy": null,
+      "referrer-policy": null,
+      "permissions-policy": null,
+      "server": "Vercel"
+    },
+    "cors_evil_origin": {
+      "status": 400,
+      "acao": null
+    },
+    "a01_unauth": {
+      "admin_users": 403,
+      "perfil_me": 403,
+      "checkout_comprar": 401
+    },
+    "a03_injection": {
+      "recomendaciones_sqli_xss_status": 200,
+      "recomendaciones_reflects_script": false,
+      "vendedor_publico_xss_status": 404,
+      "vendedor_publico_content_type": "application/json"
+    },
+    "a02_https_redirect": {
+      "web_http_status": 308,
+      "web_location": "https://vint-project.vercel.app/",
+      "api_http_status": 301,
+      "api_location": "https://api-vint.onrender.com/"
+    }
+  }
+}

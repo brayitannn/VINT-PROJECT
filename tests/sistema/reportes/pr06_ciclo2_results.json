@@ -1,0 +1,98 @@
+{
+  "load": {
+    "vus": 50,
+    "duration_s": 14.94,
+    "endpoints": [
+      "/",
+      "/api/products/categories",
+      "/api/products/marcas",
+      "/api/products/estados"
+    ],
+    "total_requests": 1782,
+    "errors": 0,
+    "error_rate_pct": 0.0,
+    "throughput_rps": 119.31,
+    "avg_ms": 247.0,
+    "p50_ms": 169.1,
+    "p95_ms": 743.3,
+    "p99_ms": 1349.0,
+    "min_ms": 13.2,
+    "max_ms": 2661.2
+  },
+  "security": {
+    "api_headers": {
+      "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY",
+      "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "permissions-policy": "camera=(), microphone=(), geolocation=()"
+    },
+    "web_headers": {
+      "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY",
+      "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://sdk.mercadopago.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://images.unsplash.com https://nthcmtvncuevvczhlrhk.supabase.co https://*.supabase.co; connect-src 'self' https://api-vint.onrender.com https://nthcmtvncuevvczhlrhk.supabase.co https://*.supabase.co wss://*.supabase.co https://api.mercadopago.com http://localhost:8000 http://127.0.0.1:8000; frame-ancestors 'none'",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "permissions-policy": "camera=(), microphone=(), geolocation=()"
+    },
+    "cors_evil_status": 400,
+    "cors_evil_acao": null
+  },
+  "compat": [
+    {
+      "platform": "Google Chrome (Escritorio)",
+      "version": "158.0.8127.36",
+      "resolution": "1920×1080",
+      "passed": true,
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "platform": "Google Chrome (Móvil Responsive)",
+      "version": "158.0.8127.36",
+      "resolution": "390×844",
+      "passed": true,
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "platform": "Microsoft Edge (Escritorio)",
+      "version": "158.0.4370.33",
+      "resolution": "1920×1080",
+      "passed": true,
+      "overflow": false,
+      "errors": []
+    }
+  ],
+  "lighthouse": [
+    {
+      "screen": "Inicio (/)",
+      "url": "http://127.0.0.1:3010/",
+      "accessibility": 100,
+      "performance": 84,
+      "failed_wcag": []
+    },
+    {
+      "screen": "Inicio de sesión (/login)",
+      "url": "http://127.0.0.1:3010/login",
+      "accessibility": 100,
+      "performance": 99,
+      "failed_wcag": []
+    },
+    {
+      "screen": "Registro (/register)",
+      "url": "http://127.0.0.1:3010/register",
+      "accessibility": 100,
+      "performance": 89,
+      "failed_wcag": []
+    },
+    {
+      "screen": "Catálogo (/explorar)",
+      "url": "http://127.0.0.1:3010/explorar",
+      "accessibility": 100,
+      "performance": 84,
+      "failed_wcag": []
+    }
+  ]
+}

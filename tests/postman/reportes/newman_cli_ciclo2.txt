@@ -1,0 +1,186 @@
+newman
+
+VINT — Suite de Pruebas de Integración (PR-05)
+
+→ CP-INT-001a | Supabase Auth Login Vendedor (válido)
+  POST https://nthcmtvncuevvczhlrhk.supabase.co/auth/v1/token?grant_type=password [200 OK, 3.65kB, 438ms]
+  √  HTTP 200 y access_token JWT emitido
+
+→ CP-INT-001b | GET /api/perfil/me con JWT válido
+  GET http://127.0.0.1:8010/api/perfil/me [200 OK, 538B, 1808ms]
+  √  HTTP 200 y perfil autenticado retornado
+
+→ Setup Auth | Login Comprador
+  POST https://nthcmtvncuevvczhlrhk.supabase.co/auth/v1/token?grant_type=password [200 OK, 3.67kB, 303ms]
+  √  JWT comprador obtenido
+
+→ Setup Auth | Login Admin
+  POST https://nthcmtvncuevvczhlrhk.supabase.co/auth/v1/token?grant_type=password [200 OK, 3.63kB, 285ms]
+  √  JWT admin obtenido
+
+→ CP-INT-002a | Supabase Auth contraseña inválida
+  POST https://nthcmtvncuevvczhlrhk.supabase.co/auth/v1/token?grant_type=password [400 Bad Request, 995B, 300ms]
+  √  Rechazo 400/401 con mensaje genérico
+
+→ CP-INT-002b | GET /api/perfil/me con JWT inválido
+  GET http://127.0.0.1:8010/api/perfil/me [401 Unauthorized, 202B, 464ms]
+  √  HTTP 401 Token inválido o expirado
+
+→ CP-INT-003a | POST /api/auth/change-password contraseña débil (400)
+  POST http://127.0.0.1:8010/api/auth/change-password [400 Bad Request, 201B, 473ms]
+  √  HTTP 400 por fortaleza insuficiente
+
+→ CP-INT-003b | POST /api/auth/change-password actual incorrecta (403)
+  POST http://127.0.0.1:8010/api/auth/change-password [403 Forbidden, 181B, 1053ms]
+  √  HTTP 403 contraseña actual incorrecta
+
+→ CP-INT-003c | POST /api/auth/change-password exitoso (200)
+  POST http://127.0.0.1:8010/api/auth/change-password [200 OK, 192B, 1621ms]
+  √  HTTP 200 contraseña actualizada
+
+→ Setup Auth | Re-login Comprador con nueva contraseña
+  POST https://nthcmtvncuevvczhlrhk.supabase.co/auth/v1/token?grant_type=password [200 OK, 3.67kB, 264ms]
+  √  Nuevo JWT comprador obtenido tras cambio de clave
+
+→ CP-INT-004a | GET /api/products/categories
+  GET http://127.0.0.1:8010/api/products/categories [200 OK, 632B, 1013ms]
+  √  HTTP 200 y array de categorías no vacío
+
+→ CP-INT-004b | GET /api/products/marcas
+  GET http://127.0.0.1:8010/api/products/marcas [200 OK, 796B, 1043ms]
+  √  HTTP 200 y array de marcas no vacío
+
+→ CP-INT-004c | GET /api/products/estados
+  GET http://127.0.0.1:8010/api/products/estados [200 OK, 1.11kB, 1012ms]
+  √  HTTP 200 y estados físicos activos
+
+→ CP-INT-005a | POST /api/products crear prenda válida (estado id=5)
+  POST http://127.0.0.1:8010/api/products [201 Created, 514B, 2.8s]
+  √  HTTP 201 y prenda creada en BD
+
+→ CP-INT-005b | POST /api/products con estado 'Nuevo con etiqueta' (id=1)
+  POST http://127.0.0.1:8010/api/products [201 Created, 515B, 2.7s]
+  √  HTTP 201 prenda creada con estado catalogo id=1
+
+→ Setup Prenda 2 | POST /api/products prenda auxiliar QA
+  POST http://127.0.0.1:8010/api/products [201 Created, 524B, 2.6s]
+  √  Prenda auxiliar creada
+
+→ CP-INT-006a | GET /api/products/999999 inexistente (404)
+  GET http://127.0.0.1:8010/api/products/999999 [404 Not Found, 166B, 2.5s]
+  √  HTTP 404 Prenda no encontrada
+
+→ CP-INT-006b | PATCH /api/products sin ser propietario (403/404)
+  PATCH http://127.0.0.1:8010/api/products [403 Forbidden, 191B, 2.2s]
+  √  HTTP 403/404 bloqueo de propiedad (_verify_prenda_owner)
+
+→ CP-INT-007a | POST /api/products/{id}/imagenes
+  POST http://127.0.0.1:8010/api/products/459/imagenes [201 Created, 297B, 2.7s]
+  √  HTTP 200/201 imagen asociada
+
+→ CP-INT-007b | PATCH /api/products/{id}/imagenes/{imgId}/principal
+  PATCH http://127.0.0.1:8010/api/products/459/imagenes/395/principal [200 OK, 167B, 3.7s]
+  √  HTTP 200 imagen marcada como principal
+
+→ CP-INT-008 | POST /api/products con category_id inexistente (FK)
+  POST http://127.0.0.1:8010/api/products [400 Bad Request, 188B, 3.2s]
+  √  Rechazo por FK inválida sin registro huérfano (400/422/500)
+
+→ CP-INT-009 | POST /api/checkout/comprar exitoso (DISPONIBLE -> VENDIDA)
+  POST http://127.0.0.1:8010/api/checkout/comprar [200 OK, 404B, 3.3s]
+  √  HTTP 200 pedido creado y prenda marcada VENDIDA
+
+→ CP-INT-010a | POST /api/checkout/comprar carrito vacío (400)
+  POST http://127.0.0.1:8010/api/checkout/comprar [400 Bad Request, 244B, 500ms]
+  √  HTTP 400 CARRITO_VACIO
+
+→ CP-INT-010b | POST /api/checkout/comprar prenda ya VENDIDA (409)
+  POST http://127.0.0.1:8010/api/checkout/comprar [409 Conflict, 326B, 1810ms]
+  √  HTTP 409 PRENDA_NO_DISPONIBLE
+
+→ CP-INT-011 | POST /api/checkout/comprar autocompra (400)
+  POST http://127.0.0.1:8010/api/checkout/comprar [400 Bad Request, 328B, 2.8s]
+  √  HTTP 400 AUTOCOMPRA_NO_PERMITIDA
+
+→ CP-INT-012a | GET /api/pedidos/mis-compras
+  GET http://127.0.0.1:8010/api/pedidos/mis-compras [200 OK, 682B, 1698ms]
+  √  HTTP 200 y compra registrada visible
+
+→ CP-INT-012b | GET /api/pedidos/mis-ventas (contrato JSON)
+  GET http://127.0.0.1:8010/api/pedidos/mis-ventas [200 OK, 537B, 2.4s]
+  √  HTTP 200 y JSON con estructura {success, data, count}
+
+→ CP-INT-012c | POST /api/pedidos/{pedido_id}/cancelar
+  POST http://127.0.0.1:8010/api/pedidos/cc985cd1-9050-4bfc-a6f0-4c7002aaea86/cancelar [200 OK, 334B, 2.4s]
+  √  HTTP 200 pedido cancelado y prenda restaurada
+
+→ CP-INT-013a | GET /api/admin/users como ADMIN (200)
+  GET http://127.0.0.1:8010/api/admin/users?page=1&limit=10 [200 OK, 3.09kB, 3.1s]
+  √  HTTP 200 listado paginado para ADMIN
+
+→ CP-INT-013b | GET /api/admin/users como COMPRADOR (403)
+  GET http://127.0.0.1:8010/api/admin/users?page=1&limit=10 [403 Forbidden, 181B, 2s]
+  √  HTTP 403 acceso denegado a rol COMPRADOR
+
+→ CP-INT-014a | GET /api/vendedor/stats
+  GET http://127.0.0.1:8010/api/vendedor/stats [200 OK, 271B, 3.4s]
+  √  HTTP 200 estadísticas del vendedor
+
+→ CP-INT-014b | GET /api/vendedor/reportes/pdf
+  GET http://127.0.0.1:8010/api/vendedor/reportes/pdf [200 OK, 4.78kB, 3.1s]
+  √  HTTP 200 y Content-Type application/pdf
+
+→ CP-INT-014c | GET /api/vendedor/reportes/excel
+  GET http://127.0.0.1:8010/api/vendedor/reportes/excel [200 OK, 8.63kB, 3s]
+  √  HTTP 200 y Content-Type spreadsheetml
+
+→ CP-INT-015a | PUT /api/perfil/me válido (200)
+  PUT http://127.0.0.1:8010/api/perfil/me [200 OK, 576B, 1854ms]
+  √  HTTP 200 perfil actualizado
+
+→ CP-INT-015b | PUT /api/perfil/me username corto inválido (422)
+  PUT http://127.0.0.1:8010/api/perfil/me [422 Unprocessable Content, 296B, 476ms]
+  √  HTTP 422 validación Pydantic min_length=3
+
+→ CP-INT-015c | POST /api/recomendaciones
+  POST http://127.0.0.1:8010/api/recomendaciones [200 OK, 3.29kB, 681ms]
+  √  HTTP 200 recomendaciones retornadas
+
+→ CP-INT-016 | Web ↔ API CORS Preflight (Origin Vercel)
+  OPTIONS http://127.0.0.1:8010/api/products/categories [200 OK, 414B, 1ms]
+  √  HTTP 200 y Access-Control-Allow-Origin para Vercel
+
+→ CP-INT-017 | Web ↔ API Perfil público vendedor + CORS Vercel
+  GET http://127.0.0.1:8010/api/vendedor/qa_vend_1795386125/publico [200 OK, 667B, 2.6s]
+  √  HTTP 200 perfil público de tienda y cabecera CORS
+
+→ CP-INT-018 | Móvil ↔ API Listado de prendas (User-Agent Dart/Flutter)
+  GET http://127.0.0.1:8010/api/products [200 OK, 2.16kB, 2.1s]
+  √  HTTP 200 contrato JSON compatible con app Flutter
+
+→ CP-INT-019 | Móvil ↔ API Eliminación de prenda propia (Dart/Flutter)
+  DELETE http://127.0.0.1:8010/api/products [200 OK, 157B, 2.8s]
+  √  HTTP 200 prenda auxiliar eliminada por su propietario
+
+┌─────────────────────────┬────────────────────┬────────────────────┐
+│                         │           executed │             failed │
+├─────────────────────────┼────────────────────┼────────────────────┤
+│              iterations │                  1 │                  0 │
+├─────────────────────────┼────────────────────┼────────────────────┤
+│                requests │                 40 │                  0 │
+├─────────────────────────┼────────────────────┼────────────────────┤
+│            test-scripts │                 40 │                  0 │
+├─────────────────────────┼────────────────────┼────────────────────┤
+│      prerequest-scripts │                  3 │                  0 │
+├─────────────────────────┼────────────────────┼────────────────────┤
+│              assertions │                 40 │                  0 │
+├─────────────────────────┴────────────────────┴────────────────────┤
+│ total run duration: 1m 16.8s                                      │
+├───────────────────────────────────────────────────────────────────┤
+│ total data received: 39.08kB (approx)                             │
+├───────────────────────────────────────────────────────────────────┤
+│ average response time: 1840ms [min: 1ms, max: 3.7s, s.d.: 1115ms] │
+└───────────────────────────────────────────────────────────────────┘
+
+(node:1828) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
