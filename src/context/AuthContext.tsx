@@ -51,7 +51,7 @@ export function AuthProvider({ children }: Props) {
       setLoading(false);
     };
 
-    getUser();
+    void getUser();
 
     // 🔥 escuchar cambios de sesión
    const {

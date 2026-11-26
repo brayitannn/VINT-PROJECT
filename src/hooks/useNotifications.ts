@@ -73,7 +73,7 @@ export function useNotifications(prefs: NotificationPrefs) {
       return () => { supabase.removeChannel(channel) }
     }
 
-    init()
+    void init()
   }, [])
 
   // Filtrar por preferencias activas

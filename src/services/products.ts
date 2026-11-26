@@ -419,7 +419,7 @@ export async function updateProduct(
         } else {
           updateData.otra_marca = null
         }
-      } else if (payload.brand && !isNaN(Number(payload.brand))) {
+      } else if (payload.brand && !Number.isNaN(Number(payload.brand))) {
         const marcaId = Number(payload.brand) || 9
         updateData.id_marca = marcaId
         if (marcaId === 41) {
@@ -431,7 +431,7 @@ export async function updateProduct(
         updateData.otra_marca = payload.otra_marca?.trim() || null
       }
       if (payload.category_id !== undefined) updateData.id_categoria = Number(payload.category_id) || payload.category_id
-      else if (payload.category && !isNaN(Number(payload.category))) updateData.id_categoria = Number(payload.category)
+      else if (payload.category && !Number.isNaN(Number(payload.category))) updateData.id_categoria = Number(payload.category)
 
       if (Object.keys(updateData).length > 0) {
         await supabase

@@ -27,8 +27,17 @@ export function ProductDeleteDialog({ open, count, productName, onClose, onConfi
   if (!open) return null
 
   return (
-    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal-container modal-sm">
+    <div className="modal-overlay">
+      <button
+        type="button"
+        aria-label="Cerrar diálogo de eliminación"
+        onClick={onClose}
+        style={{
+          position: 'absolute', inset: 0, width: '100%', height: '100%',
+          background: 'transparent', border: 'none', padding: 0, margin: 0, cursor: 'default',
+        }}
+      />
+      <div className="modal-container modal-sm" role="dialog" aria-modal="true" style={{ position: 'relative', zIndex: 1 }}>
         <div className="delete-icon-wrapper">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
             <polyline points="3 6 5 6 21 6" />

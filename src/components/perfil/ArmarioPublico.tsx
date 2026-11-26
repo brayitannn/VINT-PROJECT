@@ -70,7 +70,7 @@ export function ArmarioPublico({ buyerSlug }: ArmarioPublicoProps) {
       }
     }
 
-    fetchBuyerData()
+    void fetchBuyerData()
     return () => { active = false }
   }, [buyerSlug])
 

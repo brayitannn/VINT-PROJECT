@@ -49,7 +49,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       }
     };
 
-    checkRoleAndRoute();
+    void checkRoleAndRoute();
   }, [user, loading, pathname, router, supabase]);
 
   if (loading || (!user && !roleValidated) || !roleValidated) {

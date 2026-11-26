@@ -67,7 +67,7 @@ export function ChatModal({ isOpen, onClose, sellerName, sellerSlug, sellerId, s
           setResolvedSellerId(sellerId || sellerSlug || null)
         }
       }
-      resolveSeller()
+      void resolveSeller()
     } else if (isOpen) {
       setResolvedSellerId(sellerId || sellerSlug || null)
     }
@@ -110,7 +110,7 @@ export function ChatModal({ isOpen, onClose, sellerName, sellerSlug, sellerId, s
   useEffect(() => {
     if (!isOpen || !user || !resolvedSellerId) return
 
-    fetchMessages()
+    void fetchMessages()
     setIsOnline(Math.random() > 0.3)
 
     // Subscribe to realtime database changes for the 'mensajes' table
@@ -149,7 +149,7 @@ export function ChatModal({ isOpen, onClose, sellerName, sellerSlug, sellerId, s
             })
 
             if (isFromPartner) {
-              markMessagesAsRead()
+              void markMessagesAsRead()
             }
           }
         }
@@ -183,7 +183,7 @@ export function ChatModal({ isOpen, onClose, sellerName, sellerSlug, sellerId, s
 
       if (data && data.length > 0) {
         setMessages(data)
-        markMessagesAsRead()
+        void markMessagesAsRead()
       } else {
         loadFromLocalStorage()
       }
@@ -262,11 +262,18 @@ export function ChatModal({ isOpen, onClose, sellerName, sellerSlug, sellerId, s
   return (
     <>
       {/* Backdrop */}
-      <div 
+      <button
+        type="button"
+        aria-label="Cerrar chat"
         onClick={onClose}
         style={{
           position: 'fixed',
           inset: 0,
+          width: '100%',
+          height: '100%',
+          border: 'none',
+          padding: 0,
+          margin: 0,
           backgroundColor: 'rgba(0,0,0,0.4)',
           backdropFilter: 'blur(4px)',
           zIndex: 2000,

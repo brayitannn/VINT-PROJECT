@@ -202,10 +202,13 @@ export function ExplorarModal({ open, onClose }: ExplorarModalProps) {
       `}</style>
 
       {/* Overlay */}
-      <div
+      <button
+        type="button"
+        aria-label="Cerrar explorador"
         onClick={onClose}
         style={{
           position: 'fixed', inset: 0, zIndex: 1000,
+          width: '100%', height: '100%', border: 'none', padding: 0, margin: 0,
           backgroundColor: 'rgba(0,0,0,0.5)',
           backdropFilter: 'blur(4px)',
         }}

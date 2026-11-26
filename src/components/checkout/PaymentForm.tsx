@@ -255,10 +255,11 @@ export const PaymentForm = ({
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-xs sm:text-sm font-semibold text-[var(--text-secondary)] ml-1.5">
+            <label htmlFor="pse-bank" className="text-xs sm:text-sm font-semibold text-[var(--text-secondary)] ml-1.5">
               Selecciona tu banco
             </label>
             <select
+              id="pse-bank"
               value={pse.bank}
               onChange={(e) => setPse({ ...pse, bank: e.target.value })}
               style={{ borderColor: "color-mix(in srgb, var(--border) 30%, transparent)" }}
@@ -274,10 +275,11 @@ export const PaymentForm = ({
 
           <div className="grid grid-cols-3 gap-6 sm:gap-8">
             <div className="col-span-1 flex flex-col gap-2">
-              <label className="text-xs sm:text-sm font-semibold text-[var(--text-secondary)] ml-1.5">
+              <label htmlFor="pse-id-type" className="text-xs sm:text-sm font-semibold text-[var(--text-secondary)] ml-1.5">
                 Documento
               </label>
               <select
+                id="pse-id-type"
                 value={pse.idType}
                 onChange={(e) => setPse({ ...pse, idType: e.target.value })}
                 style={{ borderColor: "color-mix(in srgb, var(--border) 30%, transparent)" }}

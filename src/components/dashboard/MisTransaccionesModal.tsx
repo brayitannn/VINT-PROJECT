@@ -382,8 +382,17 @@ export function MisTransaccionesModal({ isOpen, onClose }: MisTransaccionesModal
         }
       `}</style>
 
-      <div className="modal-overlay" onClick={onClose}>
-        <div className="modal-content" onClick={e => e.stopPropagation()}>
+      <div className="modal-overlay">
+        <button
+          type="button"
+          aria-label="Cerrar mis compras"
+          onClick={onClose}
+          style={{
+            position: 'absolute', inset: 0, width: '100%', height: '100%',
+            background: 'transparent', border: 'none', padding: 0, margin: 0, cursor: 'default',
+          }}
+        />
+        <div className="modal-content" role="dialog" aria-modal="true" style={{ position: 'relative', zIndex: 1 }}>
           {/* Header */}
           <div className="modal-header">
             <div>
@@ -495,11 +504,27 @@ export function MisTransaccionesModal({ isOpen, onClose }: MisTransaccionesModal
                 <div
                   key={compra.id}
                   className="transaction-item"
-                  onClick={() => setSelectedCompra(compra)}
-                  style={{ cursor: 'pointer' }}
-                  title="Haz clic para ver el detalle completo de la compra"
+                  style={{ position: 'relative' }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <button
+                    type="button"
+                    aria-label={`Ver detalle de ${compra.titulo_prenda}`}
+                    title="Haz clic para ver el detalle completo de la compra"
+                    onClick={() => setSelectedCompra(compra)}
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      width: '100%',
+                      height: '100%',
+                      background: 'transparent',
+                      border: 'none',
+                      borderRadius: 20,
+                      padding: 0,
+                      cursor: 'pointer',
+                      zIndex: 0,
+                    }}
+                  />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, position: 'relative', zIndex: 1, pointerEvents: 'none' }}>
                     {/* Imagen de la prenda */}
                     <div style={{ width: 64, height: 64, borderRadius: 14, overflow: 'hidden', position: 'relative', background: 'var(--bg-secondary)', flexShrink: 0 }}>
                       {compra.imagen_prenda ? (
@@ -551,8 +576,7 @@ export function MisTransaccionesModal({ isOpen, onClose }: MisTransaccionesModal
 
                   {/* Precios y acciones */}
                   <div
-                    style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}
-                    onClick={(e) => e.stopPropagation()}
+                    style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, position: 'relative', zIndex: 2, pointerEvents: 'none' }}
                   >
                     <span style={{
                       fontSize: 16,
@@ -580,8 +604,9 @@ export function MisTransaccionesModal({ isOpen, onClose }: MisTransaccionesModal
 
                     {/* Botón de Cancelar Compra */}
                     {compra.estado !== 'cancelado' && (
-                      <div style={{ marginTop: 2 }}>
+                      <div style={{ marginTop: 2, pointerEvents: 'auto' }}>
                         <button
+                          type="button"
                           onClick={() => setPedidoAConfirmar(compra)}
                           className="btn-cancel"
                           title="Cancelar compra y regresar prenda al catálogo"
@@ -601,8 +626,17 @@ export function MisTransaccionesModal({ isOpen, onClose }: MisTransaccionesModal
 
       {/* MODAL DE DETALLE COMPLETO DE LA COMPRA */}
       {selectedCompra && (
-        <div className="detalle-compra-overlay" onClick={() => setSelectedCompra(null)}>
-          <div className="detalle-compra-container" onClick={e => e.stopPropagation()}>
+        <div className="detalle-compra-overlay">
+          <button
+            type="button"
+            aria-label="Cerrar detalle de compra"
+            onClick={() => setSelectedCompra(null)}
+            style={{
+              position: 'absolute', inset: 0, width: '100%', height: '100%',
+              background: 'transparent', border: 'none', padding: 0, margin: 0, cursor: 'default',
+            }}
+          />
+          <div className="detalle-compra-container" role="dialog" aria-modal="true" style={{ position: 'relative', zIndex: 1 }}>
             {/* Header */}
             <div style={{
               padding: '18px 26px',
@@ -836,8 +870,17 @@ export function MisTransaccionesModal({ isOpen, onClose }: MisTransaccionesModal
 
       {/* MODAL DE CONFIRMACIÓN DE CANCELACIÓN */}
       {pedidoAConfirmar && (
-        <div className="confirm-modal-overlay" onClick={() => !cancelingId && setPedidoAConfirmar(null)}>
-          <div className="confirm-modal-card" onClick={e => e.stopPropagation()}>
+        <div className="confirm-modal-overlay">
+          <button
+            type="button"
+            aria-label="Cerrar confirmación de cancelación"
+            onClick={() => !cancelingId && setPedidoAConfirmar(null)}
+            style={{
+              position: 'absolute', inset: 0, width: '100%', height: '100%',
+              background: 'transparent', border: 'none', padding: 0, margin: 0, cursor: 'default',
+            }}
+          />
+          <div className="confirm-modal-card" role="dialog" aria-modal="true" style={{ position: 'relative', zIndex: 1 }}>
             <div className="confirm-icon-box">
               <RotateCcw size={28} />
             </div>

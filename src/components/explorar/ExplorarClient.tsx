@@ -92,7 +92,7 @@ export function ExplorarClient() {
 
   const [currentPage, setCurrentPage] = useState<number>(() => {
     const p = searchParams.get('page')
-    return p ? parseInt(p, 10) : 1
+    return p ? Number.parseInt(p, 10) : 1
   })
   const [totalCount, setTotalCount] = useState<number>(0)
   const [sortOpen, setSortOpen] = useState(false)
@@ -112,9 +112,13 @@ export function ExplorarClient() {
 
   // Load categories dynamically
   useEffect(() => {
-    getCategories().then((cats) => {
-      setAvailableCategories(cats.map((c) => c.nombre))
-    })
+    getCategories()
+      .then((cats) => {
+        setAvailableCategories(cats.map((c) => c.nombre))
+      })
+      .catch((err) => {
+        console.error('Error al cargar categorías:', err)
+      })
   }, [])
 
   // Effect to load product from query param if provided
@@ -176,7 +180,7 @@ export function ExplorarClient() {
       }
     }
 
-    loadProductDetail()
+    void loadProductDetail()
   }, [searchParams, supabase])
 
   const ITEMS_PER_PAGE = 15
@@ -309,7 +313,7 @@ export function ExplorarClient() {
   // Sync URL searchParams to currentPage
   useEffect(() => {
     const p = searchParams.get('page')
-    const pageVal = p ? parseInt(p, 10) : 1
+    const pageVal = p ? Number.parseInt(p, 10) : 1
     setCurrentPage(pageVal)
   }, [searchParams])
 

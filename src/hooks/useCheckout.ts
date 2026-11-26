@@ -44,7 +44,12 @@ export function useCheckout() {
     const errors: Record<string, string> = {};
     if (!shipping.name.trim()) errors.name = "El nombre es requerido.";
     if (!shipping.phone.trim() || shipping.phone.length < 7) errors.phone = "Número de teléfono inválido (mín. 7 dígitos).";
-    if (!shipping.email.trim() || !/\S+@\S+\.\S+/.test(shipping.email)) errors.email = "Ingresa un correo electrónico válido.";
+    const trimmedEmail = shipping.email.trim();
+    const isEmailValid =
+      trimmedEmail.length > 0 &&
+      /^[^@\s]+@[^@\s.]+\.[^@\s]+$/.test(trimmedEmail) &&
+      !trimmedEmail.includes("..");
+    if (!isEmailValid) errors.email = "Ingresa un correo electrónico válido.";
     if (!shipping.address.trim()) errors.address = "La dirección de entrega es requerida.";
     if (!shipping.city.trim()) errors.city = "La ciudad es requerida.";
 

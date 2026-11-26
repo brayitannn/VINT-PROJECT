@@ -240,8 +240,9 @@ export function RegisterForm() {
 
             {/* Género */}
             <div className="flex flex-col gap-2">
-              <label className="text-[12px] font-bold uppercase tracking-wider ml-1" style={{ color: "var(--text-muted)" }}>Género</label>
+              <span id="register-genero-label" className="text-[12px] font-bold uppercase tracking-wider ml-1" style={{ color: "var(--text-muted)" }}>Género</span>
               <VintSelect
+                ariaLabelledBy="register-genero-label"
                 value={formData.genero}
                 onChange={(val) => setFormData({ ...formData, genero: val })}
                 options={[
@@ -321,14 +322,16 @@ export function RegisterForm() {
           </div>
 
         <div className="mt-8 flex flex-col gap-6">
-          <label
+          <span
+            id="register-role-label"
             className="text-[11px] font-bold uppercase tracking-widest block text-center"
             style={{ color: "var(--text-muted)" }}
           >
             ¿A qué vienes a Vint?
-          </label>
+          </span>
 
           <RadioGroup
+            aria-labelledby="register-role-label"
             value={formData.userType}
             onValueChange={(value) => setFormData({ ...formData, userType: value })}
             className="grid grid-cols-2 gap-3"

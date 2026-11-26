@@ -4,13 +4,15 @@ import * as React from "react"
 import { ChevronDown, Check } from "lucide-react"
 
 interface VintSelectProps {
+  id?: string
+  ariaLabelledBy?: string
   value: string
   onChange: (value: string) => void
   options: { value: string; label: string }[]
   placeholder?: string
 }
 
-export function VintSelect({ value, onChange, options, placeholder = "Selecciona..." }: VintSelectProps) {
+export function VintSelect({ id, ariaLabelledBy, value, onChange, options, placeholder = "Selecciona..." }: VintSelectProps) {
   const [isOpen, setIsOpen] = React.useState(false)
   const [openUpward, setOpenUpward] = React.useState(false)
   const containerRef = React.useRef<HTMLDivElement>(null)
@@ -40,6 +42,8 @@ export function VintSelect({ value, onChange, options, placeholder = "Selecciona
   return (
     <div ref={containerRef} className="relative w-full">
       <button
+        id={id}
+        aria-labelledby={ariaLabelledBy}
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="w-full h-[56px] flex items-center justify-between px-5 text-[15px] transition-all duration-200 outline-none"

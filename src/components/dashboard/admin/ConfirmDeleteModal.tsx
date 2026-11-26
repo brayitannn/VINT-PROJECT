@@ -41,13 +41,16 @@ export function ConfirmDeleteModal({ isOpen, onClose, onConfirm, userName, userE
   return (
     <>
       {/* Overlay */}
-      <div
+      <button
+        type="button"
+        aria-label="Cerrar diálogo"
         onClick={handleClose}
         style={{
           position: 'fixed', inset: 0, zIndex: 9998,
           backgroundColor: 'rgba(0,0,0,0.5)',
           backdropFilter: 'blur(4px)',
           animation: 'fadeIn 0.2s ease',
+          border: 'none', padding: 0, margin: 0, width: '100%', height: '100%',
         }}
       />
 
@@ -97,10 +100,11 @@ export function ConfirmDeleteModal({ isOpen, onClose, onConfirm, userName, userE
 
         {/* Confirm input */}
         <div style={{ marginBottom: 20 }}>
-          <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1 }}>
+          <label htmlFor="confirm-delete-input" style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1 }}>
             Escribe ELIMINAR para confirmar
           </label>
           <input
+            id="confirm-delete-input"
             type="text"
             value={confirmText}
             onChange={(e) => setConfirmText(e.target.value)}

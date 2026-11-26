@@ -168,15 +168,21 @@ export function FilterSidebar({ filters, onChange, totalResults, availableCatego
             const active = filters.categorias.includes(cat)
             return (
               <label key={cat} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '5px 4px', borderRadius: 8 }}>
-                <div style={{
+                <input
+                  type="checkbox"
+                  checked={active}
+                  onChange={() => toggle('categorias', cat)}
+                  className="sr-only"
+                />
+                <span aria-hidden="true" style={{
                   width: 16, height: 16, borderRadius: 4, flexShrink: 0, transition: 'all 0.15s',
                   backgroundColor: active ? 'var(--accent)' : 'transparent',
                   border: active ? '2px solid var(--accent)' : '2px solid var(--border)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }} onClick={() => toggle('categorias', cat)}>
+                }}>
                   {active && <svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 4l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" /></svg>}
-                </div>
-                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }} onClick={() => toggle('categorias', cat)}>{cat}</span>
+                </span>
+                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{cat}</span>
               </label>
             )
           })}
@@ -199,15 +205,21 @@ export function FilterSidebar({ filters, onChange, totalResults, availableCatego
             const active = filters.condiciones.includes(c)
             return (
               <label key={c} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '5px 4px', borderRadius: 8 }}>
-                <div style={{
+                <input
+                  type="checkbox"
+                  checked={active}
+                  onChange={() => toggle('condiciones', c)}
+                  className="sr-only"
+                />
+                <span aria-hidden="true" style={{
                   width: 16, height: 16, borderRadius: 4, flexShrink: 0, transition: 'all 0.15s',
                   backgroundColor: active ? 'var(--accent)' : 'transparent',
                   border: active ? '2px solid var(--accent)' : '2px solid var(--border)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }} onClick={() => toggle('condiciones', c)}>
+                }}>
                   {active && <svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 4l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" /></svg>}
-                </div>
-                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }} onClick={() => toggle('condiciones', c)}>{c}</span>
+                </span>
+                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{c}</span>
               </label>
             )
           })}

@@ -91,7 +91,7 @@ function ResetPasswordForm() {
       }
       setCheckingSession(false);
     };
-    checkSession();
+    void checkSession();
 
     return () => { subscription.unsubscribe(); };
   }, [supabase]);

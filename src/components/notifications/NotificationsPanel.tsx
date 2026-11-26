@@ -147,25 +147,12 @@ export function NotificationsPanel({ isOpen, onClose, notifications, unreadCount
               <div
                 key={notif.id}
                 className="notif-item"
-                onClick={() => {
-                  if (notif.tipo === 'favorito') {
-                    router.push('/favoritos')
-                    onClose()
-                  } else if (notif.tipo === 'mensaje' && onOpenChat) {
-                    const email = notif.titulo.replace('Nuevo mensaje de ', '').trim()
-                    if (email && email.includes('@')) {
-                      const name = email.split('@')[0]
-                      onOpenChat(email, name)
-                    }
-                  }
-                }}
                 style={{
                   display: 'flex',
                   alignItems: 'flex-start',
-                  gap: 14,
+                  gap: 10,
                   padding: '14px 20px',
                   borderBottom: '1px solid var(--border)',
-                  cursor: 'pointer',
                   position: 'relative',
                   backgroundColor: !notif.leida ? `${style.color}06` : 'transparent',
                   transition: 'background-color 0.15s',
@@ -177,27 +164,58 @@ export function NotificationsPanel({ isOpen, onClose, notifications, unreadCount
                     width: 6, height: 6, borderRadius: '50%', backgroundColor: style.color,
                   }} />
                 )}
-                <div style={{
-                  width: 40, height: 40, borderRadius: 12, flexShrink: 0,
-                  backgroundColor: `${style.color}15`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <Icon size={18} style={{ color: style.color }} />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ margin: '0 0 2px', fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
-                    {notif.titulo}
-                  </p>
-                  <p style={{ margin: '0 0 4px', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.4 }}>
-                    {notif.cuerpo}
-                  </p>
-                  <p style={{ margin: 0, fontSize: 11, color: 'var(--text-muted)' }}>
-                    {formatTime(notif.created_at)}
-                  </p>
-                </div>
                 <button
+                  type="button"
+                  onClick={() => {
+                    if (notif.tipo === 'favorito') {
+                      router.push('/favoritos')
+                      onClose()
+                    } else if (notif.tipo === 'mensaje' && onOpenChat) {
+                      const email = notif.titulo.replace('Nuevo mensaje de ', '').trim()
+                      if (email && email.includes('@')) {
+                        const name = email.split('@')[0]
+                        onOpenChat(email, name)
+                      }
+                    }
+                  }}
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 14,
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    font: 'inherit',
+                    color: 'inherit',
+                  }}
+                >
+                  <div style={{
+                    width: 40, height: 40, borderRadius: 12, flexShrink: 0,
+                    backgroundColor: `${style.color}15`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <Icon size={18} style={{ color: style.color }} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ margin: '0 0 2px', fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+                      {notif.titulo}
+                    </p>
+                    <p style={{ margin: '0 0 4px', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+                      {notif.cuerpo}
+                    </p>
+                    <p style={{ margin: 0, fontSize: 11, color: 'var(--text-muted)' }}>
+                      {formatTime(notif.created_at)}
+                    </p>
+                  </div>
+                </button>
+                <button
+                  type="button"
                   className="notif-dismiss"
-                  onClick={(e) => { e.stopPropagation(); dismiss(notif.id) }}
+                  onClick={() => { void dismiss(notif.id) }}
                   style={{
                     background: 'none', border: 'none', cursor: 'pointer',
                     color: 'var(--text-muted)', opacity: 0.4,

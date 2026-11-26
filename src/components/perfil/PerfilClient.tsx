@@ -234,7 +234,7 @@ function PerfilSection() {
           if (user?.user_metadata?.avatar_url) setAvatarPreview(user.user_metadata.avatar_url)
         }
       }
-      fetchPerfil()
+      void fetchPerfil()
       
       window.addEventListener('updatePerfil', fetchPerfil)
       return () => window.removeEventListener('updatePerfil', fetchPerfil)
@@ -918,7 +918,7 @@ export function PerfilClient() {
         }
         if (res.data) setPerfilData(res.data)
       }
-      fetchSidebarPerfil()
+      void fetchSidebarPerfil()
       
       window.addEventListener('updatePerfil', fetchSidebarPerfil)
       return () => window.removeEventListener('updatePerfil', fetchSidebarPerfil)

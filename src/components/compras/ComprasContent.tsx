@@ -47,7 +47,7 @@ export function ComprasContent() {
         setLoading(false)
       }
     }
-    fetchOrders()
+    void fetchOrders()
   }, [user, supabase])
 
   const formatPrice = (p: number) => `$${Number(p).toLocaleString('es-CO')} COP`
@@ -94,9 +94,12 @@ export function ComprasContent() {
             backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)',
             borderRadius: 18, overflow: 'hidden', transition: 'all 0.3s ease'
           }}>
-            <div
+            <button
+              type="button"
+              aria-expanded={isExpanded}
               onClick={() => setExpandedOrder(isExpanded ? null : order.id)}
               style={{
+                width: '100%', border: 'none', textAlign: 'left', font: 'inherit',
                 padding: '16px 20px', cursor: 'pointer', display: 'flex',
                 alignItems: 'center', justifyContent: 'space-between',
                 backgroundColor: isExpanded ? 'var(--bg-secondary)' : 'transparent',
@@ -131,7 +134,7 @@ export function ComprasContent() {
                 color: 'var(--text-muted)', transition: 'transform 0.3s',
                 transform: isExpanded ? 'rotate(180deg)' : 'none'
               }} />
-            </div>
+            </button>
 
             {isExpanded && (
               <div style={{ padding: '0 20px 16px', animation: 'fadeIn 0.3s ease' }}>

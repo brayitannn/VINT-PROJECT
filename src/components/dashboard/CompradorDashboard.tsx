@@ -45,7 +45,7 @@ export function CompradorDashboard({ user }: CompradorDashboardProps) {
       } catch {}
     }
 
-    fetchUserData()
+    void fetchUserData()
     window.addEventListener('updatePerfil', fetchUserData)
     return () => window.removeEventListener('updatePerfil', fetchUserData)
   }, [user.id, authUser])

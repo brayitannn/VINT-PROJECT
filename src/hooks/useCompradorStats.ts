@@ -73,7 +73,7 @@ export function useCompradorStats(): {
       setLoading(false)
     }
 
-    fetch()
+    void fetch()
   }, [user])
 
   return { stats, loading }

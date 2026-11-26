@@ -173,7 +173,7 @@ export function UsersTable({
                     <td style={{ padding: '14px 16px' }}>
                       <select
                         value={user.id_rol}
-                        onChange={(e) => handleRoleChange(user, parseInt(e.target.value))}
+                        onChange={(e) => handleRoleChange(user, Number.parseInt(e.target.value, 10))}
                         disabled={actionLoading === user.id_usuario}
                         style={{
                           padding: '5px 10px', borderRadius: 8, fontSize: 12,

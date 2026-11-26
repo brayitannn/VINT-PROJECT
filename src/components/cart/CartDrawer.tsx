@@ -34,7 +34,10 @@ export function CartDrawer() {
   return createPortal(
     <>
       {/* Overlay */}
-      <div
+      <button
+        type="button"
+        aria-label="Cerrar carrito"
+        tabIndex={isOpen ? 0 : -1}
         onClick={closeCart}
         style={{
           position: 'fixed', inset: 0, zIndex: 99998, // Z-index súper alto
@@ -43,6 +46,7 @@ export function CartDrawer() {
           opacity: isOpen ? 1 : 0,
           pointerEvents: isOpen ? 'auto' : 'none',
           transition: 'opacity 0.3s ease',
+          border: 'none', padding: 0, margin: 0, width: '100%', height: '100%',
         }}
       />
 

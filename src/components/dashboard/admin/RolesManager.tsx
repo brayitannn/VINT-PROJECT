@@ -146,7 +146,6 @@ export function RolesManager({ roles, allPermisos, onCreateRole, onUpdateRole, o
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit(rol.id_rol)}
-                        autoFocus
                         style={{
                           padding: '4px 10px', borderRadius: 8, fontSize: 14, fontWeight: 700,
                           border: '1px solid var(--accent)', backgroundColor: 'var(--bg-primary)',

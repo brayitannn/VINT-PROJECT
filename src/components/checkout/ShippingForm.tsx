@@ -98,10 +98,11 @@ export const ShippingForm = ({
         </div>
 
         <div className="flex flex-col gap-3">
-          <label className="text-xs sm:text-sm font-semibold text-[var(--text-secondary)] ml-1.5">
+          <label htmlFor="shipping-additional-info" className="text-xs sm:text-sm font-semibold text-[var(--text-secondary)] ml-1.5">
             Instrucciones adicionales (Opcional)
           </label>
           <textarea
+            id="shipping-additional-info"
             placeholder="Ej. Conjunto residencial, torre A, portería"
             value={shipping.additionalInfo}
             onChange={(e: any) => setShipping({ ...shipping, additionalInfo: e.target.value })}

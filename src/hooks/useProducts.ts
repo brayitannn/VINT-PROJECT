@@ -72,8 +72,8 @@ export function useProducts() {
   }, [fetchProducts])
 
   useEffect(() => {
-    getCategories().then(setCategories)
-    getMarcas().then(setMarcas)
+    getCategories().then(setCategories).catch((err) => console.error('Error al cargar categorías:', err))
+    getMarcas().then(setMarcas).catch((err) => console.error('Error al cargar marcas:', err))
   }, [])
 
   // ── Filters ────────────────────────────────────────────────────────────────

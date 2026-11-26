@@ -158,8 +158,17 @@ export function MisVentasModal({ isOpen, onClose }: MisVentasModalProps) {
         }
       `}</style>
 
-      <div className="modal-overlay" onClick={onClose}>
-        <div className="modal-content" onClick={e => e.stopPropagation()}>
+      <div className="modal-overlay">
+        <button
+          type="button"
+          aria-label="Cerrar mis ventas"
+          onClick={onClose}
+          style={{
+            position: 'absolute', inset: 0, width: '100%', height: '100%',
+            background: 'transparent', border: 'none', padding: 0, margin: 0, cursor: 'default',
+          }}
+        />
+        <div className="modal-content" role="dialog" aria-modal="true" style={{ position: 'relative', zIndex: 1 }}>
           {/* Header */}
           <div className="modal-header">
             <div>

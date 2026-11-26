@@ -31,10 +31,15 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   // Carga inicial desde Supabase
   useEffect(() => {
     if (user) {
-      getFavoritos(user.id).then((ids) => {
-        setFavoriteIds(new Set(ids))
-        setLoading(false)
-      })
+      getFavoritos(user.id)
+        .then((ids) => {
+          setFavoriteIds(new Set(ids))
+          setLoading(false)
+        })
+        .catch((err) => {
+          console.error('Error al cargar favoritos:', err)
+          setLoading(false)
+        })
     } else {
       setFavoriteIds(new Set())
       setLoading(false)

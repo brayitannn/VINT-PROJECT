@@ -167,7 +167,7 @@ export function ProductDetailModal({ product, onClose, addToCartOptions }: Props
       }
     }
 
-    loadSellerInfo()
+    void loadSellerInfo()
 
     // Cargar detalles exactos de la prenda desde catalogo.prendas para recuperar otra_marca y condicion real
     const loadPrendaDirect = async () => {
@@ -202,7 +202,7 @@ export function ProductDetailModal({ product, onClose, addToCartOptions }: Props
       } catch {}
     }
 
-    loadPrendaDirect()
+    void loadPrendaDirect()
 
     return () => { active = false }
   }, [product])
@@ -233,9 +233,12 @@ export function ProductDetailModal({ product, onClose, addToCartOptions }: Props
   const modalContent = (
     <>
       {/* Overlay */}
-      <div
+      <button
+        type="button"
+        aria-label="Cerrar detalle de producto"
         onClick={onClose}
         className="product-detail-overlay"
+        style={{ width: '100%', height: '100%', border: 'none', padding: 0, margin: 0 }}
       />
 
       {/* Modal */}

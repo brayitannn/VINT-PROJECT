@@ -203,7 +203,7 @@ export function ChatInboxPanel({ isOpen, onClose, onSelectConversation }: Props)
 
   useEffect(() => {
     if (isOpen && user) {
-      fetchConversations()
+      void fetchConversations()
 
       const channelId = `inbox-${user.id}-${Date.now()}-${Math.floor(Math.random() * 1000)}`
       const channel = supabase
@@ -212,7 +212,7 @@ export function ChatInboxPanel({ isOpen, onClose, onSelectConversation }: Props)
           'postgres_changes',
           { event: '*', schema: 'public', table: 'mensajes' },
           () => {
-            fetchConversations()
+            void fetchConversations()
           }
         )
         .subscribe()
@@ -315,7 +315,8 @@ export function ChatInboxPanel({ isOpen, onClose, onSelectConversation }: Props)
               return c.partnerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                      c.partnerEmail.toLowerCase().includes(searchQuery.toLowerCase())
             }).map((conv) => (
-              <div
+              <button
+                type="button"
                 key={conv.partnerId}
                 className="chat-item"
                 onClick={() => {
@@ -324,18 +325,22 @@ export function ChatInboxPanel({ isOpen, onClose, onSelectConversation }: Props)
                   onClose()
                 }}
                 style={{
+                  width: '100%',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 12,
                   padding: '14px 20px',
+                  border: 'none',
                   borderBottom: '1px solid var(--border)',
+                  textAlign: 'left',
+                  font: 'inherit',
                   cursor: 'pointer',
                   transition: 'background-color 0.15s',
                   backgroundColor: conv.unreadCount > 0 ? 'rgba(139, 94, 60, 0.05)' : 'transparent'
                 }}
               >
                 {/* Avatar */}
-                <div style={{
+                <span style={{
                   width: 40, height: 40, borderRadius: '50%',
                   backgroundColor: 'var(--accent)',
                   color: 'white',
@@ -343,31 +348,32 @@ export function ChatInboxPanel({ isOpen, onClose, onSelectConversation }: Props)
                   fontWeight: 700, fontSize: 15, flexShrink: 0
                 }}>
                   {conv.partnerName.charAt(0).toUpperCase()}
-                </div>
+                </span>
 
                 {/* Chat details */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 2 }}>
-                    <h4 style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span style={{ flex: 1, minWidth: 0, display: 'block' }}>
+                  <span style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 2 }}>
+                    <span style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {conv.partnerName}
-                    </h4>
+                    </span>
                     <span style={{ fontSize: 10, color: 'var(--text-muted)', flexShrink: 0 }}>
                       {formatTime(conv.lastMessageDate)}
                     </span>
-                  </div>
-                  <p style={{
+                  </span>
+                  <span style={{
+                    display: 'block',
                     margin: 0, fontSize: 12,
                     color: conv.unreadCount > 0 ? 'var(--text-primary)' : 'var(--text-secondary)',
                     fontWeight: conv.unreadCount > 0 ? 600 : 400,
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
                   }}>
                     {conv.lastMessage}
-                  </p>
-                </div>
+                  </span>
+                </span>
 
                 {/* Unread indicator */}
                 {conv.unreadCount > 0 && (
-                  <div style={{
+                  <span style={{
                     minWidth: 16, height: 16, borderRadius: 8,
                     backgroundColor: 'var(--accent)',
                     color: 'white', fontSize: 9, fontWeight: 800,
@@ -376,9 +382,9 @@ export function ChatInboxPanel({ isOpen, onClose, onSelectConversation }: Props)
                     flexShrink: 0
                   }}>
                     {conv.unreadCount}
-                  </div>
+                  </span>
                 )}
-              </div>
+              </button>
             ))}
 
             {/* Si no hay chats activos y no hay búsqueda */}
@@ -411,7 +417,8 @@ export function ChatInboxPanel({ isOpen, onClose, onSelectConversation }: Props)
                   searchResults.map((u) => {
                     const fullName = `${u.primer_nombre || ''} ${u.primer_apellido || ''}`.trim() || u.correo.split('@')[0]
                     return (
-                      <div
+                      <button
+                        type="button"
                         key={u.id_auth_supabase}
                         className="chat-item"
                         onClick={() => {
@@ -420,16 +427,21 @@ export function ChatInboxPanel({ isOpen, onClose, onSelectConversation }: Props)
                           onClose()
                         }}
                         style={{
+                          width: '100%',
                           display: 'flex',
                           alignItems: 'center',
                           gap: 12,
                           padding: '12px 20px',
+                          border: 'none',
                           borderBottom: '1px solid var(--border)',
+                          background: 'transparent',
+                          textAlign: 'left',
+                          font: 'inherit',
                           cursor: 'pointer',
                           transition: 'background-color 0.15s',
                         }}
                       >
-                        <div style={{
+                        <span style={{
                           width: 36, height: 36, borderRadius: '50%',
                           backgroundColor: 'var(--bg-secondary)',
                           border: '1px solid var(--border)',
@@ -438,16 +450,16 @@ export function ChatInboxPanel({ isOpen, onClose, onSelectConversation }: Props)
                           fontWeight: 700, fontSize: 13, flexShrink: 0
                         }}>
                           {fullName.charAt(0).toUpperCase()}
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <h4 style={{ margin: 0, fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        </span>
+                        <span style={{ flex: 1, minWidth: 0, display: 'block' }}>
+                          <span style={{ display: 'block', margin: 0, fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {fullName}
-                          </h4>
-                          <p style={{ margin: 0, fontSize: 11, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          </span>
+                          <span style={{ display: 'block', margin: 0, fontSize: 11, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {u.correo}
-                          </p>
-                        </div>
-                      </div>
+                          </span>
+                        </span>
+                      </button>
                     )
                   })
                 )}

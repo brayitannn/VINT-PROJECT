@@ -88,7 +88,7 @@ export function VendedorDashboard({ user }: VendedorDashboardProps) {
       } catch {}
     }
 
-    fetchUserData()
+    void fetchUserData()
     window.addEventListener('updatePerfil', fetchUserData)
     return () => window.removeEventListener('updatePerfil', fetchUserData)
   }, [user.id, authUser])
@@ -276,10 +276,15 @@ export function VendedorDashboard({ user }: VendedorDashboardProps) {
           ) : (
             <>
               {/* Ingresos Totales */}
-              <div className="stat-card" onClick={() => setDetalleActivo('ingresos')}>
+              <button
+                type="button"
+                className="stat-card"
+                onClick={() => setDetalleActivo('ingresos')}
+                style={{ width: '100%', textAlign: 'left', font: 'inherit', color: 'inherit' }}
+              >
                 <div className="stat-icon"><DollarSign size={22} /></div>
                 <div className="stat-title">Ingresos Totales</div>
-                <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, width: '100%' }}>
                   <div className="stat-value">
                     {stats
                       ? `$${stats.ingresosTotal.toLocaleString('es-CO')}`
@@ -302,10 +307,15 @@ export function VendedorDashboard({ user }: VendedorDashboardProps) {
                     <span className="stat-trend neutral"><Minus size={14} /> Sin datos aún</span>
                   )}
                 </div>
-              </div>
+              </button>
 
               {/* Prendas Vendidas */}
-              <div className="stat-card" onClick={() => setDetalleActivo('prendas')}>
+              <button
+                type="button"
+                className="stat-card"
+                onClick={() => setDetalleActivo('prendas')}
+                style={{ width: '100%', textAlign: 'left', font: 'inherit', color: 'inherit' }}
+              >
                 <div className="stat-icon"><ShoppingBag size={22} /></div>
                 <div className="stat-title">Prendas Vendidas</div>
                 <div className="stat-value">
@@ -324,10 +334,15 @@ export function VendedorDashboard({ user }: VendedorDashboardProps) {
                     <span className="stat-trend neutral"><Minus size={14} /> Sin ventas esta semana</span>
                   )}
                 </div>
-              </div>
+              </button>
 
               {/* Pedidos en Curso */}
-              <div className="stat-card" onClick={() => setDetalleActivo('pedidos')}>
+              <button
+                type="button"
+                className="stat-card"
+                onClick={() => setDetalleActivo('pedidos')}
+                style={{ width: '100%', textAlign: 'left', font: 'inherit', color: 'inherit' }}
+              >
                 <div className="stat-icon"><Clock size={22} /></div>
                 <div className="stat-title">Pedidos en Curso</div>
                 <div className="stat-value">
@@ -336,7 +351,7 @@ export function VendedorDashboard({ user }: VendedorDashboardProps) {
                 <div className="stat-footer">
                   Pendientes por enviar y confirmar
                 </div>
-              </div>
+              </button>
             </>
           )}
         </div>

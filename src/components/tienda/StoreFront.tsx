@@ -183,7 +183,7 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
   }
 
   useEffect(() => {
-    fetchComentarios();
+    void fetchComentarios();
   }, [sellerIdentifier]);
 
   useEffect(() => {
@@ -381,7 +381,7 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
       setLoading(false)
     }
 
-    fetchData()
+    void fetchData()
   }, [isOwner, sellerId, sellerSlug, user])
 
   const mapCondicion = (condicion?: string): string => {
@@ -748,7 +748,8 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
 
               <div className="store-stats">
                 {/* Calificación */}
-                <div 
+                <button
+                  type="button"
                   onClick={() => {
                     setActiveTab('comentarios');
                     setTimeout(() => {
@@ -756,15 +757,16 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
                     }, 100);
                   }}
                   className="store-stat-card clickable"
+                  style={{ font: 'inherit' }}
                 >
-                  <p className="val">
+                  <span className="val">
                     {comentarios.length > 0 ? (comentarios.reduce((acc, c) => acc + c.calificacion, 0) / comentarios.length).toFixed(1) : '5.0'} 
                     <Star size={16} className="star-icon" />
-                  </p>
-                  <p className="lbl">
+                  </span>
+                  <span className="lbl">
                     Calificación
-                  </p>
-                </div>
+                  </span>
+                </button>
 
                 {/* Prendas en Venta */}
                 <div className="store-stat-card">
@@ -1041,14 +1043,15 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
                   ) : (
                     <form onSubmit={handleSubmitComment} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                       <div>
-                        <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        <span id="store-rating-label" style={{ display: 'block', fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                           Tu calificación
-                        </label>
-                        <div style={{ display: 'flex', gap: 6 }}>
+                        </span>
+                        <div role="group" aria-labelledby="store-rating-label" style={{ display: 'flex', gap: 6 }}>
                           {[1, 2, 3, 4, 5].map((star) => (
                             <button
                               key={star}
                               type="button"
+                              aria-label={`Calificar con ${star} ${star === 1 ? 'estrella' : 'estrellas'}`}
                               onClick={() => setNuevaCalificacion(star)}
                               onMouseEnter={() => setHoverRating(star)}
                               onMouseLeave={() => setHoverRating(null)}
@@ -1073,10 +1076,11 @@ export function StoreFront({ isOwner, sellerId, sellerEmail, sellerSlug }: Store
                       </div>
                       
                       <div>
-                        <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        <label htmlFor="store-comment-textarea" style={{ display: 'block', fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                           Tu comentario
                         </label>
                         <textarea
+                          id="store-comment-textarea"
                           value={nuevoComentario}
                           onChange={(e) => setNuevoComentario(e.target.value)}
                           placeholder="Escribe tu opinión sobre el vendedor, calidad de la prenda, velocidad de envío..."

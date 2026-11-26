@@ -30,9 +30,15 @@ function ExitoContent() {
 
   const handleCopy = () => {
     if (typeof window !== 'undefined' && orderNumber) {
-      navigator.clipboard.writeText(orderNumber)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      navigator.clipboard
+        .writeText(orderNumber)
+        .then(() => {
+          setCopied(true)
+          setTimeout(() => setCopied(false), 2000)
+        })
+        .catch((err) => {
+          console.error('No se pudo copiar el número de orden:', err)
+        })
     }
   }
 

@@ -112,7 +112,7 @@ export function NotificationsProvider({
         .subscribe()
     }
 
-    init()
+    void init()
 
     return () => {
       if (channel) supabase.removeChannel(channel)

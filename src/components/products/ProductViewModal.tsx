@@ -176,8 +176,17 @@ export function ProductViewModal({ product, onClose, onEdit, onReactivar }: Prod
         }
       `}</style>
 
-      <div className="pv-overlay" onClick={onClose}>
-        <div className="pv-container" onClick={(e) => e.stopPropagation()}>
+      <div className="pv-overlay">
+        <button
+          type="button"
+          aria-label="Cerrar vista de prenda"
+          onClick={onClose}
+          style={{
+            position: 'absolute', inset: 0, width: '100%', height: '100%',
+            background: 'transparent', border: 'none', padding: 0, margin: 0, cursor: 'default',
+          }}
+        />
+        <div className="pv-container" role="dialog" aria-modal="true" style={{ position: 'relative', zIndex: 1 }}>
           {/* Header Bar */}
           <div style={{
             padding: '16px 24px',

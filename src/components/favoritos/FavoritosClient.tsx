@@ -40,7 +40,7 @@ export function FavoritosClient() {
       return
     }
 
-    const ids = Array.from(favoriteIds).filter(id => !isNaN(Number(id)))
+    const ids = Array.from(favoriteIds).filter(id => !Number.isNaN(Number(id)))
 
     if (ids.length === 0) {
       setFavoritos([])
@@ -80,7 +80,7 @@ export function FavoritosClient() {
       }
     }
 
-    fetchData()
+    void fetchData()
   }, [favoriteIds, loading])
 
   if (!mounted) return null
@@ -140,14 +140,19 @@ export function FavoritosClient() {
                   position: 'relative', overflow: 'hidden',
                   height: 230, backgroundColor: 'var(--bg-secondary, #EAD9C3)'
                 }}>
-                  <div onClick={() => setSelectedProduct(product)} style={{ display: 'block', height: '100%', cursor: 'pointer' }}>
+                  <button
+                    type="button"
+                    aria-label={`Ver detalle de ${product.name}`}
+                    onClick={() => setSelectedProduct(product)}
+                    style={{ display: 'block', width: '100%', height: '100%', cursor: 'pointer', border: 'none', padding: 0, background: 'none' }}
+                  >
                     <Image
                       src={product.image}
                       alt={product.name}
                       width={400} height={230}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                  </div>
+                  </button>
                   <button
                     onClick={(e) => { e.preventDefault(); toggleFavorito(String(product.id)) }}
                     style={{
@@ -166,12 +171,16 @@ export function FavoritosClient() {
 
                 <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
-                    <div onClick={() => setSelectedProduct(product)} style={{ cursor: 'pointer', display: 'block', width: '100%' }}>
-                      <h3 style={{ fontWeight: 700, fontSize: 16, color: 'var(--text-primary, #2C1F14)', lineHeight: 1.3, margin: 0 }}
-                        className="line-clamp-2 hover:text-[var(--accent)] transition-colors">
+                    <h3 style={{ fontWeight: 700, fontSize: 16, color: 'var(--text-primary, #2C1F14)', lineHeight: 1.3, margin: 0, width: '100%' }}>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedProduct(product)}
+                        style={{ cursor: 'pointer', display: 'block', width: '100%', textAlign: 'left', border: 'none', padding: 0, background: 'none', font: 'inherit', color: 'inherit' }}
+                        className="line-clamp-2 hover:text-[var(--accent)] transition-colors"
+                      >
                         {product.name}
-                      </h3>
-                    </div>
+                      </button>
+                    </h3>
                   </div>
 
                   <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 10px' }}>

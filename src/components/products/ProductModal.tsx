@@ -91,16 +91,16 @@ export function ProductModal({ open, product, onClose, onSubmit, categories: ini
     if (initialCategories.length > 0) {
       setCategoriesList(initialCategories)
     } else {
-      getCategories().then(setCategoriesList)
+      getCategories().then(setCategoriesList).catch((err) => console.error('Error al cargar categorías:', err))
     }
 
     if (initialMarcas.length > 0) {
       setMarcasList(initialMarcas)
     } else {
-      getMarcas().then(setMarcasList)
+      getMarcas().then(setMarcasList).catch((err) => console.error('Error al cargar marcas:', err))
     }
 
-    getEstadosPrenda().then(setEstadosPrendaList)
+    getEstadosPrenda().then(setEstadosPrendaList).catch((err) => console.error('Error al cargar estados:', err))
   }, [initialCategories, initialMarcas, open])
 
   // Cerrar dropdown al hacer click afuera
@@ -267,8 +267,17 @@ export function ProductModal({ open, product, onClose, onSubmit, categories: ini
     : (selectedBrandObj?.nombre || form.brand || 'Sin marca')
 
   return (
-    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal-container" style={{ maxWidth: 640 }}>
+    <div className="modal-overlay">
+      <button
+        type="button"
+        aria-label="Cerrar modal de prenda"
+        onClick={onClose}
+        style={{
+          position: 'absolute', inset: 0, width: '100%', height: '100%',
+          background: 'transparent', border: 'none', padding: 0, margin: 0, cursor: 'default',
+        }}
+      />
+      <div className="modal-container" role="dialog" aria-modal="true" style={{ maxWidth: 640, position: 'relative', zIndex: 1 }}>
         {/* Header */}
         <div className="modal-header">
           <div>
@@ -287,8 +296,9 @@ export function ProductModal({ open, product, onClose, onSubmit, categories: ini
           <div className="form-grid">
             {/* Title */}
             <div className="field col-span-2">
-              <label className="field-label">Nombre de la Prenda *</label>
+              <label htmlFor="product-name" className="field-label">Nombre de la Prenda *</label>
               <input
+                id="product-name"
                 className="field-input"
                 value={form.name}
                 onChange={(e) => set('name', e.target.value)}
@@ -299,8 +309,9 @@ export function ProductModal({ open, product, onClose, onSubmit, categories: ini
 
             {/* Categoría */}
             <div className="field">
-              <label className="field-label">Categoría *</label>
+              <label htmlFor="product-category" className="field-label">Categoría *</label>
               <select
+                id="product-category"
                 className="field-input"
                 value={form.category || form.category_id || ''}
                 onChange={(e) => {
@@ -318,9 +329,10 @@ export function ProductModal({ open, product, onClose, onSubmit, categories: ini
 
             {/* Marca con buscador interactivo y opción "Otra" */}
             <div className="field" ref={brandRef} style={{ position: 'relative' }}>
-              <label className="field-label">Marca *</label>
+              <span id="product-brand-label" className="field-label">Marca *</span>
               <button
                 type="button"
+                aria-labelledby="product-brand-label"
                 className="field-input"
                 onClick={() => setBrandDropdownOpen(!brandDropdownOpen)}
                 style={{
@@ -480,16 +492,16 @@ export function ProductModal({ open, product, onClose, onSubmit, categories: ini
               {/* Campo para ingresar el nombre de la otra marca */}
               {isOtraSelected && (
                 <div style={{ marginTop: 8 }}>
-                  <label className="field-label" style={{ fontSize: 12, marginBottom: 4 }}>
+                  <label htmlFor="product-otra-marca" className="field-label" style={{ fontSize: 12, marginBottom: 4 }}>
                     Nombre de la Marca *
                   </label>
                   <input
+                    id="product-otra-marca"
                     className="field-input"
                     value={form.otra_marca || ''}
                     onChange={(e) => set('otra_marca', e.target.value)}
                     placeholder="Ej. Canabbis, Gucci, Levi's..."
                     required
-                    autoFocus
                   />
                 </div>
               )}
@@ -497,8 +509,9 @@ export function ProductModal({ open, product, onClose, onSubmit, categories: ini
 
             {/* Estado de la prenda (Opciones reales de catalogo.estados_prenda) */}
             <div className="field">
-              <label className="field-label">Estado de la Prenda *</label>
+              <label htmlFor="product-estado" className="field-label">Estado de la Prenda *</label>
               <select
+                id="product-estado"
                 className="field-input"
                 value={form.id_estado_prenda || ''}
                 onChange={(e) => {
@@ -519,8 +532,9 @@ export function ProductModal({ open, product, onClose, onSubmit, categories: ini
 
             {/* Talla */}
             <div className="field">
-              <label className="field-label">Talla *</label>
+              <label htmlFor="product-talla" className="field-label">Talla *</label>
               <select
+                id="product-talla"
                 className="field-input"
                 value={form.size}
                 onChange={(e) => set('size', e.target.value)}
@@ -534,16 +548,17 @@ export function ProductModal({ open, product, onClose, onSubmit, categories: ini
 
             {/* Precio & Stock */}
             <div className="field">
-              <label className="field-label">Precio de Venta (COP) *</label>
+              <label htmlFor="product-precio" className="field-label">Precio de Venta (COP) *</label>
               <div className="field-prefix-wrapper">
                 <span className="field-prefix">$</span>
                 <input
+                  id="product-precio"
                   className="field-input with-prefix"
                   type="number"
                   min="1000"
                   step="500"
                   value={form.price}
-                  onChange={(e) => set('price', parseFloat(e.target.value) || 0)}
+                  onChange={(e) => set('price', Number.parseFloat(e.target.value) || 0)}
                   required
                 />
               </div>
@@ -551,8 +566,9 @@ export function ProductModal({ open, product, onClose, onSubmit, categories: ini
 
             {/* Estado de Publicación */}
             <div className="field">
-              <label className="field-label">Estado de Publicación</label>
+              <label htmlFor="product-status" className="field-label">Estado de Publicación</label>
               <select
+                id="product-status"
                 className="field-input"
                 value={form.status}
                 onChange={(e) => set('status', e.target.value as ProductStatus)}
@@ -565,8 +581,9 @@ export function ProductModal({ open, product, onClose, onSubmit, categories: ini
 
             {/* Color (Selección cerrada sin escribir) */}
             <div className="field">
-              <label className="field-label">Color *</label>
+              <label htmlFor="product-color" className="field-label">Color *</label>
               <select
+                id="product-color"
                 className="field-input"
                 value={form.color || 'Combinado'}
                 onChange={(e) => set('color', e.target.value)}
@@ -580,8 +597,9 @@ export function ProductModal({ open, product, onClose, onSubmit, categories: ini
 
             {/* Género */}
             <div className="field">
-              <label className="field-label">Género</label>
+              <label htmlFor="product-gender" className="field-label">Género</label>
               <select
+                id="product-gender"
                 className="field-input"
                 value={form.gender}
                 onChange={(e) => set('gender', e.target.value)}
@@ -594,7 +612,7 @@ export function ProductModal({ open, product, onClose, onSubmit, categories: ini
 
             {/* Fotografía de la Prenda */}
             <div className="field col-span-2">
-              <label className="field-label">Fotografía de la Prenda</label>
+              <span className="field-label">Fotografía de la Prenda</span>
               <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                 <label 
                   htmlFor="imagen-upload"
@@ -636,10 +654,11 @@ export function ProductModal({ open, product, onClose, onSubmit, categories: ini
                     Seleccionar de mi dispositivo
                   </button>
 
-                  <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>
+                  <label htmlFor="product-image-url" style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>
                     O introduce el enlace de la imagen:
-                  </p>
+                  </label>
                   <input
+                    id="product-image-url"
                     className="field-input"
                     value={(form.image_url as string) || ''}
                     onChange={(e) => set('image_url', e.target.value)}
@@ -651,8 +670,9 @@ export function ProductModal({ open, product, onClose, onSubmit, categories: ini
 
             {/* Description */}
             <div className="field col-span-2">
-              <label className="field-label">Descripción</label>
+              <label htmlFor="product-description" className="field-label">Descripción</label>
               <textarea
+                id="product-description"
                 className="field-input field-textarea"
                 rows={3}
                 value={form.description}

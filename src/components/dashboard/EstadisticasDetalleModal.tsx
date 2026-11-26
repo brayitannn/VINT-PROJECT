@@ -146,8 +146,17 @@ export function EstadisticasDetalleModal({ isOpen, onClose, tipo, stats }: Estad
         }
       `}</style>
 
-      <div className="est-modal-overlay" onClick={onClose}>
-        <div className="est-modal-content" onClick={e => e.stopPropagation()}>
+      <div className="est-modal-overlay">
+        <button
+          type="button"
+          aria-label="Cerrar detalle de estadísticas"
+          onClick={onClose}
+          style={{
+            position: 'absolute', inset: 0, width: '100%', height: '100%',
+            background: 'transparent', border: 'none', padding: 0, margin: 0, cursor: 'default',
+          }}
+        />
+        <div className="est-modal-content" role="dialog" aria-modal="true" style={{ position: 'relative', zIndex: 1 }}>
           
           {/* HEADER */}
           <div className="est-modal-header">

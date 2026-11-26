@@ -55,7 +55,7 @@ export function Navbar() {
         }
       } catch {}
     }
-    fetchAvatar()
+    void fetchAvatar()
     window.addEventListener('updatePerfil', fetchAvatar)
     return () => window.removeEventListener('updatePerfil', fetchAvatar)
   }, [user, supabase])
@@ -90,7 +90,7 @@ export function Navbar() {
       if (!error) setUnreadChats(count || 0)
     }
 
-    fetchUnreadChats()
+    void fetchUnreadChats()
 
     const channel = supabase
       .channel(`unread-chats-${user.id}`)
@@ -98,7 +98,7 @@ export function Navbar() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'mensajes' },
         () => {
-          fetchUnreadChats()
+          void fetchUnreadChats()
         }
       )
       .subscribe()
